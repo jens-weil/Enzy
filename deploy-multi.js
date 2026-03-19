@@ -3,17 +3,18 @@ const path = require('path');
 const { execSync } = require('child_process');
 const inquirer = require('inquirer').default;
 
-// Get the Git directory (where all projects are)
-const gitDir = path.dirname(__dirname) === path.dirname(path.dirname(__dirname))
-  ? path.dirname(__dirname)
-  : path.dirname(path.dirname(__dirname));
+// Get the Git directory (where all projects are) - parent of current project
+const gitDir = path.dirname(__dirname);
+
+console.log(`Scanning for projects in: ${gitDir}`);
 
 const projects = fs.readdirSync(gitDir)
   .filter(dir => {
     const dirPath = path.join(gitDir, dir);
     try {
-      return fs.statSync(dirPath).isDirectory() &&
-             fs.existsSync(path.join(dirPath, 'package.json'));
+      const isDir = fs.statSync(dirPath).isDirectory();
+      const hasPackageJson = fs.existsSync(path.join(dirPath, 'package.json'));
+      return isDir && hasPackageJson;
     } catch {
       return false;
     }
