@@ -135,9 +135,6 @@ export async function postToFacebook(data: {
 
     // If direct strategy, link to localhost will likely NOT show a preview on FB.
     // However, the post should still be created.
-    if (!isDirect && data.imageUrl && data.imageUrl.startsWith("http") && !data.imageUrl.includes("localhost")) {
-      formData.append("picture", data.imageUrl);
-    }
 
     const response = await fetch(`https://graph.facebook.com/${API_VERSION}/${FB_PAGE_ID}/feed`, {
       method: "POST",
