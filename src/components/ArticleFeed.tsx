@@ -17,7 +17,16 @@ type Article = {
     linkedin: boolean;
     tiktok: boolean;
   };
+  socialLinks: {
+    facebook?: string;
+    instagram?: string;
+    linkedin?: string;
+    tiktok?: string;
+  };
+  facebookPostId?: string;
 };
+
+const FB_PROTOTYPE_LINK = "https://www.facebook.com/groups/208466683777810/permalink/1598041428153655/";
 
 interface ArticleForm {
   title: string;
@@ -32,6 +41,13 @@ interface ArticleForm {
     linkedin: boolean;
     tiktok: boolean;
   };
+  socialLinks: {
+    facebook?: string;
+    instagram?: string;
+    linkedin?: string;
+    tiktok?: string;
+  };
+  facebookPostId?: string;
 }
 
 const initialFormState: ArticleForm = {
@@ -42,6 +58,7 @@ const initialFormState: ArticleForm = {
   content: "",
   imageUrl: "",
   socialMedia: { facebook: false, instagram: false, linkedin: false, tiktok: false },
+  socialLinks: {},
 };
 
 interface ArticleFeedProps {
@@ -175,9 +192,16 @@ function ArticleModal({ article, isAdmin, onClose, onDelete, onEdit }: ArticleMo
                         tiktok: "bg-black text-white"
                       };
                       return (
-                        <span key={platform} className={`w-8 h-8 rounded-xl flex items-center justify-center p-2 shadow-sm ${colors[platform] || "bg-gray-200"}`}>
+                        <a
+                          key={platform}
+                          href={article.socialLinks?.[platform as keyof typeof article.socialLinks] || "#"}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className={`w-8 h-8 rounded-xl flex items-center justify-center p-2 shadow-sm ${colors[platform] || "bg-gray-200"} hover:scale-110 transition-transform`}
+                          title={`Öppna på ${platform}`}
+                        >
                           {SOCIAL_ICONS[platform]}
-                        </span>
+                        </a>
                       );
                     })}
                   </div>
@@ -219,6 +243,7 @@ function ArticleEditModal({ editingArticle, onClose, onSaved }: ArticleEditModal
           content: editingArticle.content,
           imageUrl: editingArticle.imageUrl || "",
           socialMedia: { ...editingArticle.socialMedia },
+          socialLinks: editingArticle.socialLinks ? { ...editingArticle.socialLinks } : {},
         }
       : initialFormState
   );
@@ -248,7 +273,27 @@ function ArticleEditModal({ editingArticle, onClose, onSaved }: ArticleEditModal
 
   const handleSocialChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, checked } = e.target;
-    setFormData(prev => ({ ...prev, socialMedia: { ...prev.socialMedia, [name]: checked } }));
+    setFormData(prev => {
+      const newSocialMedia = { ...prev.socialMedia, [name]: checked };
+      const newSocialLinks = { ...prev.socialLinks };
+      
+      if (checked) {
+        if (name === "facebook") {
+          newSocialLinks.facebook = FB_PROTOTYPE_LINK;
+        } else {
+          // Placeholder for other platforms
+          newSocialLinks[name as keyof typeof newSocialLinks] = "#";
+        }
+      } else {
+        delete newSocialLinks[name as keyof typeof newSocialLinks];
+      }
+      
+      return { 
+        ...prev, 
+        socialMedia: newSocialMedia,
+        socialLinks: newSocialLinks
+      };
+    });
   };
 
   const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -982,10 +1027,28 @@ export default function ArticleFeed({ initialArticles }: ArticleFeedProps) {
                   LÄS MER <span>&rarr;</span>
                 </span>
                 <div className="flex gap-2 opacity-60">
-                  {article.socialMedia.facebook && <span className="w-5 h-5 flex items-center justify-center text-blue-600">{SOCIAL_ICONS.facebook}</span>}
-                  {article.socialMedia.linkedin && <span className="w-5 h-5 flex items-center justify-center text-blue-700">{SOCIAL_ICONS.linkedin}</span>}
-                  {article.socialMedia.instagram && <span className="w-5 h-5 flex items-center justify-center text-pink-600">{SOCIAL_ICONS.instagram}</span>}
-                  {article.socialMedia.tiktok && <span className="w-5 h-5 flex items-center justify-center text-black dark:text-white">{SOCIAL_ICONS.tiktok}</span>}
+                  {Object.entries(article.socialMedia).map(([platform, active]) => {
+                    if (!active) return null;
+                    const colors: Record<string, string> = {
+                      facebook: "text-blue-600",
+                      linkedin: "text-blue-700",
+                      instagram: "text-pink-600",
+                      tiktok: "text-black dark:text-white"
+                    };
+                    return (
+                      <a
+                        key={platform}
+                        href={article.socialLinks?.[platform as keyof typeof article.socialLinks] || "#"}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className={`w-5 h-5 flex items-center justify-center ${colors[platform] || "text-gray-400"} hover:scale-125 transition-transform`}
+                        onClick={(e) => e.stopPropagation()}
+                        title={`Öppna på ${platform}`}
+                      >
+                        {SOCIAL_ICONS[platform]}
+                      </a>
+                    );
+                  })}
                 </div>
               </div>
             </div>

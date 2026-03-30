@@ -12,6 +12,10 @@
       "instagram": true,
       "linkedin": true,
       "tiktok": false
+    },
+    "socialLinks": {
+      "linkedin": "#",
+      "instagram": "#"
     }
   },
   {
@@ -21,12 +25,15 @@
     "date": "2026-03-15",
     "ingress": "En kort hisspitch om Enzymatica hos Aktiespararna",
     "imageUrl": "/logo.png",
-    "content": "<div class=\"aspect-video w-full rounded-2xl overflow-hidden shadow-lg my-8\"><iframe src=\"https://www.youtube.com/embed/3ae_1Nr9J9M\" class=\"w-full h-full border-0\" allow=\"accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture\" allowfullscreen></iframe></div>",
+    "content": "Test\n<div class=\"aspect-video w-full rounded-2xl overflow-hidden shadow-lg my-8\"><iframe src=\"https://www.youtube.com/embed/3ae_1Nr9J9M\" class=\"w-full h-full border-0\" allow=\"accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture\" allowfullscreen></iframe></div>",
     "socialMedia": {
       "facebook": true,
-      "instagram": true,
+      "instagram": false,
       "linkedin": false,
       "tiktok": false
+    },
+    "socialLinks": {
+      "facebook": "https://www.facebook.com/groups/208466683777810/permalink/1598041428153655/"
     }
   },
   {
@@ -42,7 +49,13 @@
       "linkedin": true,
       "tiktok": true
     },
-    "ingress": "Den nya smaken Eucalyptos ger ny säljrekord. Marknaden tog emot den med hull och hår och apoteken säljer ut den så fort de får påfyllning."
+    "ingress": "Den nya smaken Eucalyptos ger ny säljrekord. Marknaden tog emot den med hull och hår och apoteken säljer ut den så fort de får påfyllning.",
+    "socialLinks": {
+      "facebook": "https://www.facebook.com/groups/208466683777810/permalink/1598041428153655/",
+      "linkedin": "#",
+      "instagram": "#",
+      "tiktok": "#"
+    }
   },
   {
     "id": "1",
@@ -57,22 +70,30 @@
       "linkedin": true,
       "tiktok": false
     },
-    "ingress": "Enzymatica redovisar en stark avslutning på året och välkomnar den nya vd:n som kommer leda den fortsatta internationella expansionen. Omsättningen fö..."
+    "ingress": "Enzymatica redovisar en stark avslutning på året och välkomnar den nya vd:n som kommer leda den fortsatta internationella expansionen. Omsättningen fö...",
+    "socialLinks": {
+      "facebook": "https://www.facebook.com/groups/208466683777810/permalink/1598041428153655/",
+      "linkedin": "#"
+    }
   },
   {
     "id": "2",
     "title": "Enzymaticas presentation från Stora Aktiedagarna finns nu tillgänglig",
     "type": "PM",
-    "date": "2026-03-11T10:30:00Z",
+    "date": "2026-03-11",
     "imageUrl": "/uploads/scraped/article_1773426972282_0.png",
     "content": "Se presentationen från Stora Aktiedagarna i Stockholm där ledningen presenterade bolagets framtidsutsikter och den senaste kliniska datan för ColdZyme®.\n\n<iframe width=\"640\" height=\"480\" src=\"https://www.youtube.com/embed/ruOA1MWRqAU\" title=\"Enzymatica – Stora Aktiedagarna Stockholm 10 mars 2026\" frameborder=\"0\" allow=\"accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share\" referrerpolicy=\"strict-origin-when-cross-origin\" allowfullscreen></iframe>",
     "socialMedia": {
       "facebook": true,
-      "instagram": true,
-      "linkedin": true,
+      "instagram": false,
+      "linkedin": false,
       "tiktok": false
     },
-    "ingress": "Se presentationen från Stora Aktiedagarna i Stockholm där ledningen presenterade bolagets framtidsutsikter och den senaste kliniska datan för ColdZyme..."
+    "ingress": "Se presentationen från Stora Aktiedagarna i Stockholm där ledningen presenterade bolagets framtidsutsikter och den senaste kliniska datan för ColdZyme...",
+    "socialLinks": {
+      "facebook": "https://www.facebook.com/822263410929793"
+    },
+    "facebookPostId": "822263410929793"
   },
   {
     "id": "3",
@@ -87,7 +108,13 @@
       "linkedin": true,
       "tiktok": true
     },
-    "ingress": "En vetenskaplig artikel publicerad i Journal of Physiology bekräftar att ColdZyme® inte bara lindrar förkylningssymtom, utan angriper den underliggand..."
+    "ingress": "En vetenskaplig artikel publicerad i Journal of Physiology bekräftar att ColdZyme® inte bara lindrar förkylningssymtom, utan angriper den underliggand...",
+    "socialLinks": {
+      "facebook": "https://www.facebook.com/groups/208466683777810/permalink/1598041428153655/",
+      "linkedin": "#",
+      "instagram": "#",
+      "tiktok": "#"
+    }
   },
   {
     "id": "scraped_1773426973698_1",
@@ -97,12 +124,17 @@
     "imageUrl": "/uploads/scraped/article_1773426973538_1.jpg",
     "content": "Ett år har gått sedan de kliniska resultaten för ColdZyme publicerades i den vetenskapliga tidskriften The Journal of Physiology.",
     "socialMedia": {
-      "facebook": true,
+      "facebook": false,
       "instagram": true,
       "linkedin": true,
       "tiktok": true
     },
-    "ingress": "Ett år har gått sedan de kliniska resultaten för ColdZyme publicerades i den vetenskapliga tidskriften The Journal of Physiology...."
+    "ingress": "Ett år har gått sedan de kliniska resultaten för ColdZyme publicerades i den vetenskapliga tidskriften The Journal of Physiology....",
+    "socialLinks": {
+      "linkedin": "#",
+      "instagram": "#",
+      "tiktok": "#"
+    }
   },
   {
     "id": "scraped_1773426973829_2",
@@ -117,7 +149,11 @@
       "linkedin": true,
       "tiktok": false
     },
-    "ingress": "I en aktuell intervju med BioStock berättar Enzymaticas vd Sana Alajmovic om sin första tid i bolaget och om ambitionerna framåt...."
+    "ingress": "I en aktuell intervju med BioStock berättar Enzymaticas vd Sana Alajmovic om sin första tid i bolaget och om ambitionerna framåt....",
+    "socialLinks": {
+      "facebook": "https://www.facebook.com/groups/208466683777810/permalink/1598041428153655/",
+      "linkedin": "#"
+    }
   },
   {
     "id": "scraped_1773426974016_3",
@@ -132,7 +168,11 @@
       "linkedin": true,
       "tiktok": false
     },
-    "ingress": "Se när Enzymaticas nya vd, Sana Alajmovic, gästar BioStocks studio för ett samtal om sitt nya uppdrag, bolagets kommersiella strategi och vägen framåt..."
+    "ingress": "Se när Enzymaticas nya vd, Sana Alajmovic, gästar BioStocks studio för ett samtal om sitt nya uppdrag, bolagets kommersiella strategi och vägen framåt...",
+    "socialLinks": {
+      "facebook": "https://www.facebook.com/groups/208466683777810/permalink/1598041428153655/",
+      "linkedin": "#"
+    }
   },
   {
     "id": "scraped_1773426974275_4",
@@ -147,7 +187,11 @@
       "linkedin": true,
       "tiktok": false
     },
-    "ingress": "Sana Alajmovic har nu officiellt tillträtt som vd för bolaget...."
+    "ingress": "Sana Alajmovic har nu officiellt tillträtt som vd för bolaget....",
+    "socialLinks": {
+      "facebook": "https://www.facebook.com/groups/208466683777810/permalink/1598041428153655/",
+      "linkedin": "#"
+    }
   },
   {
     "id": "scraped_1773426974831_5",
@@ -162,7 +206,11 @@
       "linkedin": true,
       "tiktok": false
     },
-    "ingress": "Den kliniska studien om ColdZyme som visade signifikant kortare sjukdomstid och lindrigare symptom vid förkylning har uppmärksammats i nationell tv...."
+    "ingress": "Den kliniska studien om ColdZyme som visade signifikant kortare sjukdomstid och lindrigare symptom vid förkylning har uppmärksammats i nationell tv....",
+    "socialLinks": {
+      "facebook": "https://www.facebook.com/groups/208466683777810/permalink/1598041428153655/",
+      "linkedin": "#"
+    }
   },
   {
     "id": "scraped_1773426975039_6",
@@ -177,7 +225,11 @@
       "linkedin": true,
       "tiktok": false
     },
-    "ingress": "VERIFIERAD INGRESS"
+    "ingress": "VERIFIERAD INGRESS",
+    "socialLinks": {
+      "facebook": "https://www.facebook.com/groups/208466683777810/permalink/1598041428153655/",
+      "linkedin": "#"
+    }
   },
   {
     "id": "scraped_1773426975208_7",
@@ -192,7 +244,13 @@
       "linkedin": true,
       "tiktok": true
     },
-    "ingress": "Enzymatica AB har tecknat ett samarbetsavtal med UK Sports Institute (UKSI)...."
+    "ingress": "Enzymatica AB har tecknat ett samarbetsavtal med UK Sports Institute (UKSI)....",
+    "socialLinks": {
+      "facebook": "https://www.facebook.com/groups/208466683777810/permalink/1598041428153655/",
+      "linkedin": "#",
+      "instagram": "#",
+      "tiktok": "#"
+    }
   },
   {
     "id": "scraped_1773426975415_8",
@@ -207,7 +265,11 @@
       "linkedin": true,
       "tiktok": false
     },
-    "ingress": "ColdZyme har blivit en del av det brittiska landslagets medicinska utrustning...."
+    "ingress": "ColdZyme har blivit en del av det brittiska landslagets medicinska utrustning....",
+    "socialLinks": {
+      "facebook": "https://www.facebook.com/groups/208466683777810/permalink/1598041428153655/",
+      "linkedin": "#"
+    }
   },
   {
     "id": "scraped_1773426975631_9",
@@ -222,7 +284,11 @@
       "linkedin": true,
       "tiktok": false
     },
-    "ingress": "Enzymatica utökar sitt produktsortiment med ColdZyme® Eucalyptus...."
+    "ingress": "Enzymatica utökar sitt produktsortiment med ColdZyme® Eucalyptus....",
+    "socialLinks": {
+      "facebook": "https://www.facebook.com/groups/208466683777810/permalink/1598041428153655/",
+      "linkedin": "#"
+    }
   },
   {
     "id": "scraped_1773426975736_10",
@@ -237,7 +303,11 @@
       "linkedin": true,
       "tiktok": false
     },
-    "ingress": "Lär känna den professionella cyklisten Charlotte Hodgkins-Byrne och professor Glen Davison, som diskuterar fördelarna med ColdZyme...."
+    "ingress": "Lär känna den professionella cyklisten Charlotte Hodgkins-Byrne och professor Glen Davison, som diskuterar fördelarna med ColdZyme....",
+    "socialLinks": {
+      "facebook": "https://www.facebook.com/groups/208466683777810/permalink/1598041428153655/",
+      "linkedin": "#"
+    }
   },
   {
     "id": "scraped_1773426975800_11",
@@ -252,7 +322,11 @@
       "linkedin": true,
       "tiktok": false
     },
-    "ingress": "BioStock analyserar de slutgiltiga resultaten från den kliniska studien om ColdZyme...."
+    "ingress": "BioStock analyserar de slutgiltiga resultaten från den kliniska studien om ColdZyme....",
+    "socialLinks": {
+      "facebook": "https://www.facebook.com/groups/208466683777810/permalink/1598041428153655/",
+      "linkedin": "#"
+    }
   },
   {
     "id": "scraped_1773426975912_12",
@@ -267,7 +341,11 @@
       "linkedin": true,
       "tiktok": false
     },
-    "ingress": "Professor Glen Davison presenterade resultaten från den kliniska studien vid Global Health Summit...."
+    "ingress": "Professor Glen Davison presenterade resultaten från den kliniska studien vid Global Health Summit....",
+    "socialLinks": {
+      "facebook": "https://www.facebook.com/groups/208466683777810/permalink/1598041428153655/",
+      "linkedin": "#"
+    }
   },
   {
     "id": "scraped_1773426976090_13",
@@ -282,7 +360,11 @@
       "linkedin": true,
       "tiktok": false
     },
-    "ingress": "Enzymatica deltar i en internationell kampanj för global hälsa...."
+    "ingress": "Enzymatica deltar i en internationell kampanj för global hälsa....",
+    "socialLinks": {
+      "facebook": "https://www.facebook.com/groups/208466683777810/permalink/1598041428153655/",
+      "linkedin": "#"
+    }
   },
   {
     "id": "scraped_1773426976217_14",
@@ -297,7 +379,11 @@
       "linkedin": true,
       "tiktok": false
     },
-    "ingress": "Ett abstract om den kliniska studien har publicerats i den ansedda tidskriften British Journal of Sports Medicine...."
+    "ingress": "Ett abstract om den kliniska studien har publicerats i den ansedda tidskriften British Journal of Sports Medicine....",
+    "socialLinks": {
+      "facebook": "https://www.facebook.com/groups/208466683777810/permalink/1598041428153655/",
+      "linkedin": "#"
+    }
   },
   {
     "id": "scraped_1773426976336_15",
@@ -312,7 +398,11 @@
       "linkedin": true,
       "tiktok": false
     },
-    "ingress": "Resultat från den senaste studien om ColdZyme presenterades vid en internationell olympisk konferens...."
+    "ingress": "Resultat från den senaste studien om ColdZyme presenterades vid en internationell olympisk konferens....",
+    "socialLinks": {
+      "facebook": "https://www.facebook.com/groups/208466683777810/permalink/1598041428153655/",
+      "linkedin": "#"
+    }
   },
   {
     "id": "scraped_1773426976467_16",
@@ -327,7 +417,11 @@
       "linkedin": true,
       "tiktok": false
     },
-    "ingress": "ColdZyme visades upp i den populära amerikanska morgonshowen \"The Balancing Act\"...."
+    "ingress": "ColdZyme visades upp i den populära amerikanska morgonshowen \"The Balancing Act\"....",
+    "socialLinks": {
+      "facebook": "https://www.facebook.com/groups/208466683777810/permalink/1598041428153655/",
+      "linkedin": "#"
+    }
   },
   {
     "id": "scraped_1773426976583_17",
@@ -342,7 +436,11 @@
       "linkedin": true,
       "tiktok": false
     },
-    "ingress": "Följ med på en resa genom 10 år av reklamfilmer för ColdZyme...."
+    "ingress": "Följ med på en resa genom 10 år av reklamfilmer för ColdZyme....",
+    "socialLinks": {
+      "facebook": "https://www.facebook.com/groups/208466683777810/permalink/1598041428153655/",
+      "linkedin": "#"
+    }
   },
   {
     "id": "scraped_1773426976702_18",
@@ -357,7 +455,11 @@
       "linkedin": true,
       "tiktok": false
     },
-    "ingress": "En djupintervju med Enzymaticas dåvarande vd Claus Egstrand...."
+    "ingress": "En djupintervju med Enzymaticas dåvarande vd Claus Egstrand....",
+    "socialLinks": {
+      "facebook": "https://www.facebook.com/groups/208466683777810/permalink/1598041428153655/",
+      "linkedin": "#"
+    }
   },
   {
     "id": "scraped_1773426976816_19",
@@ -372,6 +474,10 @@
       "linkedin": true,
       "tiktok": false
     },
-    "ingress": "Enzymatica lanserar en ny marknadskampanj i Sverige för ColdZyme...."
+    "ingress": "Enzymatica lanserar en ny marknadskampanj i Sverige för ColdZyme....",
+    "socialLinks": {
+      "facebook": "https://www.facebook.com/groups/208466683777810/permalink/1598041428153655/",
+      "linkedin": "#"
+    }
   }
 ]

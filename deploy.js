@@ -28,10 +28,17 @@ async function main() {
     console.log('Building the project...');
     execSync('npm run build', { stdio: 'inherit' });
 
-    // Add and commit
-    console.log('Committing changes...');
+    // Add and check for changes
+    console.log('Checking for changes...');
     execSync('git add .');
-    execSync(`git commit -m "Deploy to ${remote}"`, { stdio: 'inherit' });
+    const status = execSync('git status --porcelain', { encoding: 'utf8' }).trim();
+    
+    if (status) {
+      console.log('Committing changes...');
+      execSync(`git commit -m "Deploy to ${remote}"`, { stdio: 'inherit' });
+    } else {
+      console.log('No changes to commit, skipping commit step.');
+    }
 
     // Get current branch
     const branch = execSync('git branch --show-current', { encoding: 'utf8' }).trim();

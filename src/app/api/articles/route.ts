@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server';
 import { revalidatePath } from 'next/cache';
 import fs from 'fs';
 import path from 'path';
+import { postToFacebook, deleteFromFacebook } from '@/lib/facebook';
 
 export async function POST(request: Request) {
   try {
@@ -16,7 +17,7 @@ export async function POST(request: Request) {
     }
 
     // Prepare new article
-    const newArticle = {
+    const newArticle: any = {
       id: Date.now().toString(),
       title,
       type: type || 'Article',
@@ -29,8 +30,27 @@ export async function POST(request: Request) {
         instagram: false,
         linkedin: false,
         tiktok: false
-      }
+      },
+      socialLinks: body.socialLinks || {},
+      facebookPostId: undefined
     };
+
+    const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://enzymatica.se';
+    const articleUrl = `${siteUrl}/articles/${newArticle.id}`;
+
+    // Handle Facebook Post
+    if (newArticle.socialMedia.facebook) {
+      const postId = await postToFacebook({
+        title: newArticle.title,
+        ingress: newArticle.ingress,
+        link: articleUrl,
+        imageUrl: newArticle.imageUrl ? (newArticle.imageUrl.startsWith('http') ? newArticle.imageUrl : `${siteUrl}${newArticle.imageUrl}`) : undefined
+      });
+      if (postId) {
+        newArticle.facebookPostId = postId;
+        newArticle.socialLinks.facebook = `https://www.facebook.com/${postId}`;
+      }
+    }
 
     // Data file path
     const filePath = path.join(process.cwd(), 'data', 'articles.json');
@@ -61,9 +81,6 @@ export async function POST(request: Request) {
 
     revalidatePath('/articles');
 
-    // Simulate export to Social Media APIs here if checkboxes were ticked
-    // e.g. if (newArticle.socialMedia.facebook) { await exportToFacebookAPI(...) }
-
     return NextResponse.json({ success: true, article: newArticle }, { status: 201 });
   } catch (error) {
     console.error("Error saving article:", error);
@@ -73,10 +90,11 @@ export async function POST(request: Request) {
     );
   }
 }
+
 export async function PATCH(request: Request) {
   try {
     const body = await request.json();
-    const { id, title, type, ingress, content, imageUrl, socialMedia, date } = body;
+    const { id, title, type, ingress, content, imageUrl, socialMedia, socialLinks, date } = body;
 
     if (!id || !title || !content) {
       return NextResponse.json(
@@ -98,7 +116,35 @@ export async function PATCH(request: Request) {
       return NextResponse.json({ error: 'Artikeln hittades inte' }, { status: 404 });
     }
 
-    // Update the article while preserving original properties like date
+    const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://enzymatica.se';
+    const articleUrl = `${siteUrl}/articles/${id}`;
+
+    // Sync with Facebook
+    const oldFB = articles[articleIndex].socialMedia.facebook;
+    const newFB = socialMedia?.facebook !== undefined ? socialMedia.facebook : oldFB;
+    let facebookPostId = articles[articleIndex].facebookPostId;
+    let updatedSocialLinks = { ...(socialLinks || articles[articleIndex].socialLinks || {}) };
+
+    if (newFB && !facebookPostId) {
+      // Should be active but no post ID -> Create post
+      const postId = await postToFacebook({
+        title: title || articles[articleIndex].title,
+        ingress: ingress !== undefined ? ingress : articles[articleIndex].ingress,
+        link: articleUrl,
+        imageUrl: imageUrl ? (imageUrl.startsWith('http') ? imageUrl : `${siteUrl}${imageUrl}`) : (articles[articleIndex].imageUrl ? (articles[articleIndex].imageUrl.startsWith('http') ? articles[articleIndex].imageUrl : `${siteUrl}${articles[articleIndex].imageUrl}`) : undefined)
+      });
+      if (postId) {
+        facebookPostId = postId;
+        updatedSocialLinks.facebook = `https://www.facebook.com/${postId}`;
+      }
+    } else if (oldFB && !newFB && facebookPostId) {
+      // Just deactivated -> Delete
+      await deleteFromFacebook(facebookPostId);
+      facebookPostId = undefined;
+      delete updatedSocialLinks.facebook;
+    }
+
+    // Update the article while preserving original properties
     articles[articleIndex] = {
       ...articles[articleIndex],
       title,
@@ -107,12 +153,15 @@ export async function PATCH(request: Request) {
       ingress: ingress !== undefined ? ingress : articles[articleIndex].ingress,
       imageUrl: imageUrl !== undefined ? imageUrl : articles[articleIndex].imageUrl,
       content,
-      socialMedia: socialMedia || articles[articleIndex].socialMedia
+      socialMedia: socialMedia || articles[articleIndex].socialMedia,
+      socialLinks: updatedSocialLinks,
+      facebookPostId
     };
 
     fs.writeFileSync(filePath, JSON.stringify(articles, null, 2), 'utf8');
 
     revalidatePath('/articles');
+    revalidatePath(`/articles/${id}`);
 
     return NextResponse.json({ success: true, article: articles[articleIndex] });
   } catch (error) {
@@ -141,6 +190,11 @@ export async function DELETE(request: Request) {
     const fileData = fs.readFileSync(filePath, 'utf8');
     let articles = JSON.parse(fileData);
 
+    const articleToDelete = articles.find((a: any) => a.id === id);
+    if (articleToDelete?.facebookPostId) {
+      await deleteFromFacebook(articleToDelete.facebookPostId);
+    }
+
     const filteredArticles = articles.filter((a: any) => a.id !== id);
 
     if (articles.length === filteredArticles.length) {
@@ -157,4 +211,3 @@ export async function DELETE(request: Request) {
     return NextResponse.json({ error: 'Misslyckades att radera artikeln' }, { status: 500 });
   }
 }
-

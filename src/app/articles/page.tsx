@@ -15,6 +15,13 @@ type Article = {
     linkedin: boolean;
     tiktok: boolean;
   };
+  socialLinks: {
+    facebook?: string;
+    instagram?: string;
+    linkedin?: string;
+    tiktok?: string;
+  };
+  facebookPostId?: string;
 };
 
 import ArticleFeed from '@/components/ArticleFeed';

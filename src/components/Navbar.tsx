@@ -366,6 +366,13 @@ export default function Navbar() {
               >
                 Spara ändringar
               </button>
+              <Link
+                href="/admin/settings"
+                onClick={() => { setShowProfileModal(false); setIsMobileMenuOpen(false); }}
+                className="w-full bg-gray-50 dark:bg-slate-800 hover:bg-gray-100 dark:hover:bg-slate-700 text-gray-700 dark:text-gray-300 py-3 rounded-2xl font-black text-sm uppercase tracking-widest transition-all border border-gray-100 dark:border-slate-800 flex items-center justify-center gap-2"
+              >
+                <span>⚙️</span> Inställningar
+              </Link>
               <button
                 type="button"
                 onClick={handleLogout}

@@ -8,7 +8,8 @@
     "start": "next start",
     "lint": "eslint",
     "deploy": "node deploy.js",
-    "deploy-multi": "node deploy-multi.js"
+    "deploy-multi": "node deploy-multi.js",
+    "zip": "node create-zip.js"
   },
   "dependencies": {
     "date-fns": "^4.1.0",
