@@ -25,6 +25,18 @@ function getStrategy(): "comment" | "direct" {
   return "comment";
 }
 
+const errorLogPath = path.join(process.cwd(), 'data', 'facebook_errors.log');
+
+function logError(message: string, detail?: any) {
+  const timestamp = new Date().toISOString();
+  const logMessage = `[${timestamp}] ${message}: ${detail ? (typeof detail === 'object' ? JSON.stringify(detail) : detail) : ''}\n`;
+  try {
+    fs.appendFileSync(errorLogPath, logMessage);
+  } catch (e) {
+    console.error("Failed to write to error log file", e);
+  }
+}
+
 export async function postToFacebook(data: {
   title: string;
   ingress?: string;
@@ -32,7 +44,9 @@ export async function postToFacebook(data: {
   imageUrl?: string;
 }) {
   if (!FB_PAGE_ID || !FB_PAGE_ACCESS_TOKEN || FB_PAGE_ID === "your-page-id-here") {
-    console.warn("Facebook credentials not configured. Skipping post.");
+    const errorMsg = "Facebook credentials not configured. Skipping post.";
+    console.warn(errorMsg);
+    logError(errorMsg, { FB_PAGE_ID_exists: !!FB_PAGE_ID, FB_PAGE_ACCESS_TOKEN_exists: !!FB_PAGE_ACCESS_TOKEN });
     return null;
   }
 
@@ -77,6 +91,7 @@ export async function postToFacebook(data: {
         const result = await response.json();
         if (!response.ok) {
           console.error("Facebook API error (Photo Upload):", result.error);
+          logError("Facebook API error (Photo Upload)", result.error);
           throw new Error(result.error?.message || "Facebook API error (Photo Upload)");
         }
         
@@ -132,6 +147,7 @@ export async function postToFacebook(data: {
     const result = await response.json();
     if (!response.ok) {
       console.error("Facebook API error (Feed Post):", result.error);
+      logError("Facebook API error (Feed Post)", { error: result.error, link: data.link, strategy: strategy });
       throw new Error(result.error?.message || "Facebook API error (Feed Post)");
     }
 
@@ -154,8 +170,9 @@ export async function postToFacebook(data: {
     }
 
     return postId;
-  } catch (error) {
+  } catch (error: any) {
     console.error("Failed to post to Facebook:", error);
+    logError("Failed to post to Facebook", error instanceof Error ? error.message : error);
     return null;
   }
 }

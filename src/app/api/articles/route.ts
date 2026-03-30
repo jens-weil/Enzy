@@ -37,6 +37,8 @@ export async function POST(request: Request) {
 
     const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://enzymatica.se';
     const articleUrl = `${siteUrl}/articles/${newArticle.id}`;
+    
+    console.log(`Creating article with siteUrl: ${siteUrl}`);
 
     // Handle Facebook Post
     if (newArticle.socialMedia.facebook) {
