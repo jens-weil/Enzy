@@ -107,7 +107,15 @@ export async function postToFacebook(data: {
     console.log("Using standard feed post (link post)");
     const formData = new URLSearchParams();
     formData.append("message", message);
-    formData.append("link", data.link);
+    
+    // Facebook Graph API rejects feed posts with 'link' pointing to localhost.
+    if (!data.link.includes('localhost')) {
+      formData.append("link", data.link);
+    } else {
+      console.warn("Skipping 'link' parameter because Facebook rejects localhost URLs. Adding to message instead.");
+      formData.set("message", message + `\n\nLink: ${data.link}`);
+    }
+    
     formData.append("access_token", FB_PAGE_ACCESS_TOKEN);
 
     // If direct strategy, link to localhost will likely NOT show a preview on FB.
