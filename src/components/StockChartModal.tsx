@@ -121,11 +121,11 @@ export default function StockChartModal({ isOpen, onClose, ticker = 'ENZY.ST' }:
 
   return (
     <div 
-      className="fixed inset-0 z-[200] bg-black/80 backdrop-blur-sm flex items-center justify-center p-4 animate-in fade-in duration-300"
+      className="fixed inset-0 z-[200] bg-black/40 backdrop-blur-sm flex items-center justify-center p-4 md:p-10 animate-in fade-in duration-300 overflow-y-auto"
       onClick={(e) => { if (e.target === e.currentTarget) onClose(); }}
     >
       <div 
-        className="bg-white dark:bg-slate-900 w-full max-w-5xl rounded-[2rem] shadow-2xl flex flex-col overflow-hidden animate-in zoom-in-95 duration-300 border border-gray-100 dark:border-slate-800"
+        className="bg-white dark:bg-slate-900 w-full max-w-5xl my-auto rounded-[2rem] shadow-2xl flex flex-col overflow-hidden animate-in zoom-in-95 duration-300 border border-gray-100 dark:border-slate-800"
         onClick={e => e.stopPropagation()}
       >
         {/* Header */}
@@ -158,23 +158,26 @@ export default function StockChartModal({ isOpen, onClose, ticker = 'ENZY.ST' }:
         </div>
 
         {/* Content */}
-        <div className="p-8 space-y-8">
+        <div className="px-0 md:px-8 py-6 md:py-8 space-y-8">
           {/* Timeframe Selectors */}
-          <div className="flex flex-wrap gap-2">
-            {timeframes.map((tf) => (
-              <button
-                key={tf.label}
-                onClick={() => setSelectedTimeframe(tf)}
-                className={`px-4 py-2 rounded-xl text-xs font-black uppercase tracking-widest transition-all ${
-                  selectedTimeframe.label === tf.label
-                    ? 'bg-brand-teal text-white shadow-md'
-                    : 'bg-gray-50 dark:bg-slate-800 text-gray-500 hover:bg-gray-100 dark:hover:bg-slate-700'
-                }`}
-              >
-                {tf.label}
-              </button>
-            ))}
-          </div>
+            <div className="flex flex-row justify-between items-center gap-1 md:gap-2 px-2 md:px-0">
+              {timeframes.map((tf) => (
+                <button
+                  key={tf.label}
+                  onClick={() => setSelectedTimeframe(tf)}
+                  className={`flex-1 px-0 md:px-4 py-2 rounded-lg md:rounded-xl text-[10px] md:text-xs font-black uppercase tracking-tighter md:tracking-widest transition-all ${
+                    selectedTimeframe.label === tf.label
+                      ? 'bg-brand-teal text-white shadow-md'
+                      : 'bg-gray-50 dark:bg-slate-800 text-gray-500 hover:bg-gray-100 dark:hover:bg-slate-700'
+                  } ${['1 vecka', '3 månader', '10 år'].includes(tf.label) ? 'hidden sm:block' : 'block'}`}
+                >
+                  <span className="hidden md:inline">{tf.label}</span>
+                  <span className="md:hidden">
+                    {tf.label.includes(' ') ? `${tf.label.split(' ')[0]}${tf.label.split(' ')[1].charAt(0)}` : tf.label}
+                  </span>
+                </button>
+              ))}
+            </div>
 
           {/* Chart Area */}
           <div className="h-[400px] w-full relative">

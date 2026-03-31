@@ -5,6 +5,8 @@ import Link from "next/link";
 import Image from "next/image";
 import { useState, useEffect } from "react";
 import ContactModal from "./ContactModal";
+import StockTicker from "./StockTicker";
+import StockChartModal from "./StockChartModal";
 
 
 export default function Navbar() {
@@ -13,6 +15,7 @@ export default function Navbar() {
   const [showLoginModal, setShowLoginModal] = useState(false);
   const [showProfileModal, setShowProfileModal] = useState(false);
   const [showContactModal, setShowContactModal] = useState(false);
+  const [showStockChart, setShowStockChart] = useState(false);
   const pathname = usePathname();
 
 
@@ -118,7 +121,7 @@ export default function Navbar() {
             </div>
 
             {/* Desktop Menu */}
-            <div className="hidden md:flex items-center space-x-2">
+            <div className="hidden lg:flex items-center space-x-2">
               <Link 
                 href="/" 
                 className={`px-5 py-2.5 rounded-full font-bold transition-all text-sm uppercase tracking-widest ${pathname === "/" ? "bg-brand-teal text-white shadow-lg shadow-brand-teal/20" : "text-gray-600 dark:text-gray-300 hover:text-brand-teal hover:bg-brand-light dark:hover:bg-slate-800"}`}
@@ -164,10 +167,11 @@ export default function Navbar() {
                   </button>
                 )}
               </div>
+              <StockTicker onOpenChart={() => setShowStockChart(true)} className="hidden lg:flex ml-4" />
             </div>
 
             {/* Mobile Menu Button */}
-            <div className="flex md:hidden items-center">
+            <div className="flex lg:hidden items-center">
               <button
                 onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
                 className="text-gray-600 dark:text-gray-300 hover:text-brand-teal p-2 focus:outline-none"
@@ -183,7 +187,7 @@ export default function Navbar() {
         </div>
 
         {/* Mobile Drawer */}
-        <div className={`md:hidden absolute top-20 left-0 w-full bg-white dark:bg-slate-900 border-b border-gray-100 dark:border-slate-800 shadow-2xl transition-all duration-300 ease-in-out transform origin-top ${isMobileMenuOpen ? 'scale-y-100 opacity-100' : 'scale-y-0 opacity-0 pointer-events-none'}`}>
+        <div className={`lg:hidden absolute top-20 left-0 w-full bg-white dark:bg-slate-900 border-b border-gray-100 dark:border-slate-800 shadow-2xl transition-all duration-300 ease-in-out transform origin-top ${isMobileMenuOpen ? 'scale-y-100 opacity-100' : 'scale-y-0 opacity-0 pointer-events-none'}`}>
           <div className="px-6 py-8 space-y-6">
             <div className="flex flex-col space-y-4">
               <Link
@@ -213,6 +217,10 @@ export default function Navbar() {
               >
                 Kontakt
               </button>
+              
+              <div className="pt-2 pb-4">
+                <StockTicker onOpenChart={() => { setShowStockChart(true); setIsMobileMenuOpen(false); }} className="flex !w-full" />
+              </div>
             </div>
 
             <div className="pt-6 border-t border-gray-100 dark:border-slate-800 flex flex-col space-y-4">
@@ -389,6 +397,12 @@ export default function Navbar() {
         isOpen={showContactModal}
         onClose={() => setShowContactModal(false)}
         isLoggedIn={isLoggedIn}
+      />
+
+      <StockChartModal 
+        isOpen={showStockChart} 
+        onClose={() => setShowStockChart(false)} 
+        ticker="ENZY.ST" 
       />
     </>
 
