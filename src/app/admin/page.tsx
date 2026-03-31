@@ -4,6 +4,8 @@ import { useState, useEffect, Suspense } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import Navbar from '@/components/Navbar';
 import Image from 'next/image';
+import { useAuth } from '@/components/AuthContext';
+import { supabase } from '@/lib/supabase';
 
 interface ArticleForm {
   title: string;
@@ -37,34 +39,39 @@ function AdminForm() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const editId = searchParams.get('edit');
+  const { user, profile, loading: authLoading } = useAuth();
   
   const [formData, setFormData] = useState<ArticleForm>(initialFormState);
   const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
-  const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [availableImages, setAvailableImages] = useState<string[]>([]);
   const [isEditing, setIsEditing] = useState(false);
   const [uploading, setUploading] = useState(false);
+  const [accessToken, setAccessToken] = useState<string | null>(null);
 
+  // Redirect if not Admin or Editor
   useEffect(() => {
-    const auth = localStorage.getItem('enzy_auth');
-    if (auth !== "true") {
-      router.push('/login');
-    } else {
-      setIsLoggedIn(true);
-      fetchImages();
+    if (authLoading) return;
+    if (!user || (profile?.role !== 'Admin' && profile?.role !== 'Editor')) {
+      router.push('/');
+      return;
     }
-  }, [router]);
+    // Grab the session token for API calls
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      setAccessToken(session?.access_token ?? null);
+      fetchImages(session?.access_token);
+    });
+  }, [user, profile, authLoading, router]);
 
   useEffect(() => {
-    if (editId && isLoggedIn) {
+    if (editId && user) {
       setIsEditing(true);
       fetchArticleToEdit(editId);
     } else {
       setIsEditing(false);
       setFormData(initialFormState);
     }
-  }, [editId, isLoggedIn]);
+  }, [editId, user]);
 
   const fetchArticleToEdit = async (id: string) => {
     try {
@@ -88,7 +95,7 @@ function AdminForm() {
     }
   };
 
-  const fetchImages = async () => {
+  const fetchImages = async (token?: string | null) => {
     try {
       const res = await fetch('/api/images');
       if (res.ok) {
@@ -148,10 +155,19 @@ function AdminForm() {
     setLoading(true);
     setMessage(null);
 
+    if (!accessToken) {
+      setMessage({ type: 'error', text: 'Ingen aktiv session. Logga in igen.' });
+      setLoading(false);
+      return;
+    }
+
     try {
       const res = await fetch('/api/articles', {
         method: isEditing ? 'PATCH' : 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${accessToken}`,
+        },
         body: JSON.stringify(isEditing ? { ...formData, id: editId } : formData),
       });
 
@@ -162,8 +178,8 @@ function AdminForm() {
         });
         if (!isEditing) setFormData(initialFormState);
         setTimeout(() => {
-            setMessage(null);
-            router.push('/articles');
+          setMessage(null);
+          router.push('/articles');
         }, 1500);
       } else {
         const error = await res.json();
@@ -176,12 +192,8 @@ function AdminForm() {
     }
   };
 
-  const handleLogout = () => {
-    localStorage.removeItem('enzy_auth');
-    router.push('/login');
-  };
 
-  if (!isLoggedIn) return null;
+  if (authLoading || !user || (profile?.role !== 'Admin' && profile?.role !== 'Editor')) return null;
 
   return (
     <div className="min-h-screen bg-gray-50 dark:bg-slate-950 pb-20">
@@ -207,7 +219,7 @@ function AdminForm() {
               </button>
             )}
             <button 
-              onClick={handleLogout}
+              onClick={async () => { await supabase.auth.signOut(); router.push('/'); }}
               className="px-6 py-2 rounded-xl bg-red-50 text-red-600 font-bold hover:bg-red-100 transition-all text-sm uppercase tracking-widest"
             >
               Logga ut

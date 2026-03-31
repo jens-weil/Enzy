@@ -1,10 +1,31 @@
-import { NextResponse } from 'next/server';
+import { NextRequest, NextResponse } from 'next/server';
 import { revalidatePath } from 'next/cache';
 import fs from 'fs';
 import path from 'path';
 import { postToFacebook, deleteFromFacebook } from '@/lib/facebook';
+import { requireRole } from '@/lib/auth';
 
-export async function POST(request: Request) {
+// GET — public, no auth required
+export async function GET() {
+  try {
+    const filePath = path.join(process.cwd(), 'data', 'articles.json');
+    if (!fs.existsSync(filePath)) {
+      return NextResponse.json([]);
+    }
+    const fileData = fs.readFileSync(filePath, 'utf8');
+    return NextResponse.json(JSON.parse(fileData));
+  } catch (error) {
+    return NextResponse.json({ error: 'Kunde inte läsa artiklar' }, { status: 500 });
+  }
+}
+
+// POST — Admin or Editor only
+export async function POST(request: NextRequest) {
+  const auth = await requireRole(request, ['Admin', 'Editor']);
+  if (!auth.authorized) {
+    return NextResponse.json({ error: auth.error }, { status: auth.status });
+  }
+
   try {
     const body = await request.json();
     const { title, type, ingress, content, imageUrl, socialMedia, date } = body;
@@ -16,7 +37,6 @@ export async function POST(request: Request) {
       );
     }
 
-    // Prepare new article
     const newArticle: any = {
       id: Date.now().toString(),
       title,
@@ -37,10 +57,9 @@ export async function POST(request: Request) {
 
     const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://enzymatica.se';
     const articleUrl = `${siteUrl}/articles/${newArticle.id}`;
-    
+
     console.log(`Creating article with siteUrl: ${siteUrl}`);
 
-    // Handle Facebook Post
     if (newArticle.socialMedia.facebook) {
       const postId = await postToFacebook({
         title: newArticle.title,
@@ -54,46 +73,40 @@ export async function POST(request: Request) {
       }
     }
 
-    // Data file path
     const filePath = path.join(process.cwd(), 'data', 'articles.json');
-    
-    // Ensure directory exists
     const dirPath = path.dirname(filePath);
     if (!fs.existsSync(dirPath)) {
       fs.mkdirSync(dirPath, { recursive: true });
     }
 
-    // Read existing articles or initialize empty array
     let articles = [];
     if (fs.existsSync(filePath)) {
       const fileData = fs.readFileSync(filePath, 'utf8');
       try {
         articles = JSON.parse(fileData);
       } catch (e) {
-        console.error("Error parsing articles.json", e);
         articles = [];
       }
     }
 
-    // Add new article to the top of the list
     articles.unshift(newArticle);
-
-    // Write back to file
     fs.writeFileSync(filePath, JSON.stringify(articles, null, 2), 'utf8');
-
     revalidatePath('/articles');
 
     return NextResponse.json({ success: true, article: newArticle }, { status: 201 });
   } catch (error) {
     console.error("Error saving article:", error);
-    return NextResponse.json(
-      { error: 'Ett internt serverfel uppstod' },
-      { status: 500 }
-    );
+    return NextResponse.json({ error: 'Ett internt serverfel uppstod' }, { status: 500 });
   }
 }
 
-export async function PATCH(request: Request) {
+// PATCH — Admin or Editor only
+export async function PATCH(request: NextRequest) {
+  const auth = await requireRole(request, ['Admin', 'Editor']);
+  if (!auth.authorized) {
+    return NextResponse.json({ error: auth.error }, { status: auth.status });
+  }
+
   try {
     const body = await request.json();
     const { id, title, type, ingress, content, imageUrl, socialMedia, socialLinks, date } = body;
@@ -121,14 +134,12 @@ export async function PATCH(request: Request) {
     const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://enzymatica.se';
     const articleUrl = `${siteUrl}/articles/${id}`;
 
-    // Sync with Facebook
     const oldFB = articles[articleIndex].socialMedia.facebook;
     const newFB = socialMedia?.facebook !== undefined ? socialMedia.facebook : oldFB;
     let facebookPostId = articles[articleIndex].facebookPostId;
     let updatedSocialLinks = { ...(socialLinks || articles[articleIndex].socialLinks || {}) };
 
     if (newFB && !facebookPostId) {
-      // Should be active but no post ID -> Create post
       const postId = await postToFacebook({
         title: title || articles[articleIndex].title,
         ingress: ingress !== undefined ? ingress : articles[articleIndex].ingress,
@@ -140,13 +151,11 @@ export async function PATCH(request: Request) {
         updatedSocialLinks.facebook = `https://www.facebook.com/${postId}`;
       }
     } else if (oldFB && !newFB && facebookPostId) {
-      // Just deactivated -> Delete
       await deleteFromFacebook(facebookPostId);
       facebookPostId = undefined;
       delete updatedSocialLinks.facebook;
     }
 
-    // Update the article while preserving original properties
     articles[articleIndex] = {
       ...articles[articleIndex],
       title,
@@ -161,21 +170,23 @@ export async function PATCH(request: Request) {
     };
 
     fs.writeFileSync(filePath, JSON.stringify(articles, null, 2), 'utf8');
-
     revalidatePath('/articles');
     revalidatePath(`/articles/${id}`);
 
     return NextResponse.json({ success: true, article: articles[articleIndex] });
   } catch (error) {
     console.error("Error updating article:", error);
-    return NextResponse.json(
-      { error: 'Ett internt serverfel uppstod vid uppdatering' },
-      { status: 500 }
-    );
+    return NextResponse.json({ error: 'Ett internt serverfel uppstod vid uppdatering' }, { status: 500 });
   }
 }
 
-export async function DELETE(request: Request) {
+// DELETE — Admin only
+export async function DELETE(request: NextRequest) {
+  const auth = await requireRole(request, ['Admin']);
+  if (!auth.authorized) {
+    return NextResponse.json({ error: auth.error }, { status: auth.status });
+  }
+
   try {
     const { searchParams } = new URL(request.url);
     const id = searchParams.get('id');
@@ -200,11 +211,10 @@ export async function DELETE(request: Request) {
     const filteredArticles = articles.filter((a: any) => a.id !== id);
 
     if (articles.length === filteredArticles.length) {
-        return NextResponse.json({ error: 'Artikeln hittades inte' }, { status: 404 });
+      return NextResponse.json({ error: 'Artikeln hittades inte' }, { status: 404 });
     }
 
     fs.writeFileSync(filePath, JSON.stringify(filteredArticles, null, 2), 'utf8');
-
     revalidatePath('/articles');
 
     return NextResponse.json({ success: true });

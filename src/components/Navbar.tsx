@@ -7,20 +7,24 @@ import { useState, useEffect } from "react";
 import ContactModal from "./ContactModal";
 import StockTicker from "./StockTicker";
 import StockChartModal from "./StockChartModal";
-
+import { useAuth } from "./AuthContext";
+import { supabase } from "@/lib/supabase";
+import MembershipModal from "./MembershipModal";
 
 export default function Navbar() {
-  const [isLoggedIn, setIsLoggedIn] = useState(false);
-  const [username, setUsername] = useState("Enzy");
+  const { user, profile, loading, signOut, refreshProfile } = useAuth();
+  const isLoggedIn = !!user;
+  const username = profile?.display_name || user?.email?.split("@")[0] || "Användare";
+  
   const [showLoginModal, setShowLoginModal] = useState(false);
   const [showProfileModal, setShowProfileModal] = useState(false);
   const [showContactModal, setShowContactModal] = useState(false);
+  const [showMembershipModal, setShowMembershipModal] = useState(false);
   const [showStockChart, setShowStockChart] = useState(false);
   const pathname = usePathname();
 
-
   // Login form state
-  const [loginUsername, setLoginUsername] = useState("");
+  const [loginEmail, setLoginEmail] = useState("");
   const [loginPassword, setLoginPassword] = useState("");
   const [loginError, setLoginError] = useState("");
 
@@ -31,72 +35,79 @@ export default function Navbar() {
 
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
 
-  useEffect(() => {
-    const auth = localStorage.getItem("enzy_auth");
-    const storedName = localStorage.getItem("enzy_username");
-    if (auth === "true") {
-      setIsLoggedIn(true);
-      setUsername(storedName || "Enzy");
-    }
-  }, []);
-
-  const handleLogin = (e: React.FormEvent) => {
+  const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoginError("");
-    const storedPassword = localStorage.getItem("enzy_password") || "Enzy";
-    const storedUsername = localStorage.getItem("enzy_username") || "Enzy";
-    if (loginUsername === storedUsername && loginPassword === storedPassword) {
-      localStorage.setItem("enzy_auth", "true");
-      setIsLoggedIn(true);
-      setUsername(storedUsername);
+    
+    const { error } = await supabase.auth.signInWithPassword({
+      email: loginEmail,
+      password: loginPassword,
+    });
+
+    if (error) {
+      setLoginError("Felaktigt e-post eller lösenord.");
+    } else {
       setShowLoginModal(false);
-      setLoginUsername("");
+      setLoginEmail("");
       setLoginPassword("");
       setIsMobileMenuOpen(false);
-    } else {
-      // Fallback: accept original "Enzy"/"Enzy" credentials too
-      if (loginUsername === "Enzy" && loginPassword === (localStorage.getItem("enzy_password") || "Enzy")) {
-        localStorage.setItem("enzy_auth", "true");
-        localStorage.setItem("enzy_username", loginUsername);
-        setIsLoggedIn(true);
-        setUsername(loginUsername);
-        setShowLoginModal(false);
-        setLoginUsername("");
-        setLoginPassword("");
-        setIsMobileMenuOpen(false);
-      } else {
-        setLoginError("Felaktigt användarnamn eller lösenord.");
-      }
+      window.dispatchEvent(new Event("enzy_auth_change"));
     }
   };
 
-  const handleLogout = () => {
-    localStorage.removeItem("enzy_auth");
-    setIsLoggedIn(false);
+  const handleLogout = async () => {
+    await signOut();
     setShowProfileModal(false);
     setIsMobileMenuOpen(false);
-    // Dispatch event so ArticleFeed also updates
     window.dispatchEvent(new Event("enzy_auth_change"));
   };
 
-  const handleProfileSave = (e: React.FormEvent) => {
+  const handleProfileSave = async (e: React.FormEvent) => {
     e.preventDefault();
     setProfileMessage(null);
-    if (newDisplayName.trim()) {
-      localStorage.setItem("enzy_username", newDisplayName.trim());
-      setUsername(newDisplayName.trim());
+
+    if (!user) return;
+
+    try {
+      const trimmedName = newDisplayName.trim();
+
+      // Update display_name via server-side API (bypasses Supabase RLS)
+      if (trimmedName && trimmedName !== username) {
+        const { data: { session } } = await supabase.auth.getSession();
+        if (!session?.access_token) throw new Error("Ingen aktiv session.");
+
+        const res = await fetch("/api/profile", {
+          method: "PATCH",
+          headers: {
+            "Content-Type": "application/json",
+            "Authorization": `Bearer ${session.access_token}`,
+          },
+          body: JSON.stringify({ display_name: trimmedName }),
+        });
+
+        if (!res.ok) {
+          const data = await res.json();
+          throw new Error(data.error || "Kunde inte uppdatera profilen.");
+        }
+      }
+
+      // Password update goes through Supabase Auth directly (not affected by RLS)
+      if (newPassword.trim()) {
+        const { error } = await supabase.auth.updateUser({ password: newPassword.trim() });
+        if (error) throw error;
+      }
+
+      setProfileMessage({ type: "success", text: "Profilen har uppdaterats!" });
+      setNewPassword("");
+      // Re-fetch profile from DB so navbar name updates immediately
+      await refreshProfile();
+      setTimeout(() => {
+        setProfileMessage(null);
+        setShowProfileModal(false);
+      }, 1500);
+    } catch (err: any) {
+      setProfileMessage({ type: "error", text: err.message || "Ett fel uppstod." });
     }
-    if (newPassword.trim()) {
-      localStorage.setItem("enzy_password", newPassword.trim());
-    }
-    setProfileMessage({ type: "success", text: "Profilen har uppdaterats!" });
-    setNewDisplayName("");
-    setNewPassword("");
-    setTimeout(() => {
-      setProfileMessage(null);
-      setShowProfileModal(false);
-      setIsMobileMenuOpen(false);
-    }, 1500);
   };
 
   const openProfile = () => {
@@ -238,12 +249,20 @@ export default function Navbar() {
                   <span className="text-brand-teal/40">Profil &rarr;</span>
                 </button>
               ) : (
-                <button
-                  onClick={() => { setShowLoginModal(true); setLoginError(""); setIsMobileMenuOpen(false); }}
-                  className="w-full bg-brand-light text-brand-teal px-6 py-4 rounded-2xl font-black text-xs uppercase tracking-widest text-left"
-                >
-                  Logga in
-                </button>
+                <>
+                  <button
+                    onClick={() => { setShowMembershipModal(true); setIsMobileMenuOpen(false); }}
+                    className="w-full bg-brand-teal text-white px-6 py-4 rounded-2xl font-black text-xs uppercase tracking-widest text-left shadow-lg shadow-brand-teal/20"
+                  >
+                    Ansök om medlemskap
+                  </button>
+                  <button
+                    onClick={() => { setShowLoginModal(true); setLoginError(""); setIsMobileMenuOpen(false); }}
+                    className="w-full bg-brand-light text-brand-teal px-6 py-4 rounded-2xl font-black text-xs uppercase tracking-widest text-left"
+                  >
+                    Logga in
+                  </button>
+                </>
               )}
             </div>
           </div>
@@ -282,11 +301,11 @@ export default function Navbar() {
               <div className="space-y-2">
                 <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest">Användarnamn</label>
                 <input
-                  type="text"
-                  value={loginUsername}
-                  onChange={e => setLoginUsername(e.target.value)}
+                  type="email"
+                  value={loginEmail}
+                  onChange={e => setLoginEmail(e.target.value)}
                   className="w-full px-5 py-3.5 rounded-2xl bg-gray-50 dark:bg-slate-800 border border-transparent focus:border-brand-teal focus:ring-4 focus:ring-brand-teal/10 outline-none transition-all font-bold text-gray-900 dark:text-white"
-                  placeholder="Enzy"
+                  placeholder="din@e-post.se"
                   required
                 />
               </div>
@@ -307,7 +326,16 @@ export default function Navbar() {
               >
                 Logga in
               </button>
-              <p className="text-center text-xs text-gray-400 font-medium pt-1">Endast för behörig personal.</p>
+              <div className="pt-4 border-t border-gray-100 dark:border-slate-800 mt-4 text-center">
+                <p className="text-xs text-gray-400 font-medium mb-3">Saknar du konto?</p>
+                <button
+                  type="button"
+                  onClick={() => { setShowLoginModal(false); setShowMembershipModal(true); }}
+                  className="text-brand-teal text-xs font-black uppercase tracking-widest hover:underline"
+                >
+                  Ansök om medlemskap
+                </button>
+              </div>
             </form>
           </div>
         </div>
@@ -331,7 +359,7 @@ export default function Navbar() {
                   <span className="text-3xl font-black text-white">{username.charAt(0).toUpperCase()}</span>
                 </div>
                 <h2 className="text-2xl font-black text-white tracking-tight">{username}</h2>
-                <p className="text-white/60 mt-1 text-sm font-medium">Enzymatica Admin</p>
+                <p className="text-white/60 mt-1 text-sm font-medium">Enzymatica {profile?.role || "Medlem"}</p>
               </div>
               <button
                 onClick={() => setShowProfileModal(false)}
@@ -374,13 +402,33 @@ export default function Navbar() {
               >
                 Spara ändringar
               </button>
-              <Link
-                href="/admin/settings"
-                onClick={() => { setShowProfileModal(false); setIsMobileMenuOpen(false); }}
-                className="w-full bg-gray-50 dark:bg-slate-800 hover:bg-gray-100 dark:hover:bg-slate-700 text-gray-700 dark:text-gray-300 py-3 rounded-2xl font-black text-sm uppercase tracking-widest transition-all border border-gray-100 dark:border-slate-800 flex items-center justify-center gap-2"
-              >
-                <span>⚙️</span> Inställningar
-              </Link>
+              {profile?.role === "Admin" && (
+                <div className="grid grid-cols-2 gap-3 pb-2 pt-2 border-t border-gray-100 dark:border-slate-800">
+                  <Link
+                    href="/admin/users"
+                    onClick={() => { setShowProfileModal(false); setIsMobileMenuOpen(false); }}
+                    className="w-full bg-brand-teal/10 text-brand-teal hover:bg-brand-teal hover:text-white py-3 rounded-xl font-black text-xs uppercase tracking-widest transition-all flex items-center justify-center gap-2"
+                  >
+                    <span>👥</span> Användare
+                  </Link>
+                  <Link
+                    href="/admin"
+                    onClick={() => { setShowProfileModal(false); setIsMobileMenuOpen(false); }}
+                    className="w-full bg-gray-50 dark:bg-slate-800 text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-slate-700 border border-gray-100 dark:border-slate-800 py-3 rounded-xl font-black text-xs uppercase tracking-widest transition-all flex items-center justify-center gap-2"
+                  >
+                    <span>✍️</span> Innehåll
+                  </Link>
+                </div>
+              )}
+              {profile?.role === "Admin" && (
+                <Link
+                  href="/admin/settings"
+                  onClick={() => { setShowProfileModal(false); setIsMobileMenuOpen(false); }}
+                  className="w-full bg-gray-50 dark:bg-slate-800 hover:bg-gray-100 dark:hover:bg-slate-700 text-gray-700 dark:text-gray-300 py-3 rounded-2xl font-black text-sm uppercase tracking-widest transition-all border border-gray-100 dark:border-slate-800 flex items-center justify-center gap-2"
+                >
+                  <span>⚙️</span> Inställningar
+                </Link>
+              )}
               <button
                 type="button"
                 onClick={handleLogout}
@@ -393,10 +441,15 @@ export default function Navbar() {
         </div>
       )}
 
+      <MembershipModal
+        isOpen={showMembershipModal}
+        onClose={() => setShowMembershipModal(false)}
+      />
+
       <ContactModal
         isOpen={showContactModal}
         onClose={() => setShowContactModal(false)}
-        isLoggedIn={isLoggedIn}
+        canEdit={profile?.role === "Admin" || profile?.role === "Editor"}
       />
 
       <StockChartModal 

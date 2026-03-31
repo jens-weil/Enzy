@@ -17,10 +17,10 @@ interface ContactData {
 interface ContactModalProps {
   isOpen: boolean;
   onClose: () => void;
-  isLoggedIn: boolean;
+  canEdit: boolean;
 }
 
-export default function ContactModal({ isOpen, onClose, isLoggedIn }: ContactModalProps) {
+export default function ContactModal({ isOpen, onClose, canEdit }: ContactModalProps) {
   const [data, setData] = useState<ContactData | null>(null);
   const [activeTabId, setActiveTabId] = useState<string>("");
   const [isEditing, setIsEditing] = useState(false);
@@ -42,7 +42,7 @@ export default function ContactModal({ isOpen, onClose, isLoggedIn }: ContactMod
       setData(json);
       if (json.tabs && json.tabs.length > 0) {
         // Find first visible tab or first tab if admin
-        const initialTab = isLoggedIn 
+        const initialTab = canEdit 
           ? json.tabs[0] 
           : json.tabs.find((t: ContactTab) => t.visible) || json.tabs[0];
         setActiveTabId(initialTab.id);
@@ -127,7 +127,7 @@ export default function ContactModal({ isOpen, onClose, isLoggedIn }: ContactMod
 
           <div className="flex-grow flex md:flex-col gap-2 overflow-x-auto md:overflow-x-visible pb-2 md:pb-0 no-scrollbar">
             {data?.tabs.map((tab) => (
-              (tab.visible || isLoggedIn) && (
+              (tab.visible || canEdit) && (
                 <button
                   key={tab.id}
                   onClick={() => { setActiveTabId(tab.id); setIsEditing(false); }}
@@ -136,15 +136,15 @@ export default function ContactModal({ isOpen, onClose, isLoggedIn }: ContactMod
                     ${activeTabId === tab.id 
                       ? "bg-brand-teal text-white shadow-lg shadow-brand-teal/20" 
                       : "text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-slate-800"}
-                    ${!tab.visible && isLoggedIn ? "opacity-60 border border-dashed border-gray-400" : ""}
+                    ${!tab.visible && canEdit ? "opacity-60 border border-dashed border-gray-400" : ""}
                   `}
                 >
                   <span className="flex items-center gap-2">
                     {tab.title}
-                    {!tab.visible && isLoggedIn && <span className="text-[10px] bg-gray-200 dark:bg-slate-700 px-1.5 py-0.5 rounded text-gray-500">Dold</span>}
+                    {!tab.visible && canEdit && <span className="text-[10px] bg-gray-200 dark:bg-slate-700 px-1.5 py-0.5 rounded text-gray-500">Dold</span>}
                   </span>
                   
-                  {isLoggedIn && (
+                  {canEdit && (
                      <div 
                         onClick={(e) => { e.stopPropagation(); toggleVisibility(tab.id); }}
                         className={`w-4 h-4 rounded-full border-2 transition-all ${tab.visible ? 'bg-green-500 border-green-500' : 'bg-transparent border-gray-400'}`}
@@ -155,23 +155,26 @@ export default function ContactModal({ isOpen, onClose, isLoggedIn }: ContactMod
               )
             ))}
           </div>
-
-          <button 
-            onClick={onClose}
-            className="mt-auto hidden md:block text-xs font-black text-gray-400 uppercase tracking-widest hover:text-brand-teal transition-colors"
-          >
-            Stäng fönster
-          </button>
         </div>
 
         {/* Content Area */}
         <div className="flex-grow flex flex-col relative overflow-hidden bg-white dark:bg-slate-900">
-          <button 
-            onClick={onClose}
-            className="absolute top-6 right-6 w-10 h-10 rounded-full bg-gray-100 dark:bg-slate-800 hover:bg-brand-teal hover:text-white flex items-center justify-center text-xl font-black transition-all z-10 md:hidden"
-          >
-            ×
-          </button>
+          <div className="absolute top-6 right-6 flex items-center gap-3 z-10">
+            {canEdit && !isEditing && (
+              <button 
+                onClick={startEditing}
+                className="bg-brand-teal/10 text-brand-teal px-4 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest hover:bg-brand-teal hover:text-white transition-all shadow-sm"
+              >
+                Redigera
+              </button>
+            )}
+            <button 
+              onClick={onClose}
+              className="w-10 h-10 rounded-full bg-gray-100 dark:bg-slate-800 hover:bg-brand-teal hover:text-white flex items-center justify-center text-xl font-black transition-all"
+            >
+              ×
+            </button>
+          </div>
 
           {isLoading ? (
             <div className="flex-grow flex items-center justify-center">
@@ -216,14 +219,6 @@ export default function ContactModal({ isOpen, onClose, isLoggedIn }: ContactMod
                 <div className="prose dark:prose-invert max-w-none">
                   <div className="flex justify-between items-start mb-8">
                     <h3 className="text-3xl font-black text-brand-dark dark:text-white m-0 tracking-tight">{activeTab.title}</h3>
-                    {isLoggedIn && (
-                      <button 
-                        onClick={startEditing}
-                        className="bg-brand-teal/10 text-brand-teal px-4 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest hover:bg-brand-teal hover:text-white transition-all"
-                      >
-                        Redigera
-                      </button>
-                    )}
                   </div>
                   
                   <div className="space-y-4 text-gray-600 dark:text-gray-300 font-medium leading-relaxed whitespace-pre-wrap">

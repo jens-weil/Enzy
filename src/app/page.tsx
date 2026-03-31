@@ -1,39 +1,108 @@
+"use client";
+
 import Link from "next/link";
 import Image from "next/image";
+import { useState, useEffect } from "react";
+
+const heroImages = [
+  {
+    src: "/hero_lab_researchers.png",
+    alt: "Enzymatica virusforskning laboratorium med forskare",
+    headline: "Skydda dig mot",
+    highlight: "infektioner"
+  },
+  {
+    src: "/sick_person_hero.png",
+    alt: "Person med förkylning och röd näsa",
+    headline: "Slipp förkylningar och",
+    highlight: "infektioner"
+  },
+  {
+    src: "/hero_authentic.webp",
+    alt: "Kvinna strålande frisk och fri från sin förkylning",
+    headline: "Få ökad",
+    highlight: "livskvalitet"
+  }
+];
+
+import MembershipModal from "@/components/MembershipModal";
+import { useAuth } from "@/components/AuthContext";
 
 export default function Home() {
+  const { user } = useAuth();
+  const [activeImage, setActiveImage] = useState(0);
+  const [showMembershipModal, setShowMembershipModal] = useState(false);
+
+  useEffect(() => {
+    const timer = setInterval(() => {
+      setActiveImage((prev) => (prev + 1) % heroImages.length);
+    }, 8000); // Rotate every 8 seconds
+    return () => clearInterval(timer);
+  }, []);
+
   return (
     <div className="flex flex-col w-full">
       {/* Hero Section */}
       <section className="relative w-full h-[90vh] min-h-[700px] flex items-center justify-center overflow-hidden">
-        {/* Background Image */}
+        {/* Background Images with Cross-Fade */}
         <div className="absolute inset-0 z-0">
-          <Image
-            src="/hero_lab_researchers.png"
-            alt="Enzymatica virusforskning laboratorium med forskare"
-            fill
-            priority
-            className="object-cover"
-          />
+          {heroImages.map((img, idx) => (
+            <div 
+              key={img.src}
+              className={`absolute inset-0 transition-opacity duration-[2000ms] ease-in-out ${activeImage === idx ? "opacity-100" : "opacity-0"}`}
+            >
+              <Image
+                src={img.src}
+                alt={img.alt}
+                fill
+                priority={idx === 0}
+                className="object-cover"
+              />
+            </div>
+          ))}
+          
           {/* Subtle Overlay to ensure text readability */}
-          <div className="absolute inset-0 bg-black/30 dark:bg-slate-900/40"></div>
+          <div className="absolute inset-0 bg-black/40 dark:bg-slate-900/50 z-10"></div>
           {/* Gradient for a premium feel */}
-          <div className="absolute inset-0 bg-gradient-to-t from-background via-transparent to-transparent"></div>
+          <div className="absolute inset-0 bg-gradient-to-t from-background via-transparent to-transparent z-10"></div>
         </div>
 
-        <div className="relative z-10 text-center px-4 sm:px-6 lg:px-8 max-w-5xl mx-auto space-y-8">
+        <div className="relative z-10 text-center px-4 sm:px-6 lg:px-8 max-w-7xl mx-auto">
           <span className="inline-block py-1 px-4 rounded-full bg-brand-cyan/25 backdrop-blur-sm text-white text-sm font-bold tracking-wider mb-2 border border-white/20">
             BARRIÄRTEKNIK SOM SKYDDAR
           </span>
-          <h1 className="text-5xl md:text-8xl font-black tracking-tight text-white mb-6 drop-shadow-2xl">
-            Skydda dig mot <br />
-            <span className="text-brand-cyan">infektioner</span>
+          <h1
+            className="font-black tracking-tight leading-[1.05] text-white drop-shadow-2xl my-10 relative"
+            style={{ fontSize: "clamp(2.5rem, 8vw, 7rem)" }}
+          >
+            {heroImages.map((img, idx) => (
+              <span
+                key={idx}
+                className={`block transition-all duration-700 ease-in-out ${
+                  activeImage === idx
+                    ? "opacity-100 translate-y-0"
+                    : "opacity-0 -translate-y-6 absolute inset-x-0"
+                }`}
+              >
+                <span className="whitespace-nowrap">{img.headline}</span>
+                <br />
+                <span className="text-brand-cyan whitespace-nowrap">{img.highlight}</span>
+              </span>
+            ))}
           </h1>
-          <p className="text-xl md:text-2xl text-white/90 max-w-2xl mx-auto mb-10 leading-relaxed drop-shadow-lg font-medium">
+          <p className="text-xl md:text-2xl text-white/90 max-w-2xl mx-auto mt-0 mb-10 leading-relaxed drop-shadow-lg font-medium">
             ColdZyme® munspray skapar en skyddande barriär som verkar omedelbart mot förkylningsvirus.
           </p>
           <div className="flex flex-col sm:flex-row justify-center gap-6 pt-4">
-            <a href="#coldzyme" className="bg-brand-teal hover:bg-brand-dark text-white text-xl px-10 py-4 rounded-full font-bold transition-all shadow-2xl hover:shadow-cyan-500/20 transform hover:-translate-y-1 inline-block scroll-smooth">
+            {!user && (
+              <button 
+                onClick={() => setShowMembershipModal(true)}
+                className="bg-brand-cyan hover:bg-white text-brand-dark text-xl px-10 py-4 rounded-full font-black transition-all shadow-2xl hover:shadow-cyan-500/20 transform hover:-translate-y-1 inline-block uppercase tracking-widest"
+              >
+                Ansök om medlemskap
+              </button>
+            )}
+            <a href="#coldzyme" className="bg-brand-teal hover:bg-brand-dark text-white text-xl px-10 py-4 rounded-full font-bold transition-all shadow-2xl hover:shadow-cyan-500/20 transform hover:-translate-y-1 inline-block scroll-smooth text-center">
               Läs mer om ColdZyme®
             </a>
             <Link href="/articles" className="glassmorphism text-white text-xl px-10 py-4 rounded-full font-bold transition-all shadow-xl hover:bg-white/20 transform hover:-translate-y-1 text-center">
@@ -46,6 +115,11 @@ export default function Home() {
         <div className="absolute top-20 left-10 w-64 h-64 bg-brand-cyan/20 rounded-full blur-3xl mix-blend-multiply dark:mix-blend-lighten filter opacity-70 animate-pulse"></div>
         <div className="absolute -bottom-8 left-1/2 w-80 h-80 bg-brand-accent/20 rounded-full blur-3xl mix-blend-multiply dark:mix-blend-lighten filter opacity-70 animate-pulse" style={{ animationDelay: '2s' }}></div>
       </section>
+
+      <MembershipModal 
+        isOpen={showMembershipModal} 
+        onClose={() => setShowMembershipModal(false)} 
+      />
       {/* ColdZyme Feature Section */}
       <section id="coldzyme" className="py-32 bg-brand-dark relative overflow-hidden group focus:outline-none scroll-mt-24">
         <div className="absolute top-0 right-0 w-1/2 h-full bg-gradient-to-l from-brand-teal/20 to-transparent block mix-blend-overlay"></div>

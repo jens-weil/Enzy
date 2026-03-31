@@ -2,6 +2,8 @@
 
 import { useState, useMemo, useEffect } from "react";
 import Image from "next/image";
+import { useAuth } from "./AuthContext";
+import { supabase } from "@/lib/supabase";
 
 type Article = {
   id: string;
@@ -227,11 +229,12 @@ function ArticleModal({ article, isAdmin, onClose, onDelete, onEdit }: ArticleMo
 // ─── Article Edit / Create Lightbox ──────────────────────────────────────────
 interface ArticleEditModalProps {
   editingArticle: Article | null; // null = create new
+  accessToken: string | null;
   onClose: () => void;
   onSaved: (article: Article, isNew: boolean) => void;
 }
 
-function ArticleEditModal({ editingArticle, onClose, onSaved }: ArticleEditModalProps) {
+function ArticleEditModal({ editingArticle, accessToken, onClose, onSaved }: ArticleEditModalProps) {
   const isEditing = editingArticle !== null;
   const [formData, setFormData] = useState<ArticleForm>(
     editingArticle
@@ -321,10 +324,20 @@ function ArticleEditModal({ editingArticle, onClose, onSaved }: ArticleEditModal
     e.preventDefault();
     setLoading(true);
     setMessage(null);
+
+    if (!accessToken) {
+      setMessage({ type: "error", text: "Ingen aktiv session. Logga in igen." });
+      setLoading(false);
+      return;
+    }
+
     try {
       const res = await fetch("/api/articles", {
         method: isEditing ? "PATCH" : "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: {
+          "Content-Type": "application/json",
+          "Authorization": `Bearer ${accessToken}`,
+        },
         body: JSON.stringify(isEditing ? { ...formData, id: editingArticle!.id } : formData),
       });
       if (res.ok) {
@@ -831,15 +844,19 @@ function ArticleEditModal({ editingArticle, onClose, onSaved }: ArticleEditModal
 
 // ─── Main ArticleFeed Component ───────────────────────────────────────────────
 export default function ArticleFeed({ initialArticles }: ArticleFeedProps) {
+  const { user, profile } = useAuth();
   const [showFilters, setShowFilters] = useState(false);
   const [filterType, setFilterType] = useState<string>("Alla");
   const [startDate, setStartDate] = useState<string>("");
   const [endDate, setEndDate] = useState<string>("");
   const [socialFilters, setSocialFilters] = useState({ facebook: false, instagram: false, linkedin: false, tiktok: false });
   const [selectedArticle, setSelectedArticle] = useState<Article | null>(null);
-  const [isAdmin, setIsAdmin] = useState(false);
   const [articles, setArticles] = useState(initialArticles);
   const [deletingId, setDeletingId] = useState<string | null>(null);
+  const [accessToken, setAccessToken] = useState<string | null>(null);
+
+  // Derive admin status from Supabase profile role
+  const isAdmin = profile?.role === "Admin" || profile?.role === "Editor";
 
   // Edit / Create lightbox
   const [editingArticle, setEditingArticle] = useState<Article | null | "new">(undefined as any);
@@ -848,15 +865,16 @@ export default function ArticleFeed({ initialArticles }: ArticleFeedProps) {
   const openCreateModal = () => { setEditingArticle(null); setShowEditModal(true); };
   const openEditModal = (article: Article) => { setEditingArticle(article); setShowEditModal(true); };
 
-  const checkAuth = () => {
-    setIsAdmin(localStorage.getItem("enzy_auth") === "true");
-  };
-
   useEffect(() => {
-    checkAuth();
-    window.addEventListener("enzy_auth_change", checkAuth);
-    return () => window.removeEventListener("enzy_auth_change", checkAuth);
-  }, []);
+    // Fetch and cache the session token whenever the user changes
+    if (user) {
+      supabase.auth.getSession().then(({ data: { session } }) => {
+        setAccessToken(session?.access_token ?? null);
+      });
+    } else {
+      setAccessToken(null);
+    }
+  }, [user]);
 
   useEffect(() => { setArticles(initialArticles); }, [initialArticles]);
 
@@ -885,8 +903,15 @@ export default function ArticleFeed({ initialArticles }: ArticleFeedProps) {
   const hasActiveFilters = filterType !== "Alla" || startDate || endDate || Object.values(socialFilters).some(v => v);
 
   const deleteArticle = async (id: string) => {
+    if (!accessToken) {
+      alert("Ingen aktiv session. Logga in igen.");
+      return;
+    }
     try {
-      const response = await fetch(`/api/articles?id=${id}`, { method: "DELETE" });
+      const response = await fetch(`/api/articles?id=${id}`, {
+        method: "DELETE",
+        headers: { "Authorization": `Bearer ${accessToken}` },
+      });
       if (response.ok) {
         setArticles(prev => prev.filter(a => a.id !== id));
         setDeletingId(null);
@@ -1105,6 +1130,7 @@ export default function ArticleFeed({ initialArticles }: ArticleFeedProps) {
       {showEditModal && (
         <ArticleEditModal
           editingArticle={editingArticle as Article | null}
+          accessToken={accessToken}
           onClose={() => setShowEditModal(false)}
           onSaved={handleArticleSaved}
         />
