@@ -126,9 +126,7 @@ export default function SocialShare({
   const platforms = Object.entries(socialMedia)
     .filter(([_, active]) => active)
     .map(([platform]) => platform);
-
-  if (platforms.length === 0 && !isAdmin) return null;
-
+  
   return (
     <div className={`flex flex-wrap gap-4 items-center ${variant === "filled" ? "py-4" : ""}`}>
       {showLabel && (

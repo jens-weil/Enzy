@@ -156,22 +156,20 @@ function ArticleModal({ article, isAdmin, onClose, onDelete, onEdit }: ArticleMo
             </div>
 
             {article.ingress && (
-              <div className="space-y-8">
-                <div className="text-xl md:text-2xl font-bold text-gray-900 dark:text-gray-100 leading-relaxed border-l-4 border-brand-teal pl-8 italic">
-                  {article.ingress}
-                </div>
-                
-                {/* Social Media - Now using centralized Component */}
-                <SocialShare 
-                  articleId={article.id}
-                  articleTitle={article.title}
-                  socialMedia={article.socialMedia}
-                  socialLinks={article.socialLinks}
-                  size="md"
-                  showLabel={true}
-                />
+              <div className="text-xl md:text-2xl font-bold text-gray-900 dark:text-gray-100 leading-relaxed border-l-4 border-brand-teal pl-8 italic mb-8">
+                {article.ingress}
               </div>
             )}
+            
+            {/* Social Media - Always visible now */}
+            <SocialShare 
+              articleId={article.id}
+              articleTitle={article.title}
+              socialMedia={article.socialMedia}
+              socialLinks={article.socialLinks}
+              size="md"
+              showLabel={true}
+            />
           </div>
           <div
             className="article-rich-content text-gray-600 dark:text-gray-300 text-lg leading-[1.8] font-medium space-y-8"
