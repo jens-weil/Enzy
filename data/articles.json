@@ -96,7 +96,7 @@
     "imageUrl": "/uploads/scraped/article_1773426972282_0.png",
     "content": "Se presentationen från Stora Aktiedagarna i Stockholm där ledningen presenterade bolagets framtidsutsikter och den senaste kliniska datan för ColdZyme®.\n\n<div class=\"aspect-video w-full rounded-2xl overflow-hidden shadow-lg my-8\"><iframe src=\"https://www.youtube.com/embed/ruOA1MWRqAU\" class=\"w-full h-full border-0\" allow=\"accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture\" allowfullscreen></iframe></div>",
     "socialMedia": {
-      "facebook": false,
+      "facebook": true,
       "instagram": false,
       "linkedin": false,
       "tiktok": false
@@ -104,8 +104,10 @@
     "ingress": "Se presentationen från Stora Aktiedagarna i Stockholm där ledningen presenterade bolagets framtidsutsikter och den senaste kliniska datan för ColdZyme...",
     "socialLinks": {
       "linkedin": "https://www.linkedin.com/in/jensweil/",
-      "instagram": "https://nya.jenka.se"
-    }
+      "instagram": "https://nya.jenka.se",
+      "facebook": "https://www.facebook.com/823850677437733"
+    },
+    "facebookPostId": "823850677437733"
   },
   {
     "id": "3",

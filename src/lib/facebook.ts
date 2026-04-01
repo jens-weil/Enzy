@@ -96,6 +96,7 @@ export async function postToFacebook(data: {
         }
         
         const postId = result.id as string;
+        console.log(`Successfully created photo post with ID: ${postId}`);
 
         // Post the link as a comment
         const commentResponse = await fetch(`https://graph.facebook.com/${API_VERSION}/${postId}/comments`, {
@@ -109,32 +110,34 @@ export async function postToFacebook(data: {
         if (!commentResponse.ok) {
           const commentResult = await commentResponse.json();
           console.error("Failed to post comment on Facebook:", commentResult.error?.message || "Unknown error");
-        } else {
-          console.log(`Successfully posted link comment for post ${postId}`);
         }
 
-        return postId;
+        // Fetch permalink_url
+        let permalinkUrl = `https://www.facebook.com/${postId}`;
+        try {
+          const urlRes = await fetch(`https://graph.facebook.com/${API_VERSION}/${postId}?fields=permalink_url&access_token=${FB_PAGE_ACCESS_TOKEN}`);
+          if (urlRes.ok) {
+            const urlData = await urlRes.json();
+            if (urlData.permalink_url) permalinkUrl = urlData.permalink_url;
+          }
+        } catch {}
+
+        return { id: postId, url: permalinkUrl };
       }
     }
 
     // STRATEGY: DIRECT LINK POST (Feed)
-    // Also used as fallback for comment strategy if no image exists
     console.log("Using standard feed post (link post)");
     const formData = new URLSearchParams();
     formData.append("message", message);
     
-    // Facebook Graph API rejects feed posts with 'link' pointing to localhost.
     if (!data.link.includes('localhost')) {
       formData.append("link", data.link);
     } else {
-      console.warn("Skipping 'link' parameter because Facebook rejects localhost URLs. Adding to message instead.");
       formData.set("message", message + `\n\nLink: ${data.link}`);
     }
     
     formData.append("access_token", FB_PAGE_ACCESS_TOKEN);
-
-    // If direct strategy, link to localhost will likely NOT show a preview on FB.
-    // However, the post should still be created.
 
     const response = await fetch(`https://graph.facebook.com/${API_VERSION}/${FB_PAGE_ID}/feed`, {
       method: "POST",
@@ -149,24 +152,24 @@ export async function postToFacebook(data: {
     }
 
     const postId = result.id as string;
-    console.log(`Successfully created feed post with ID: ${postId}`);
+    console.log(`Successfully created feed post with ID: ${postId}. Fetching permalink_url...`);
 
-    // Only post comment if in comment strategy
-    if (!isDirect) {
-      const commentResponse = await fetch(`https://graph.facebook.com/${API_VERSION}/${postId}/comments`, {
-        method: "POST",
-        body: new URLSearchParams({
-          message: data.link,
-          access_token: FB_PAGE_ACCESS_TOKEN || "",
-        }),
-      });
-      if (!commentResponse.ok) {
-         const commentResult = await commentResponse.json();
-         console.error("Failed to post comment on Facebook:", commentResult.error?.message || "Unknown error");
+    // Fetch the actual permalink_url for better mobile support
+    let permalinkUrl = `https://www.facebook.com/${postId}`; // Fallback
+    try {
+      const urlResponse = await fetch(`https://graph.facebook.com/${API_VERSION}/${postId}?fields=permalink_url&access_token=${FB_PAGE_ACCESS_TOKEN}`);
+      if (urlResponse.ok) {
+        const urlData = await urlResponse.json();
+        if (urlData.permalink_url) {
+          permalinkUrl = urlData.permalink_url;
+          console.log(`Retrieved permalink_url: ${permalinkUrl}`);
+        }
       }
+    } catch (e) {
+      console.warn("Failed to fetch permalink_url from Facebook, using fallback:", e);
     }
 
-    return postId;
+    return { id: postId, url: permalinkUrl };
   } catch (error: any) {
     console.error("Failed to post to Facebook:", error);
     logError("Failed to post to Facebook", error instanceof Error ? error.message : error);

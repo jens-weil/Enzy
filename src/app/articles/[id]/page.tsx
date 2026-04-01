@@ -137,7 +137,7 @@ export default async function ArticlePage({ params }: { params: Promise<{ id: st
               articleTitle={article.title}
               socialMedia={article.socialMedia}
               socialLinks={article.socialLinks}
-              size="lg"
+              size="md"
               showLabel={true}
             />
 

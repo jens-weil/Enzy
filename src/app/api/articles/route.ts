@@ -61,15 +61,15 @@ export async function POST(request: NextRequest) {
     console.log(`Creating article with siteUrl: ${siteUrl}`);
 
     if (newArticle.socialMedia.facebook && !newArticle.socialLinks.facebook) {
-      const postId = await postToFacebook({
+      const fbResult = await postToFacebook({
         title: newArticle.title,
         ingress: newArticle.ingress,
         link: articleUrl,
         imageUrl: newArticle.imageUrl ? (newArticle.imageUrl.startsWith('http') ? newArticle.imageUrl : `${siteUrl}${newArticle.imageUrl}`) : undefined
       });
-      if (postId) {
-        newArticle.facebookPostId = postId;
-        newArticle.socialLinks.facebook = `https://www.facebook.com/${postId}`;
+      if (fbResult) {
+        newArticle.facebookPostId = fbResult.id;
+        newArticle.socialLinks.facebook = fbResult.url;
       }
     }
 
@@ -140,15 +140,15 @@ export async function PATCH(request: NextRequest) {
     let updatedSocialLinks = { ...(socialLinks || articles[articleIndex].socialLinks || {}) };
 
     if (newFB && !facebookPostId && !updatedSocialLinks.facebook) {
-      const postId = await postToFacebook({
+      const fbResult = await postToFacebook({
         title: title || articles[articleIndex].title,
         ingress: ingress !== undefined ? ingress : articles[articleIndex].ingress,
         link: articleUrl,
         imageUrl: imageUrl ? (imageUrl.startsWith('http') ? imageUrl : `${siteUrl}${imageUrl}`) : (articles[articleIndex].imageUrl ? (articles[articleIndex].imageUrl.startsWith('http') ? articles[articleIndex].imageUrl : `${siteUrl}${articles[articleIndex].imageUrl}`) : undefined)
       });
-      if (postId) {
-        facebookPostId = postId;
-        updatedSocialLinks.facebook = `https://www.facebook.com/${postId}`;
+      if (fbResult) {
+        facebookPostId = fbResult.id;
+        updatedSocialLinks.facebook = fbResult.url;
       }
     } else if (oldFB && !newFB && facebookPostId) {
       await deleteFromFacebook(facebookPostId);

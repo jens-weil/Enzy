@@ -1024,7 +1024,7 @@ export default function ArticleFeed({ initialArticles }: ArticleFeedProps) {
                   articleTitle={article.title}
                   socialMedia={article.socialMedia}
                   socialLinks={article.socialLinks}
-                  size="lg"
+                  size="sm"
                   showLabel={false}
                 />
               </div>
