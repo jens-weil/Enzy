@@ -39,19 +39,17 @@
     "imageUrl": "/uploads/scraped/article_1773426975415_9.jpg",
     "content": "<div class=\"aspect-video w-full rounded-2xl overflow-hidden shadow-lg my-8\"><iframe src=\"https://www.youtube.com/embed/EpZKrw7z35k\" class=\"w-full h-full border-0\" allow=\"accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture\" allowfullscreen></iframe></div>Enligt tillverkaren Enzymatica valdes eukalyptus eftersom:\n\nmånga associerar eukalyptus med friskhet och lättare andning\nsmaken upplevs som sval, krispig och uppfriskande\nden passar väl för användning vid halsbesvär och tidiga förkylningssymtom\n\nSyftet är att erbjuda ett smakalternativ, inte en annan medicinsk effekt\n\nKliniskt stöd (oförändrat)\nColdZyme som produkt (oavsett smak) stöds av oberoende studier som visar att den kan:\n\nminska virusmängden med upp till 94 %\nförkorta förkylningens längd med i genomsnitt cirka 40 %\n\nStudierna gäller produkten som helhet, inte specifikt eukalyptussmaken, men formuleringen i Eucalyptus‑varianten bygger på samma aktiva princip.",
     "socialMedia": {
-      "facebook": true,
+      "facebook": false,
       "instagram": false,
-      "linkedin": true,
+      "linkedin": false,
       "tiktok": false
     },
     "ingress": "Den nya smaken Eucalyptos ger ny säljrekord. Marknaden tog emot den med hull och hår och apoteken säljer ut den så fort de får påfyllning.",
     "socialLinks": {
-      "facebook": "https://www.facebook.com/823820900774044",
       "linkedin": "https://www.linkedin.com/in/jensweil/",
       "instagram": "#",
       "tiktok": "#"
-    },
-    "facebookPostId": "823820900774044"
+    }
   },
   {
     "id": "1",
@@ -86,7 +84,10 @@
       "tiktok": false
     },
     "ingress": "Se presentationen från Stora Aktiedagarna i Stockholm där ledningen presenterade bolagets framtidsutsikter och den senaste kliniska datan för ColdZyme...",
-    "socialLinks": {}
+    "socialLinks": {
+      "linkedin": "https://www.linkedin.com/in/jensweil/",
+      "instagram": "https://nya.jenka.se"
+    }
   },
   {
     "id": "3",

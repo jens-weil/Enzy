@@ -75,37 +75,45 @@ export default function SocialShare({
   const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || (typeof window !== "undefined" ? window.location.origin : "https://enzymatica.se");
   const articleUrl = `${siteUrl}/articles/${articleId}`;
 
-  const handleShareClick = async (e: React.MouseEvent, platform: string, href?: string) => {
-    // 1. Universal Share or Platform Fallback (Mobile Experience)
-    if (platform === "share" || platform === "instagram" || platform === "tiktok") {
-      if (typeof navigator !== "undefined" && navigator.share) {
-        e.preventDefault();
-        try {
-          await navigator.share({
-            title: articleTitle,
-            text: "Kolla in artikeln från Enzymatica!",
-            url: articleUrl,
-          });
-          return;
-        } catch (err) {
-          if ((err as Error).name === "AbortError") return;
-          console.warn("Navigator share failed, falling back to clipboard:", err);
-        }
-      }
+  const handleShareClick = (e: React.MouseEvent, platform: string, href?: string) => {
+    e.stopPropagation(); // Always prevent opening the article modal
 
-      // 2. Clipboard fallback for sharing
+    // For universal share, instagram, and tiktok, use the Web Share API or Clipboard
+    if (platform === "share" || platform === "instagram" || platform === "tiktok") {
       e.preventDefault();
-      try {
-        await navigator.clipboard.writeText(articleUrl);
-        setCopied(true);
-        setTimeout(() => setCopied(false), 2000);
-      } catch (err) {
-        console.error("Failed to copy link:", err);
-      }
+      
+      const performShare = async () => {
+        if (typeof navigator !== "undefined" && navigator.share) {
+          try {
+            await navigator.share({
+              title: articleTitle,
+              text: "Kolla in artikeln från Enzymatica!",
+              url: articleUrl,
+            });
+            return;
+          } catch (err) {
+            if ((err as Error).name === "AbortError") return;
+            console.warn("Navigator share failed, falling back to clipboard:", err);
+          }
+        }
+
+        // Clipboard fallback
+        try {
+          await navigator.clipboard.writeText(articleUrl);
+          setCopied(true);
+          setTimeout(() => setCopied(false), 2000);
+        } catch (err) {
+          console.error("Failed to copy link:", err);
+        }
+      };
+
+      performShare();
       return;
     }
 
-    // 3. Platform-specific Links (View Post) - let standard anchor behavior handle it
+    // For Facebook and LinkedIn, we let the default anchor behavior (href + target="_blank") work.
+    // By NOT calling e.preventDefault() here and NOT using an async function wrapper for the event itself,
+    // we maintain the "user gesture" context which is critical for mobile browsers to allow opening new tabs.
   };
 
   const colors: Record<string, string> = {
