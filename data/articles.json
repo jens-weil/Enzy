@@ -1,5 +1,23 @@
 [
   {
+    "id": "facebook-test-123",
+    "title": "TEST: Verifiering av Facebook-länkar",
+    "type": "Nyhet",
+    "date": "2026-04-01",
+    "ingress": "Denna artikel används för att verifiera att den manuella Facebook-länken fungerar korrekt på alla enheter.",
+    "imageUrl": "/logo.png",
+    "content": "Detta är en testartikel för att säkerställa att sociala medier-ikonerna nu öppnar rätt länkar på mobilen.",
+    "socialMedia": {
+      "facebook": true,
+      "instagram": false,
+      "linkedin": false,
+      "tiktok": false
+    },
+    "socialLinks": {
+      "facebook": "https://www.facebook.com/enzymatica.ab"
+    }
+  },
+  {
     "id": "1773603246233",
     "title": "Oberoende studie­­r",
     "type": "Artikel",

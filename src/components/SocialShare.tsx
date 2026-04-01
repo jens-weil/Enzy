@@ -169,28 +169,33 @@ export default function SocialShare({
             : "";
 
           return (
-            <a
-              key={platform}
-              href={postUrl}
-              target="_blank"
-              rel="noopener noreferrer"
-              className={`${sizeClasses[size]} flex items-center justify-center transition-all ${
-                variant === "filled" 
-                  ? `${colors[platform]} shadow-md hover:scale-110` 
-                  : `${iconColor} opacity-90 hover:opacity-100 hover:scale-125`
-              }`}
-              title={`Öppna inlägg på ${platform}`}
-              onClick={(e) => handleShareClick(e, platform, postUrl)}
+            <div 
+              key={platform} 
+              onPointerDown={(e) => e.stopPropagation()}
+              onClick={(e) => e.stopPropagation()}
+              className="flex items-center justify-center p-1"
             >
-              <div className="w-full h-full relative">
-                {SOCIAL_ICONS[platform]}
-                <div className="absolute -top-1 -right-1 bg-white dark:bg-brand-dark rounded-full p-0.5 shadow-sm">
-                  <svg className="w-2 h-2 text-brand-dark dark:text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
-                  </svg>
+              <a
+                href={postUrl}
+                target="_blank"
+                rel="noopener noreferrer"
+                className={`${sizeClasses[size]} flex items-center justify-center transition-all ${
+                  variant === "filled" 
+                    ? `${colors[platform]} shadow-md hover:scale-110` 
+                    : `${iconColor} opacity-90 hover:opacity-100 hover:scale-125`
+                }`}
+                title={`Öppna inlägg på ${platform}`}
+              >
+                <div className="w-full h-full relative">
+                  {SOCIAL_ICONS[platform]}
+                  <div className="absolute -top-1 -right-1 bg-white dark:bg-brand-dark rounded-full p-0.5 shadow-sm">
+                    <svg className="w-2 h-2 text-brand-dark dark:text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
+                    </svg>
+                  </div>
                 </div>
-              </div>
-            </a>
+              </a>
+            </div>
           );
         })}
       </div>

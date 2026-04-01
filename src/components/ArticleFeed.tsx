@@ -1019,13 +1019,12 @@ export default function ArticleFeed({ initialArticles }: ArticleFeedProps) {
                 <span className="text-[10px] font-black text-brand-teal uppercase tracking-widest flex items-center gap-2 group-hover:gap-4 transition-all">
                   LÄS MER <span>&rarr;</span>
                 </span>
-                 <SocialShare 
+                   <SocialShare 
                   articleId={article.id}
                   articleTitle={article.title}
                   socialMedia={article.socialMedia}
                   socialLinks={article.socialLinks}
-                  size="sm"
-                  variant="ghost"
+                  size="lg"
                   showLabel={false}
                 />
               </div>

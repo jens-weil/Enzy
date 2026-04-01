@@ -60,7 +60,7 @@ export async function POST(request: NextRequest) {
 
     console.log(`Creating article with siteUrl: ${siteUrl}`);
 
-    if (newArticle.socialMedia.facebook) {
+    if (newArticle.socialMedia.facebook && !newArticle.socialLinks.facebook) {
       const postId = await postToFacebook({
         title: newArticle.title,
         ingress: newArticle.ingress,
@@ -139,7 +139,7 @@ export async function PATCH(request: NextRequest) {
     let facebookPostId = articles[articleIndex].facebookPostId;
     let updatedSocialLinks = { ...(socialLinks || articles[articleIndex].socialLinks || {}) };
 
-    if (newFB && !facebookPostId) {
+    if (newFB && !facebookPostId && !updatedSocialLinks.facebook) {
       const postId = await postToFacebook({
         title: title || articles[articleIndex].title,
         ingress: ingress !== undefined ? ingress : articles[articleIndex].ingress,
@@ -153,7 +153,7 @@ export async function PATCH(request: NextRequest) {
     } else if (oldFB && !newFB && facebookPostId) {
       await deleteFromFacebook(facebookPostId);
       facebookPostId = undefined;
-      delete updatedSocialLinks.facebook;
+      // Note: We don't delete updatedSocialLinks.facebook here if it was manual
     }
 
     articles[articleIndex] = {
