@@ -47,7 +47,6 @@ function AdminForm() {
   const [availableImages, setAvailableImages] = useState<string[]>([]);
   const [isEditing, setIsEditing] = useState(false);
   const [uploading, setUploading] = useState(false);
-  const [accessToken, setAccessToken] = useState<string | null>(null);
 
   // Redirect if not Admin or Editor
   useEffect(() => {
@@ -56,11 +55,8 @@ function AdminForm() {
       router.push('/');
       return;
     }
-    // Grab the session token for API calls
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      setAccessToken(session?.access_token ?? null);
-      fetchImages(session?.access_token);
-    });
+    // Fetch initial images
+    fetchImages();
   }, [user, profile, authLoading, router]);
 
   useEffect(() => {
@@ -95,9 +91,15 @@ function AdminForm() {
     }
   };
 
-  const fetchImages = async (token?: string | null) => {
+  const fetchImages = async () => {
     try {
-      const res = await fetch('/api/images');
+      const { data: { session } } = await supabase.auth.getSession();
+      const headers: any = {};
+      if (session?.access_token) {
+        headers['Authorization'] = `Bearer ${session.access_token}`;
+      }
+
+      const res = await fetch('/api/images', { headers });
       if (res.ok) {
         const data = await res.json();
         setAvailableImages(data.images || []);
@@ -131,8 +133,12 @@ function AdminForm() {
     body.append('file', file);
 
     try {
+      const { data: { session } } = await supabase.auth.getSession();
       const res = await fetch('/api/images', {
         method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${session?.access_token}`,
+        },
         body,
       });
 
@@ -142,6 +148,9 @@ function AdminForm() {
         fetchImages();
         setMessage({ type: 'success', text: 'Bild uppladdad och vald!' });
         setShowMediaPicker(false);
+      } else {
+        const errData = await res.json();
+        setMessage({ type: 'error', text: errData.error || 'Kunde inte ladda upp bild.' });
       }
     } catch (error) {
       setMessage({ type: 'error', text: 'Kunde inte ladda upp bild.' });
@@ -155,18 +164,19 @@ function AdminForm() {
     setLoading(true);
     setMessage(null);
 
-    if (!accessToken) {
-      setMessage({ type: 'error', text: 'Ingen aktiv session. Logga in igen.' });
-      setLoading(false);
-      return;
-    }
-
     try {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session) {
+        setMessage({ type: 'error', text: 'Din session har gått ut. Logga in igen.' });
+        setLoading(false);
+        return;
+      }
+
       const res = await fetch('/api/articles', {
         method: isEditing ? 'PATCH' : 'POST',
         headers: {
           'Content-Type': 'application/json',
-          'Authorization': `Bearer ${accessToken}`,
+          'Authorization': `Bearer ${session.access_token}`,
         },
         body: JSON.stringify(isEditing ? { ...formData, id: editId } : formData),
       });
@@ -183,7 +193,12 @@ function AdminForm() {
         }, 1500);
       } else {
         const error = await res.json();
-        setMessage({ type: 'error', text: error.error || 'Något gick fel.' });
+        // If the error looks like a session error, give a clearer message
+        const errorMsg = error.error === "Ogiltig session." 
+          ? 'Din session har gått ut. Logga in igen.' 
+          : (error.error || 'Något gick fel.');
+        
+        setMessage({ type: 'error', text: errorMsg });
       }
     } catch (error) {
       setMessage({ type: 'error', text: 'Kunde inte kommunicera med servern.' });

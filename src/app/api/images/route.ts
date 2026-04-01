@@ -1,8 +1,14 @@
-import { NextResponse } from 'next/server';
+import { NextRequest, NextResponse } from 'next/server';
 import fs from 'fs';
 import path from 'path';
+import { requireRole } from '@/lib/auth';
 
-export async function GET() {
+export async function GET(request: NextRequest) {
+  const auth = await requireRole(request, ['Admin', 'Editor']);
+  if (!auth.authorized) {
+    return NextResponse.json({ error: auth.error }, { status: auth.status });
+  }
+
   try {
     const uploadDir = path.join(process.cwd(), 'public', 'uploads');
     if (!fs.existsSync(uploadDir)) {
@@ -32,7 +38,7 @@ export async function GET() {
     });
     
     // Add default images if they exist
-    ['/hero.png', '/hero_authentic.webp', '/logo.png'].forEach(img => {
+    ['/logo.png', '/hero.png', '/hero_authentic.webp'].forEach(img => {
       if (fs.existsSync(path.join(process.cwd(), 'public', img))) {
         if (!images.includes(img)) images.push(img);
       }
@@ -45,7 +51,12 @@ export async function GET() {
   }
 }
 
-export async function POST(request: Request) {
+export async function POST(request: NextRequest) {
+  const auth = await requireRole(request, ['Admin', 'Editor']);
+  if (!auth.authorized) {
+    return NextResponse.json({ error: auth.error }, { status: auth.status });
+  }
+
   try {
     const formData = await request.formData();
     const file = formData.get('file') as File;

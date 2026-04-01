@@ -80,7 +80,7 @@
     "type": "PM",
     "date": "2026-03-11",
     "imageUrl": "/uploads/scraped/article_1773426972282_0.png",
-    "content": "Se presentationen från Stora Aktiedagarna i Stockholm där ledningen presenterade bolagets framtidsutsikter och den senaste kliniska datan för ColdZyme®.\n\n<iframe width=\"640\" height=\"480\" src=\"https://www.youtube.com/embed/ruOA1MWRqAU\" title=\"Enzymatica – Stora Aktiedagarna Stockholm 10 mars 2026\" frameborder=\"0\" allow=\"accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share\" referrerpolicy=\"strict-origin-when-cross-origin\" allowfullscreen></iframe>",
+    "content": "Se presentationen från Stora Aktiedagarna i Stockholm där ledningen presenterade bolagets framtidsutsikter och den senaste kliniska datan för ColdZyme®.\n\n<div class=\"aspect-video w-full rounded-2xl overflow-hidden shadow-lg my-8\"><iframe src=\"https://www.youtube.com/embed/ruOA1MWRqAU\" class=\"w-full h-full border-0\" allow=\"accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture\" allowfullscreen></iframe></div>",
     "socialMedia": {
       "facebook": true,
       "instagram": false,
@@ -89,9 +89,9 @@
     },
     "ingress": "Se presentationen från Stora Aktiedagarna i Stockholm där ledningen presenterade bolagets framtidsutsikter och den senaste kliniska datan för ColdZyme...",
     "socialLinks": {
-      "facebook": "https://www.facebook.com/822263410929793"
+      "facebook": "https://www.facebook.com/823776534111814"
     },
-    "facebookPostId": "822263410929793"
+    "facebookPostId": "823776534111814"
   },
   {
     "id": "3",

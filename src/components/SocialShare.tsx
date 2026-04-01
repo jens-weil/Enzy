@@ -48,6 +48,15 @@ export const SOCIAL_ICONS: Record<string, React.ReactNode> = {
       <path d="M12.525.02c1.31-.02 2.61-.01 3.91-.01.08 1.53.63 3.09 1.75 4.17 1.12 1.11 2.7 1.62 4.24 1.79v4.03c-1.44-.06-2.89-.35-4.2-.97-.57-.26-1.1-.59-1.59-1.01V14.5c.01 2.32-.6 4.67-2.06 6.47-2.95 3.64-8.56 4.08-12.08 1.08-3.03-2.58-3.57-7.44-1.26-10.67 1.88-2.63 5.22-3.72 8.35-2.76V12.7c-1.32-.46-2.88-.35-4.03.48-1.36.98-1.77 2.82-1.14 4.31.55 1.29 1.89 2.14 3.27 2.23 1.58.07 3.16-.92 3.73-2.39.15-.36.2-.76.2-1.15V.02z"/>
     </svg>
   ),
+  share: (
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="w-full h-full">
+      <circle cx="18" cy="5" r="3" />
+      <circle cx="6" cy="12" r="3" />
+      <circle cx="18" cy="19" r="3" />
+      <line x1="8.59" y1="13.51" x2="15.42" y2="17.49" />
+      <line x1="15.41" y1="6.51" x2="8.59" y2="10.49" />
+    </svg>
+  ),
 };
 
 export default function SocialShare({
@@ -66,25 +75,9 @@ export default function SocialShare({
   const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || (typeof window !== "undefined" ? window.location.origin : "https://enzymatica.se");
   const articleUrl = `${siteUrl}/articles/${articleId}`;
 
-  const getShareUrl = (platform: string) => {
-    const encodedUrl = encodeURIComponent(articleUrl);
-    // const encodedTitle = encodeURIComponent(articleTitle);
-
-    switch (platform) {
-      case "facebook":
-        return `https://www.facebook.com/sharer/sharer.php?u=${encodedUrl}`;
-      case "linkedin":
-        return `https://www.linkedin.com/sharing/share-offsite/?url=${encodedUrl}`;
-      default:
-        // By default, just return the article URL so we can handle it with copy/share
-        return articleUrl;
-    }
-  };
-
-  const handleShareClick = async (e: React.MouseEvent, platform: string, href: string) => {
-    // If not Admin (Sharing Mode)
-    if (!isAdmin) {
-      // 1. Try Native Web Share API if available (premium mobile experience)
+  const handleShareClick = async (e: React.MouseEvent, platform: string, href?: string) => {
+    // 1. Universal Share or Platform Fallback (Mobile Experience)
+    if (platform === "share" || platform === "instagram" || platform === "tiktok") {
       if (typeof navigator !== "undefined" && navigator.share) {
         e.preventDefault();
         try {
@@ -95,27 +88,24 @@ export default function SocialShare({
           });
           return;
         } catch (err) {
-          // If the user cancelled or UI is blocked, we fall back to standard links
           if ((err as Error).name === "AbortError") return;
-          console.warn("Navigator share failed, falling back to link:", err);
+          console.warn("Navigator share failed, falling back to clipboard:", err);
         }
       }
 
-      // 2. If it's a platform without a standard sharing URL (Instagram, TikTok), or if above failed
-      if (href === articleUrl || platform === "instagram" || platform === "tiktok") {
-        e.preventDefault();
-        try {
-          await navigator.clipboard.writeText(articleUrl);
-          setCopied(true);
-          setTimeout(() => setCopied(false), 2000);
-        } catch (err) {
-          console.error("Failed to copy link:", err);
-        }
-        return;
+      // 2. Clipboard fallback for sharing
+      e.preventDefault();
+      try {
+        await navigator.clipboard.writeText(articleUrl);
+        setCopied(true);
+        setTimeout(() => setCopied(false), 2000);
+      } catch (err) {
+        console.error("Failed to copy link:", err);
       }
+      return;
     }
-    
-    // For Admins or fallback sharing: standard anchor behavior applies
+
+    // 3. Platform-specific Links (View Post) - let standard anchor behavior handle it
   };
 
   const colors: Record<string, string> = {
@@ -123,34 +113,50 @@ export default function SocialShare({
     linkedin: "bg-blue-700 text-white",
     instagram: "bg-gradient-to-tr from-yellow-400 via-red-500 to-purple-600 text-white",
     tiktok: "bg-black text-white",
+    share: "bg-brand-teal text-white",
   };
 
   const sizeClasses = {
-    xs: "w-4 h-4 p-0.5 rounded-sm",
-    sm: "w-5 h-5 p-1 rounded-md",
-    md: "w-8 h-8 p-2 rounded-xl",
-    lg: "w-10 h-10 p-2.5 rounded-2xl",
+    xs: "w-7 h-7 p-1 rounded-sm",
+    sm: "w-9 h-9 p-2 rounded-md",
+    md: "w-11 h-11 p-3 rounded-2xl",
+    lg: "w-16 h-16 p-4 rounded-[1.8rem]",
   };
 
   const platforms = Object.entries(socialMedia)
     .filter(([_, active]) => active)
     .map(([platform]) => platform);
 
-  if (platforms.length === 0) return null;
+  if (platforms.length === 0 && !isAdmin) return null;
 
   return (
     <div className={`flex flex-wrap gap-4 items-center ${variant === "filled" ? "py-4" : ""}`}>
       {showLabel && (
         <span className="text-[10px] font-black text-gray-400 uppercase tracking-widest flex items-center gap-2">
-          {isAdmin ? "Publicerad via" : (copied ? "Länk kopierad!" : "Dela via")}
+          {copied ? "Länk kopierad!" : "Dela artikel"}
           {copied && <span className="text-brand-teal text-[8px]">✓</span>}
         </span>
       )}
-      <div className={`flex ${size === "xs" ? "gap-1" : "gap-3"}`}>
+      <div className={`flex flex-wrap items-center ${size === "xs" ? "gap-1" : "gap-3"}`}>
+        {/* Universal Share Button */}
+        <button
+          onClick={(e) => handleShareClick(e as any, "share")}
+          className={`${sizeClasses[size]} flex items-center justify-center transition-all ${
+            variant === "filled" 
+              ? `${colors.share} shadow-lg hover:scale-110` 
+              : "text-brand-teal opacity-80 hover:opacity-100 hover:scale-125"
+          }`}
+          title="Dela artikel"
+        >
+          <div className="w-full h-full p-0.5">
+            {SOCIAL_ICONS.share}
+          </div>
+        </button>
+
+        {/* Platform View Links (only if link provided) */}
         {platforms.map((platform) => {
-          const href = isAdmin 
-            ? socialLinks[platform as keyof SocialLinks] || "#" 
-            : getShareUrl(platform);
+          const postUrl = socialLinks[platform as keyof SocialLinks];
+          if (!postUrl || postUrl === "#") return null;
 
           const iconColor = variant === "ghost" 
             ? (colors[platform]?.split(" ")[0].replace("bg-", "text-") || "text-gray-400")
@@ -159,19 +165,24 @@ export default function SocialShare({
           return (
             <a
               key={platform}
-              href={href}
+              href={postUrl}
               target="_blank"
               rel="noopener noreferrer"
               className={`${sizeClasses[size]} flex items-center justify-center transition-all ${
                 variant === "filled" 
-                  ? `${colors[platform] || "bg-gray-200"} shadow-md hover:scale-110` 
-                  : `${iconColor} opacity-70 hover:opacity-100 hover:scale-125`
+                  ? `${colors[platform]} shadow-md hover:scale-110` 
+                  : `${iconColor} opacity-90 hover:opacity-100 hover:scale-125`
               }`}
-              title={isAdmin ? `Se på ${platform}` : (platform === "instagram" || platform === "tiktok" ? "Kopiera länk" : `Dela på ${platform}`)}
-              onClick={(e) => handleShareClick(e, platform, href)}
+              title={`Öppna inlägg på ${platform}`}
+              onClick={(e) => handleShareClick(e, platform, postUrl)}
             >
-              <div className="w-full h-full">
+              <div className="w-full h-full relative">
                 {SOCIAL_ICONS[platform]}
+                <div className="absolute -top-1 -right-1 bg-white dark:bg-brand-dark rounded-full p-0.5 shadow-sm">
+                  <svg className="w-2 h-2 text-brand-dark dark:text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
+                  </svg>
+                </div>
               </div>
             </a>
           );

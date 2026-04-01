@@ -1,7 +1,7 @@
 "use client";
 
-import { useState, useEffect, useMemo } from 'react';
-import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, ReferenceLine } from 'recharts';
+import { useState, useEffect } from 'react';
+import { ComposedChart, Line, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, ReferenceLine } from 'recharts';
 import { format, fromUnixTime } from 'date-fns';
 import { sv } from 'date-fns/locale';
 
@@ -34,6 +34,12 @@ export default function StockChartModal({ isOpen, onClose, ticker = 'ENZY.ST' }:
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [stockInfo, setStockInfo] = useState({ price: 0, changePercent: 0, changeValue: 0, currency: 'SEK' });
+  
+  // Chart View States
+  const [showLog, setShowLog] = useState(false);
+  const [showVolume, setShowVolume] = useState(false);
+  const [showMA30, setShowMA30] = useState(false);
+  const [showMA100, setShowMA100] = useState(false);
 
   useEffect(() => {
     if (!isOpen) return;
@@ -56,6 +62,7 @@ export default function StockChartModal({ isOpen, onClose, ticker = 'ENZY.ST' }:
         const result = json.chart.result[0];
         const timestamps = result.timestamp || [];
         const closes = result.indicators?.quote?.[0]?.close || [];
+        const volumes = result.indicators?.quote?.[0]?.volume || [];
         const meta = result.meta;
         const prevClose = meta.previousClose || meta.chartPreviousClose;
 
@@ -66,16 +73,39 @@ export default function StockChartModal({ isOpen, onClose, ticker = 'ENZY.ST' }:
           currency: meta.currency || 'SEK'
         });
 
+        // Format and compute indicators
         const formattedData = timestamps.map((ts: number, index: number) => {
           const date = fromUnixTime(ts);
+          const price = closes[index] !== null ? Number(closes[index].toFixed(2)) : null;
+          
           return {
             timestamp: ts,
             date: date,
-            price: closes[index] !== null ? Number(closes[index].toFixed(2)) : null,
+            price: price,
+            volume: volumes[index] || 0,
           };
         }).filter((item: any) => item.price !== null);
 
-        setData(formattedData);
+        // Simple Moving Average Calculation
+        const calculateSMA = (dataList: any[], period: number) => {
+          return dataList.map((point, index) => {
+            if (index < period - 1) return null;
+            const slice = dataList.slice(index - period + 1, index + 1);
+            const sum = slice.reduce((acc, curr) => acc + (curr.price || 0), 0);
+            return Number((sum / period).toFixed(2));
+          });
+        };
+
+        const ma30Values = calculateSMA(formattedData, 30);
+        const ma100Values = calculateSMA(formattedData, 100);
+
+        const dataWithIndicators = formattedData.map((d: any, i: number) => ({
+          ...d,
+          ma30: ma30Values[i],
+          ma100: ma100Values[i],
+        }));
+
+        setData(dataWithIndicators);
         setLoading(false);
       })
       .catch(err => {
@@ -112,9 +142,9 @@ export default function StockChartModal({ isOpen, onClose, ticker = 'ENZY.ST' }:
   const isPositive = stockInfo.changeValue >= 0;
   const lineColor = isPositive ? '#10B981' : '#EF4444'; // Emerald for positive, Red for negative
 
-  // Calculate min/max for Y axis to make the chart look better
-  const minPrice = data.length > 0 ? Math.min(...data.map(d => d.price)) : 0;
-  const maxPrice = data.length > 0 ? Math.max(...data.map(d => d.price)) : 100;
+  // Calculate min/max for Y axis
+  const minPrice = data.length > 0 ? Math.min(...data.map(d => d.price || 999999)) : 0;
+  const maxPrice = data.length > 0 ? Math.max(...data.map(d => d.price || 0)) : 100;
   const padding = (maxPrice - minPrice) * 0.1;
 
   if (!isOpen) return null;
@@ -158,26 +188,68 @@ export default function StockChartModal({ isOpen, onClose, ticker = 'ENZY.ST' }:
         </div>
 
         {/* Content */}
-        <div className="px-0 md:px-8 py-6 md:py-8 space-y-8">
+        <div className="px-4 md:px-8 py-6 md:py-8 space-y-6">
           {/* Timeframe Selectors */}
-            <div className="flex flex-row justify-between items-center gap-1 md:gap-2 px-2 md:px-0">
-              {timeframes.map((tf) => (
-                <button
-                  key={tf.label}
-                  onClick={() => setSelectedTimeframe(tf)}
-                  className={`flex-1 px-0 md:px-4 py-2 rounded-lg md:rounded-xl text-[10px] md:text-xs font-black uppercase tracking-tighter md:tracking-widest transition-all ${
-                    selectedTimeframe.label === tf.label
-                      ? 'bg-brand-teal text-white shadow-md'
-                      : 'bg-gray-50 dark:bg-slate-800 text-gray-500 hover:bg-gray-100 dark:hover:bg-slate-700'
-                  } ${['1 vecka', '3 månader', '10 år'].includes(tf.label) ? 'hidden sm:block' : 'block'}`}
-                >
-                  <span className="hidden md:inline">{tf.label}</span>
-                  <span className="md:hidden">
-                    {tf.label.includes(' ') ? `${tf.label.split(' ')[0]}${tf.label.split(' ')[1].charAt(0)}` : tf.label}
-                  </span>
-                </button>
-              ))}
-            </div>
+          <div className="flex flex-row justify-between items-center gap-1 md:gap-2">
+            {timeframes.map((tf) => (
+              <button
+                key={tf.label}
+                onClick={() => setSelectedTimeframe(tf)}
+                className={`flex-1 px-1 md:px-4 py-2 rounded-lg md:rounded-xl text-[10px] md:text-xs font-black uppercase tracking-tighter md:tracking-widest transition-all ${
+                  selectedTimeframe.label === tf.label
+                    ? 'bg-brand-teal text-white shadow-md'
+                    : 'bg-gray-50 dark:bg-slate-800 text-gray-500 hover:bg-gray-100 dark:hover:bg-slate-700'
+                } ${['1 vecka', '3 månader', '10 år'].includes(tf.label) ? 'hidden sm:block' : 'block'}`}
+              >
+                <span className="hidden md:inline">{tf.label}</span>
+                <span className="md:hidden">
+                  {tf.label.includes(' ') ? `${tf.label.split(' ')[0]}${tf.label.split(' ')[1].charAt(0)}` : tf.label}
+                </span>
+              </button>
+            ))}
+          </div>
+
+          {/* Indicator Toggles */}
+          <div className="flex flex-wrap gap-4 items-center bg-gray-50/50 dark:bg-slate-800/20 p-3 rounded-2xl border border-gray-100/50 dark:border-slate-800/50">
+             <span className="text-[10px] font-black text-gray-400 uppercase tracking-widest px-2">Visa</span>
+             <div className="flex flex-wrap gap-6">
+                <label className="flex items-center gap-2 cursor-pointer group">
+                  <div className="relative">
+                    <input type="checkbox" checked={showLog} onChange={(e) => setShowLog(e.target.checked)} className="sr-only" />
+                    <div className={`w-8 h-4 rounded-full transition-colors ${showLog ? 'bg-brand-teal' : 'bg-gray-200 dark:bg-slate-700'}`}></div>
+                    <div className={`absolute top-0.5 left-0.5 w-3 h-3 rounded-full bg-white transition-transform ${showLog ? 'translate-x-4' : ''}`}></div>
+                  </div>
+                  <span className="text-[10px] font-black text-gray-500 uppercase tracking-widest group-hover:text-brand-teal transition-colors">Logaritmisk</span>
+                </label>
+
+                <label className="flex items-center gap-2 cursor-pointer group">
+                  <div className="relative">
+                    <input type="checkbox" checked={showVolume} onChange={(e) => setShowVolume(e.target.checked)} className="sr-only" />
+                    <div className={`w-8 h-4 rounded-full transition-colors ${showVolume ? 'bg-brand-teal' : 'bg-gray-200 dark:bg-slate-700'}`}></div>
+                    <div className={`absolute top-0.5 left-0.5 w-3 h-3 rounded-full bg-white transition-transform ${showVolume ? 'translate-x-4' : ''}`}></div>
+                  </div>
+                  <span className="text-[10px] font-black text-gray-500 uppercase tracking-widest group-hover:text-brand-teal transition-colors">Volym</span>
+                </label>
+
+                <label className="flex items-center gap-2 cursor-pointer group">
+                  <div className="relative">
+                    <input type="checkbox" checked={showMA30} onChange={(e) => setShowMA30(e.target.checked)} className="sr-only" />
+                    <div className={`w-8 h-4 rounded-full transition-colors ${showMA30 ? 'bg-orange-500' : 'bg-gray-200 dark:bg-slate-700'}`}></div>
+                    <div className={`absolute top-0.5 left-0.5 w-3 h-3 rounded-full bg-white transition-transform ${showMA30 ? 'translate-x-4' : ''}`}></div>
+                  </div>
+                  <span className="text-[10px] font-black text-gray-500 uppercase tracking-widest group-hover:text-orange-500 transition-colors">MA30</span>
+                </label>
+
+                <label className="flex items-center gap-2 cursor-pointer group">
+                  <div className="relative">
+                    <input type="checkbox" checked={showMA100} onChange={(e) => setShowMA100(e.target.checked)} className="sr-only" />
+                    <div className={`w-8 h-4 rounded-full transition-colors ${showMA100 ? 'bg-purple-500' : 'bg-gray-200 dark:bg-slate-700'}`}></div>
+                    <div className={`absolute top-0.5 left-0.5 w-3 h-3 rounded-full bg-white transition-transform ${showMA100 ? 'translate-x-4' : ''}`}></div>
+                  </div>
+                  <span className="text-[10px] font-black text-gray-500 uppercase tracking-widest group-hover:text-purple-500 transition-colors">MA100</span>
+                </label>
+             </div>
+          </div>
 
           {/* Chart Area */}
           <div className="h-[400px] w-full relative">
@@ -191,7 +263,7 @@ export default function StockChartModal({ isOpen, onClose, ticker = 'ENZY.ST' }:
               </div>
             ) : data.length > 0 ? (
               <ResponsiveContainer width="100%" height="100%">
-                <LineChart data={data} margin={{ top: 10, right: 10, left: 0, bottom: 0 }}>
+                <ComposedChart data={data} margin={{ top: 10, right: 10, left: 10, bottom: 0 }}>
                   <defs>
                     <linearGradient id="colorPrice" x1="0" y1="0" x2="0" y2="1">
                       <stop offset="5%" stopColor={lineColor} stopOpacity={0.3}/>
@@ -210,33 +282,89 @@ export default function StockChartModal({ isOpen, onClose, ticker = 'ENZY.ST' }:
                     tickLine={false}
                   />
                   <YAxis 
-                    domain={[minPrice - padding, maxPrice + padding]} 
-                    tickFormatter={(val) => val.toFixed(1)}
+                    yAxisId="price"
                     orientation="right"
+                    scale={showLog ? 'log' : 'linear'}
+                    domain={showLog ? ['dataMin', 'dataMax'] : [minPrice - padding, maxPrice + padding]} 
+                    tickFormatter={(val) => val.toFixed(1)}
                     stroke="#9CA3AF"
                     fontSize={12}
                     tickMargin={10}
                     axisLine={false}
                     tickLine={false}
+                    allowDataOverflow={true}
                   />
+                  <YAxis 
+                    yAxisId="volume"
+                    axisLine={false}
+                    tick={false}
+                    hide={true}
+                    domain={['auto', (max: number) => max * 5]} 
+                  />
+                  
                   <Tooltip 
                     contentStyle={{ borderRadius: '16px', border: 'none', boxShadow: '0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04)', padding: '16px', backgroundColor: 'rgba(255, 255, 255, 0.95)' }}
+                    itemStyle={{ padding: '2px 0' }}
                     labelFormatter={(label) => <span className="text-xs font-black text-gray-400 tracking-widest uppercase">{formatTooltipDate(label as Date)}</span>}
-                    formatter={(value: any) => [<span className="text-lg font-black text-brand-dark italic">{Number(value).toFixed(2)} kr</span>, '']}
+                    formatter={(value: any, name: any) => {
+                      if (name === 'price') return [<span key="price" className="text-lg font-black text-brand-dark italic">{Number(value).toFixed(2)} kr</span>, 'Pris'];
+                      if (name === 'volume') return [<span key="vol" className="text-sm font-bold text-gray-500">{Number(value).toLocaleString('sv-SE')} st</span>, 'Volym'];
+                      if (name === 'ma30') return [<span key="ma30" className="text-sm font-bold text-orange-500">{Number(value).toFixed(2)} kr</span>, 'MA30'];
+                      if (name === 'ma100') return [<span key="ma100" className="text-sm font-bold text-purple-500">{Number(value).toFixed(2)} kr</span>, 'MA100'];
+                      return [value, name];
+                    }}
                     separator=""
                   />
+
                   {stockInfo.price > 0 && selectedTimeframe.range !== 'max' && selectedTimeframe.range !== '10y' && (
-                    <ReferenceLine y={data[0]?.price} stroke="#9CA3AF" strokeDasharray="3 3" />
+                    <ReferenceLine yAxisId="price" y={data[0]?.price} stroke="#9CA3AF" strokeDasharray="3 3" />
                   )}
+
+                  {showVolume && (
+                    <Bar 
+                      yAxisId="volume"
+                      dataKey="volume" 
+                      fill="#9CA3AF" 
+                      opacity={0.2}
+                      radius={[4, 4, 0, 0]}
+                    />
+                  )}
+
+                  {showMA30 && (
+                    <Line 
+                      yAxisId="price"
+                      type="monotone" 
+                      dataKey="ma30" 
+                      stroke="#F97316" 
+                      strokeWidth={2}
+                      dot={false}
+                      animationDuration={300}
+                    />
+                  )}
+
+                  {showMA100 && (
+                    <Line 
+                      yAxisId="price"
+                      type="monotone" 
+                      dataKey="ma100" 
+                      stroke="#A855F7" 
+                      strokeWidth={2}
+                      dot={false}
+                      animationDuration={300}
+                    />
+                  )}
+
                   <Line 
+                    yAxisId="price"
                     type="monotone" 
                     dataKey="price" 
                     stroke={lineColor} 
                     strokeWidth={3}
                     dot={false}
                     activeDot={{ r: 6, fill: lineColor, strokeWidth: 0 }}
+                    animationDuration={300}
                   />
-                </LineChart>
+                </ComposedChart>
               </ResponsiveContainer>
             ) : null}
           </div>

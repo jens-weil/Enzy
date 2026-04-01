@@ -1,6 +1,7 @@
-import { NextResponse } from 'next/server';
+import { NextRequest, NextResponse } from 'next/server';
 import fs from 'fs';
 import path from 'path';
+import { requireRole } from '@/lib/auth';
 
 const settingsPath = path.join(process.cwd(), 'data', 'settings.json');
 
@@ -12,7 +13,12 @@ function getSettings() {
   return JSON.parse(data);
 }
 
-export async function GET() {
+export async function GET(request: NextRequest) {
+  const auth = await requireRole(request, ['Admin', 'Editor']);
+  if (!auth.authorized) {
+    return NextResponse.json({ error: auth.error }, { status: auth.status });
+  }
+
   try {
     const settings = getSettings();
     return NextResponse.json(settings);
@@ -21,7 +27,12 @@ export async function GET() {
   }
 }
 
-export async function POST(request: Request) {
+export async function POST(request: NextRequest) {
+  const auth = await requireRole(request, ['Admin']);
+  if (!auth.authorized) {
+    return NextResponse.json({ error: auth.error }, { status: auth.status });
+  }
+
   try {
     const body = await request.json();
     const currentSettings = getSettings();

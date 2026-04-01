@@ -167,7 +167,7 @@ function ArticleModal({ article, isAdmin, onClose, onDelete, onEdit }: ArticleMo
                   articleTitle={article.title}
                   socialMedia={article.socialMedia}
                   socialLinks={article.socialLinks}
-                  size="sm"
+                  size="md"
                   showLabel={true}
                 />
               </div>
@@ -967,7 +967,7 @@ export default function ArticleFeed({ initialArticles }: ArticleFeedProps) {
                     socialFilters[p as keyof typeof socialFilters] ? "bg-brand-teal text-white border-transparent shadow-md scale-110" : "bg-gray-50 dark:bg-slate-800 text-gray-400 border-transparent opacity-50 hover:opacity-100"
                   }`}
                 >
-                  <div className="w-4 h-4">
+                  <div className="w-6 h-6">
                     {SOCIAL_ICONS[p]}
                   </div>
                 </button>
@@ -1013,12 +1013,12 @@ export default function ArticleFeed({ initialArticles }: ArticleFeedProps) {
                 <span className="text-[10px] font-black text-brand-teal uppercase tracking-widest flex items-center gap-2 group-hover:gap-4 transition-all">
                   LÄS MER <span>&rarr;</span>
                 </span>
-                <SocialShare 
+                 <SocialShare 
                   articleId={article.id}
                   articleTitle={article.title}
                   socialMedia={article.socialMedia}
                   socialLinks={article.socialLinks}
-                  size="xs"
+                  size="sm"
                   variant="ghost"
                   showLabel={false}
                 />
