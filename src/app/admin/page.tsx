@@ -19,6 +19,12 @@ interface ArticleForm {
     linkedin: boolean;
     tiktok: boolean;
   };
+  socialLinks: {
+    facebook?: string;
+    instagram?: string;
+    linkedin?: string;
+    tiktok?: string;
+  };
 }
 
 const initialFormState: ArticleForm = {
@@ -32,6 +38,12 @@ const initialFormState: ArticleForm = {
     instagram: false,
     linkedin: false,
     tiktok: false,
+  },
+  socialLinks: {
+    facebook: '',
+    instagram: '',
+    linkedin: '',
+    tiktok: '',
   },
 };
 
@@ -82,7 +94,8 @@ function AdminForm() {
             ingress: article.ingress || '',
             content: article.content,
             imageUrl: article.imageUrl,
-            socialMedia: article.socialMedia
+            socialMedia: article.socialMedia || initialFormState.socialMedia,
+            socialLinks: article.socialLinks || initialFormState.socialLinks
           });
         }
       }
@@ -119,6 +132,14 @@ function AdminForm() {
     setFormData((prev) => ({
       ...prev,
       socialMedia: { ...prev.socialMedia, [name]: checked },
+    }));
+  };
+  
+  const handleLinkChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const { name, value } = e.target;
+    setFormData((prev) => ({
+      ...prev,
+      socialLinks: { ...prev.socialLinks, [name]: value },
     }));
   };
 
@@ -320,21 +341,39 @@ function AdminForm() {
 
           <div className="space-y-4">
             <label className="text-xs font-black text-gray-400 uppercase tracking-widest ml-1">Social Media</label>
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
               {['facebook', 'linkedin', 'instagram', 'tiktok'].map((platform) => (
-                <label 
-                  key={platform} 
-                  className={`flex items-center justify-between p-4 rounded-2xl border transition-all cursor-pointer ${formData.socialMedia[platform as keyof typeof formData.socialMedia] ? 'bg-brand-teal/5 border-brand-teal text-brand-teal' : 'bg-gray-50 dark:bg-slate-800 border-transparent text-gray-400'}`}
-                >
-                  <span className="font-black text-[10px] uppercase tracking-widest">{platform}</span>
-                  <input
-                    type="checkbox"
-                    name={platform}
-                    checked={formData.socialMedia[platform as keyof typeof formData.socialMedia]}
-                    onChange={handleSocialChange}
-                    className="w-5 h-5 rounded-lg border-gray-300 text-brand-teal focus:ring-brand-teal"
-                  />
-                </label>
+                <div key={platform} className="space-y-3">
+                  <label 
+                    className={`flex items-center justify-between p-4 rounded-2xl border transition-all cursor-pointer ${formData.socialMedia[platform as keyof typeof formData.socialMedia] ? 'bg-brand-teal/5 border-brand-teal text-brand-teal' : 'bg-gray-50 dark:bg-slate-800 border-transparent text-gray-400'}`}
+                  >
+                    <span className="font-black text-[10px] uppercase tracking-widest">{platform}</span>
+                    <input
+                      type="checkbox"
+                      name={platform}
+                      checked={formData.socialMedia[platform as keyof typeof formData.socialMedia]}
+                      onChange={handleSocialChange}
+                      className="w-5 h-5 rounded-lg border-gray-300 text-brand-teal focus:ring-brand-teal"
+                    />
+                  </label>
+                  
+                  {formData.socialMedia[platform as keyof typeof formData.socialMedia] && platform !== 'facebook' && (
+                    <div className="animate-in slide-in-from-top-2 duration-300">
+                      <input
+                        type="url"
+                        name={platform}
+                        value={formData.socialLinks[platform as keyof typeof formData.socialLinks] || ''}
+                        onChange={handleLinkChange}
+                        placeholder={`Länk till ${platform}-inlägg...`}
+                        className="w-full px-4 py-2 rounded-xl bg-white dark:bg-slate-900 border border-brand-teal/20 focus:border-brand-teal outline-none transition-all font-bold text-[10px] text-gray-600 dark:text-gray-300 placeholder:text-gray-400"
+                      />
+                    </div>
+                  )}
+
+                  {platform === 'facebook' && formData.socialMedia.facebook && (
+                    <p className="text-[8px] font-black uppercase text-brand-teal px-2 italic opacity-60">Länk genereras automatiskt vid publicering</p>
+                  )}
+                </div>
               ))}
             </div>
           </div>
