@@ -1,5 +1,6 @@
 "use client";
 
+import { useState } from "react";
 import { useAuth } from "./AuthContext";
 
 type SocialMedia = {
@@ -59,6 +60,7 @@ export default function SocialShare({
   showLabel = true,
 }: SocialShareProps) {
   const { profile } = useAuth();
+  const [copied, setCopied] = useState(false);
   const isAdmin = profile?.role === "Admin" || profile?.role === "Editor";
 
   const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || (typeof window !== "undefined" ? window.location.origin : "https://enzymatica.se");
@@ -66,7 +68,7 @@ export default function SocialShare({
 
   const getShareUrl = (platform: string) => {
     const encodedUrl = encodeURIComponent(articleUrl);
-    const encodedTitle = encodeURIComponent(articleTitle);
+    // const encodedTitle = encodeURIComponent(articleTitle);
 
     switch (platform) {
       case "facebook":
@@ -74,10 +76,46 @@ export default function SocialShare({
       case "linkedin":
         return `https://www.linkedin.com/sharing/share-offsite/?url=${encodedUrl}`;
       default:
-        // Instagram and TikTok don't have direct web share URLs
-        // We fallback to the original link if available (likely the post)
-        return socialLinks[platform as keyof SocialLinks] || "#";
+        // By default, just return the article URL so we can handle it with copy/share
+        return articleUrl;
     }
+  };
+
+  const handleShareClick = async (e: React.MouseEvent, platform: string, href: string) => {
+    // If not Admin (Sharing Mode)
+    if (!isAdmin) {
+      // 1. Try Native Web Share API if available (premium mobile experience)
+      if (typeof navigator !== "undefined" && navigator.share) {
+        e.preventDefault();
+        try {
+          await navigator.share({
+            title: articleTitle,
+            text: "Kolla in artikeln från Enzymatica!",
+            url: articleUrl,
+          });
+          return;
+        } catch (err) {
+          // If the user cancelled or UI is blocked, we fall back to standard links
+          if ((err as Error).name === "AbortError") return;
+          console.warn("Navigator share failed, falling back to link:", err);
+        }
+      }
+
+      // 2. If it's a platform without a standard sharing URL (Instagram, TikTok), or if above failed
+      if (href === articleUrl || platform === "instagram" || platform === "tiktok") {
+        e.preventDefault();
+        try {
+          await navigator.clipboard.writeText(articleUrl);
+          setCopied(true);
+          setTimeout(() => setCopied(false), 2000);
+        } catch (err) {
+          console.error("Failed to copy link:", err);
+        }
+        return;
+      }
+    }
+    
+    // For Admins or fallback sharing: standard anchor behavior applies
   };
 
   const colors: Record<string, string> = {
@@ -103,8 +141,9 @@ export default function SocialShare({
   return (
     <div className={`flex flex-wrap gap-4 items-center ${variant === "filled" ? "py-4" : ""}`}>
       {showLabel && (
-        <span className="text-[10px] font-black text-gray-400 uppercase tracking-widest">
-          {isAdmin ? "Publicerad via" : "Dela via"}
+        <span className="text-[10px] font-black text-gray-400 uppercase tracking-widest flex items-center gap-2">
+          {isAdmin ? "Publicerad via" : (copied ? "Länk kopierad!" : "Dela via")}
+          {copied && <span className="text-brand-teal text-[8px]">✓</span>}
         </span>
       )}
       <div className={`flex ${size === "xs" ? "gap-1" : "gap-3"}`}>
@@ -128,8 +167,8 @@ export default function SocialShare({
                   ? `${colors[platform] || "bg-gray-200"} shadow-md hover:scale-110` 
                   : `${iconColor} opacity-70 hover:opacity-100 hover:scale-125`
               }`}
-              title={isAdmin ? `Se på ${platform}` : `Dela på ${platform}`}
-              onClick={(e) => e.stopPropagation()}
+              title={isAdmin ? `Se på ${platform}` : (platform === "instagram" || platform === "tiktok" ? "Kopiera länk" : `Dela på ${platform}`)}
+              onClick={(e) => handleShareClick(e, platform, href)}
             >
               <div className="w-full h-full">
                 {SOCIAL_ICONS[platform]}
@@ -141,3 +180,4 @@ export default function SocialShare({
     </div>
   );
 }
+
