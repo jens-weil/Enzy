@@ -60,7 +60,10 @@ export async function POST(request: NextRequest) {
 
     console.log(`Creating article with siteUrl: ${siteUrl}`);
 
-    if (newArticle.socialMedia.facebook && !newArticle.socialLinks.facebook) {
+    const isManualLink = (url?: string) => !!(url && url.trim().startsWith('http') && url.trim().length > 10);
+    const hasManualFB = isManualLink(newArticle.socialLinks?.facebook);
+
+    if (newArticle.socialMedia.facebook && !hasManualFB) {
       const fbResult = await postToFacebook({
         title: newArticle.title,
         ingress: newArticle.ingress,
@@ -68,8 +71,12 @@ export async function POST(request: NextRequest) {
         imageUrl: newArticle.imageUrl ? (newArticle.imageUrl.startsWith('http') ? newArticle.imageUrl : `${siteUrl}${newArticle.imageUrl}`) : undefined
       });
       if (fbResult) {
+        console.log("Article API: Facebook post SUCCESS:", fbResult.id);
         newArticle.facebookPostId = fbResult.id;
         newArticle.socialLinks.facebook = fbResult.url;
+      } else {
+        console.warn("Article API: Facebook post FAILED (check logs)");
+        newArticle._fbWarning = "Facebook-inlägget kunde inte skapas automatisk.";
       }
     }
 
@@ -93,7 +100,11 @@ export async function POST(request: NextRequest) {
     fs.writeFileSync(filePath, JSON.stringify(articles, null, 2), 'utf8');
     revalidatePath('/articles');
 
-    return NextResponse.json({ success: true, article: newArticle }, { status: 201 });
+    return NextResponse.json({ 
+      success: true, 
+      article: newArticle,
+      warning: newArticle._fbWarning 
+    }, { status: 201 });
   } catch (error) {
     console.error("Error saving article:", error);
     return NextResponse.json({ error: 'Ett internt serverfel uppstod' }, { status: 500 });
@@ -139,7 +150,29 @@ export async function PATCH(request: NextRequest) {
     let facebookPostId = articles[articleIndex].facebookPostId;
     let updatedSocialLinks = { ...(socialLinks || articles[articleIndex].socialLinks || {}) };
 
-    if (newFB && !facebookPostId && !updatedSocialLinks.facebook) {
+    const platforms = ["facebook", "linkedin", "instagram", "tiktok"] as const;
+    platforms.forEach(p => {
+      const oldVal = articles[articleIndex].socialMedia[p];
+      const newVal = socialMedia?.[p] !== undefined ? socialMedia[p] : oldVal;
+      
+      if (oldVal && !newVal) {
+        console.log(`Article API (PATCH): User turned ${p} OFF for ${id}. Clearing link.`);
+        delete updatedSocialLinks[p];
+        if (p === 'facebook') {
+          if (facebookPostId) {
+            deleteFromFacebook(facebookPostId).catch(e => console.warn("Background FB delete failed:", e));
+          }
+          facebookPostId = undefined;
+        }
+      }
+    });
+
+    const isManualLink = (url?: string) => !!(url && url.trim().startsWith('http') && url.trim().length > 10);
+    const hasManualFB = isManualLink(updatedSocialLinks.facebook);
+
+    // LOGIC: Automate Facebook when toggling ON (and no existing ID/Manual Link)
+    if (newFB && !facebookPostId && !hasManualFB) {
+      console.log(`Article API (PATCH): Attempting automated Facebook post for ${id}...`);
       const fbResult = await postToFacebook({
         title: title || articles[articleIndex].title,
         ingress: ingress !== undefined ? ingress : articles[articleIndex].ingress,
@@ -147,24 +180,29 @@ export async function PATCH(request: NextRequest) {
         imageUrl: imageUrl ? (imageUrl.startsWith('http') ? imageUrl : `${siteUrl}${imageUrl}`) : (articles[articleIndex].imageUrl ? (articles[articleIndex].imageUrl.startsWith('http') ? articles[articleIndex].imageUrl : `${siteUrl}${articles[articleIndex].imageUrl}`) : undefined)
       });
       if (fbResult) {
+        console.log("Article API (PATCH): Facebook post SUCCESS:", fbResult.id);
         facebookPostId = fbResult.id;
         updatedSocialLinks.facebook = fbResult.url;
+      } else {
+        console.warn("Article API (PATCH): Facebook post FAILED");
+        articles[articleIndex]._fbWarning = "Facebook-inlägget kunde inte skapas automatisk.";
       }
-    } else if (oldFB && !newFB && facebookPostId) {
-      await deleteFromFacebook(facebookPostId);
-      facebookPostId = undefined;
-      // Note: We don't delete updatedSocialLinks.facebook here if it was manual
     }
 
     articles[articleIndex] = {
       ...articles[articleIndex],
-      title,
+      title: title || articles[articleIndex].title,
       date: date || articles[articleIndex].date,
       type: type || articles[articleIndex].type,
       ingress: ingress !== undefined ? ingress : articles[articleIndex].ingress,
       imageUrl: imageUrl !== undefined ? imageUrl : articles[articleIndex].imageUrl,
-      content,
-      socialMedia: socialMedia || articles[articleIndex].socialMedia,
+      content: content !== undefined ? content : articles[articleIndex].content,
+      socialMedia: {
+        facebook: newFB,
+        instagram: socialMedia?.instagram !== undefined ? socialMedia.instagram : articles[articleIndex].socialMedia.instagram,
+        linkedin: socialMedia?.linkedin !== undefined ? socialMedia.linkedin : articles[articleIndex].socialMedia.linkedin,
+        tiktok: socialMedia?.tiktok !== undefined ? socialMedia.tiktok : articles[articleIndex].socialMedia.tiktok,
+      },
       socialLinks: updatedSocialLinks,
       facebookPostId
     };
@@ -173,10 +211,14 @@ export async function PATCH(request: NextRequest) {
     revalidatePath('/articles');
     revalidatePath(`/articles/${id}`);
 
-    return NextResponse.json({ success: true, article: articles[articleIndex] });
-  } catch (error) {
+    return NextResponse.json({ 
+      success: true, 
+      article: articles[articleIndex],
+      warning: articles[articleIndex]._fbWarning 
+    });
+  } catch (error: any) {
     console.error("Error updating article:", error);
-    return NextResponse.json({ error: 'Ett internt serverfel uppstod vid uppdatering' }, { status: 500 });
+    return NextResponse.json({ error: `Ett internt serverfel uppstod: ${error.message}` }, { status: 500 });
   }
 }
 

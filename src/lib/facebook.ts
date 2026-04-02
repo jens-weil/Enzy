@@ -7,6 +7,23 @@ import path from 'path';
  * Supports configurable strategies: "comment" (link in comment) or "direct" (link post).
  */
 
+// Helper for fetch with timeout
+async function fetchWithTimeout(url: string, options: any = {}, timeout = 10000) {
+  const controller = new AbortController();
+  const id = setTimeout(() => controller.abort(), timeout);
+  try {
+    const response = await fetch(url, {
+      ...options,
+      signal: controller.signal
+    });
+    clearTimeout(id);
+    return response;
+  } catch (error) {
+    clearTimeout(id);
+    throw error;
+  }
+}
+
 const FB_PAGE_ID = process.env.FB_PAGE_ID;
 const FB_PAGE_ACCESS_TOKEN = process.env.FB_PAGE_ACCESS_TOKEN;
 const API_VERSION = "v22.0";
@@ -44,18 +61,17 @@ export async function postToFacebook(data: {
   imageUrl?: string;
 }) {
   if (!FB_PAGE_ID || !FB_PAGE_ACCESS_TOKEN || FB_PAGE_ID === "your-page-id-here") {
-    const errorMsg = "Facebook credentials not configured. Skipping post.";
-    console.warn(errorMsg);
-    logError(errorMsg, { FB_PAGE_ID_exists: !!FB_PAGE_ID, FB_PAGE_ACCESS_TOKEN_exists: !!FB_PAGE_ACCESS_TOKEN });
+    const errorMsg = `Facebook credentials missing: ID=${!!FB_PAGE_ID}, Token=${!!FB_PAGE_ACCESS_TOKEN}`;
+    console.warn("FB_POST_FAILURE:", errorMsg);
+    logError(errorMsg);
     return null;
   }
 
   const strategy = getStrategy();
   const isDirect = strategy === "direct";
 
-  console.log(`Posting to Facebook using strategy: ${strategy}`);
+  console.log(`FB_POST_START: Strategy=${strategy}, Image=${!!data.imageUrl}`);
 
-  // Customize message based on strategy
   const message = isDirect 
     ? `${data.title}\n\n${data.ingress || ""}`
     : `${data.title}\n\n${data.ingress || ""}\n\n👇 Länk till mer information finns i första kommentaren nedan!`;
@@ -65,41 +81,35 @@ export async function postToFacebook(data: {
     
     // STRATEGY: PHOTO UPLOAD + COMMENT (Default/Comment)
     if (!isDirect && data.imageUrl && isLocal) {
-      // Extract local path from URL or use as is
       const localPath = data.imageUrl.includes("localhost") 
         ? new URL(data.imageUrl).pathname 
         : data.imageUrl;
-        
       const filePath = path.join(process.cwd(), 'public', localPath);
       
       if (fs.existsSync(filePath)) {
-        console.log(`Uploading local photo: ${filePath}`);
+        console.log(`FB_UPLOADING_PHOTO: ${filePath}`);
         const fileBuffer = fs.readFileSync(filePath);
         const formData = new FormData();
-        
-        // Convert buffer to Blob for native fetch
         const blob = new Blob([fileBuffer], { type: 'image/jpeg' });
         formData.append("source", blob, path.basename(filePath));
         formData.append("caption", message);
         formData.append("access_token", FB_PAGE_ACCESS_TOKEN);
 
-        const response = await fetch(`https://graph.facebook.com/${API_VERSION}/${FB_PAGE_ID}/photos`, {
+        const response = await fetchWithTimeout(`https://graph.facebook.com/${API_VERSION}/${FB_PAGE_ID}/photos`, {
           method: "POST",
           body: formData,
         });
 
         const result = await response.json();
         if (!response.ok) {
-          console.error("Facebook API error (Photo Upload):", result.error);
-          logError("Facebook API error (Photo Upload)", result.error);
-          throw new Error(result.error?.message || "Facebook API error (Photo Upload)");
+          throw new Error(result.error?.message || "Photo Upload Failed");
         }
         
         const postId = result.id as string;
-        console.log(`Successfully created photo post with ID: ${postId}`);
+        console.log(`FB_PHOTO_POSTED: ${postId}. Posting comment...`);
 
         // Post the link as a comment
-        const commentResponse = await fetch(`https://graph.facebook.com/${API_VERSION}/${postId}/comments`, {
+        const commentResponse = await fetchWithTimeout(`https://graph.facebook.com/${API_VERSION}/${postId}/comments`, {
           method: "POST",
           body: new URLSearchParams({
             message: data.link,
@@ -107,15 +117,12 @@ export async function postToFacebook(data: {
           }),
         });
 
-        if (!commentResponse.ok) {
-          const commentResult = await commentResponse.json();
-          console.error("Failed to post comment on Facebook:", commentResult.error?.message || "Unknown error");
-        }
+        if (!commentResponse.ok) console.warn("FB_COMMENT_FAILURE");
 
         // Fetch permalink_url
         let permalinkUrl = `https://www.facebook.com/${postId}`;
         try {
-          const urlRes = await fetch(`https://graph.facebook.com/${API_VERSION}/${postId}?fields=permalink_url&access_token=${FB_PAGE_ACCESS_TOKEN}`);
+          const urlRes = await fetchWithTimeout(`https://graph.facebook.com/${API_VERSION}/${postId}?fields=permalink_url&access_token=${FB_PAGE_ACCESS_TOKEN}`);
           if (urlRes.ok) {
             const urlData = await urlRes.json();
             if (urlData.permalink_url) permalinkUrl = urlData.permalink_url;
@@ -127,79 +134,74 @@ export async function postToFacebook(data: {
     }
 
     // STRATEGY: DIRECT LINK POST (Feed)
-    console.log("Using standard feed post (link post)");
+    console.log("FB_POSTING_FEED...");
     const formData = new URLSearchParams();
     formData.append("message", message);
-    
-    if (!data.link.includes('localhost')) {
-      formData.append("link", data.link);
-    } else {
-      formData.set("message", message + `\n\nLink: ${data.link}`);
-    }
-    
+    if (!data.link.includes('localhost')) formData.append("link", data.link);
+    else formData.set("message", message + `\n\nLink: ${data.link}`);
     formData.append("access_token", FB_PAGE_ACCESS_TOKEN);
 
-    const response = await fetch(`https://graph.facebook.com/${API_VERSION}/${FB_PAGE_ID}/feed`, {
+    const response = await fetchWithTimeout(`https://graph.facebook.com/${API_VERSION}/${FB_PAGE_ID}/feed`, {
       method: "POST",
       body: formData,
     });
 
     const result = await response.json();
     if (!response.ok) {
-      console.error("Facebook API error (Feed Post):", result.error);
-      logError("Facebook API error (Feed Post)", { error: result.error, link: data.link, strategy: strategy });
-      throw new Error(result.error?.message || "Facebook API error (Feed Post)");
+      throw new Error(result.error?.message || "Feed Post Failed");
     }
 
     const postId = result.id as string;
-    console.log(`Successfully created feed post with ID: ${postId}. Fetching permalink_url...`);
+    console.log(`FB_POST_CREATED: ${postId}. Fetching permalink...`);
 
-    // Fetch the actual permalink_url for better mobile support
-    let permalinkUrl = `https://www.facebook.com/${postId}`; // Fallback
-    try {
-      const urlResponse = await fetch(`https://graph.facebook.com/${API_VERSION}/${postId}?fields=permalink_url&access_token=${FB_PAGE_ACCESS_TOKEN}`);
-      if (urlResponse.ok) {
-        const urlData = await urlResponse.json();
-        if (urlData.permalink_url) {
-          permalinkUrl = urlData.permalink_url;
-          console.log(`Retrieved permalink_url: ${permalinkUrl}`);
-        }
-      }
-    } catch (e) {
-      console.warn("Failed to fetch permalink_url from Facebook, using fallback:", e);
+    if (!isDirect) {
+      console.log("FB_POSTING_COMMENT...");
+      await fetchWithTimeout(`https://graph.facebook.com/${API_VERSION}/${postId}/comments`, {
+        method: "POST",
+        body: new URLSearchParams({
+          message: data.link,
+          access_token: FB_PAGE_ACCESS_TOKEN || "",
+        }),
+      }).catch(e => console.warn("FB_COMMENT_FAILURE:", e.message));
     }
 
+    let permalinkUrl = `https://www.facebook.com/${postId}`;
+    try {
+      const urlResponse = await fetchWithTimeout(`https://graph.facebook.com/${API_VERSION}/${postId}?fields=permalink_url&access_token=${FB_PAGE_ACCESS_TOKEN}`);
+      if (urlResponse.ok) {
+        const urlData = await urlResponse.json();
+        if (urlData.permalink_url) permalinkUrl = urlData.permalink_url;
+      }
+    } catch (e) {
+      console.warn("FB_PERMALINK_EXCEPTION:", e instanceof Error ? e.message : "timeout");
+    }
+
+    console.log("FB_POST_SUCCESS:", { id: postId, url: permalinkUrl });
     return { id: postId, url: permalinkUrl };
   } catch (error: any) {
-    console.error("Failed to post to Facebook:", error);
-    logError("Failed to post to Facebook", error instanceof Error ? error.message : error);
+    const errorMsg = error instanceof Error ? error.message : String(error);
+    console.error("FB_POST_CRITICAL_FAILURE:", errorMsg);
+    logError("Failed to post to Facebook", errorMsg);
     return null;
   }
 }
 
 export async function deleteFromFacebook(postId: string) {
   if (!FB_PAGE_ACCESS_TOKEN || FB_PAGE_ACCESS_TOKEN === "your-page-access-token-here") {
-    console.warn("Facebook credentials not configured. Skipping delete.");
     return false;
   }
 
   try {
-    const response = await fetch(`https://graph.facebook.com/${API_VERSION}/${postId}`, {
+    console.log(`FB_DELETING_POST: ${postId}`);
+    const response = await fetchWithTimeout(`https://graph.facebook.com/${API_VERSION}/${postId}`, {
       method: "DELETE",
-      body: new URLSearchParams({
-        access_token: FB_PAGE_ACCESS_TOKEN,
-      }),
+      body: new URLSearchParams({ access_token: FB_PAGE_ACCESS_TOKEN }),
     });
 
     const result = await response.json();
-    if (!response.ok) {
-      console.error("Facebook API error (Delete):", result.error);
-      throw new Error(result.error?.message || "Facebook API error (Delete)");
-    }
-
-    return result.success as boolean;
+    return !!response.ok && !!result.success;
   } catch (error) {
-    console.error("Failed to delete from Facebook:", error);
+    console.error("FB_DELETE_FAILURE:", error instanceof Error ? error.message : "timeout");
     return false;
   }
 }
