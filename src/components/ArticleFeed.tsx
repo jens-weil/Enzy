@@ -2,6 +2,7 @@
 
 import { useState, useMemo, useEffect } from "react";
 import Image from "next/image";
+import { motion, AnimatePresence } from "framer-motion";
 import { useAuth } from "./AuthContext";
 import { supabase } from "@/lib/supabase";
 import SocialShare, { SOCIAL_ICONS } from "./SocialShare";
@@ -984,54 +985,79 @@ export default function ArticleFeed({ initialArticles }: ArticleFeedProps) {
       </div>
 
       {/* Article Grid */}
-      <div className="grid gap-8 md:grid-cols-2 lg:grid-cols-3">
-        {filteredArticles.map(article => (
-          <article
-            key={article.id}
-            className="group flex flex-col bg-white dark:bg-slate-900 rounded-3xl overflow-hidden border border-gray-100 dark:border-slate-800 shadow-sm hover:shadow-2xl transition-all duration-500 transform hover:-translate-y-2 cursor-pointer"
-            onClick={() => setSelectedArticle(article)}
-          >
-            <div className="relative w-full h-56 bg-gray-50 dark:bg-slate-800">
-              <Image
-                src={article.imageUrl || "/logo.png"}
-                alt={article.title}
-                fill
-                className={`object-cover transition-transform duration-700 group-hover:scale-110 ${!article.imageUrl && "p-12 object-contain opacity-40"}`}
-              />
-              <div className="absolute top-4 left-4">
-                <span className={`px-4 py-1 rounded-full text-[10px] font-black tracking-widest shadow-lg ${getTypeColor(article.type)}`}>
-                  {article.type.toUpperCase()}
-                </span>
-              </div>
-            </div>
-            <div className="p-8 flex-1 flex flex-col">
-              <div className="flex justify-between items-center mb-4">
-                <time className="text-[10px] font-black text-gray-400 uppercase tracking-widest">{formatDate(article.date)}</time>
-              </div>
-              <h2 className="text-xl font-black text-gray-900 dark:text-white mb-4 line-clamp-2 leading-tight group-hover:text-brand-teal transition-colors">
-                {article.title}
-              </h2>
-              <div
-                className="article-rich-content text-gray-500 dark:text-gray-400 line-clamp-3 mb-8 leading-relaxed text-sm font-medium"
-                dangerouslySetInnerHTML={{ __html: article.ingress || "" }}
-              />
-              <div className="mt-auto pt-6 border-t border-gray-50 dark:border-slate-800/50 flex items-center justify-between">
-                <span className="text-[10px] font-black text-brand-teal uppercase tracking-widest flex items-center gap-2 group-hover:gap-4 transition-all">
-                  LÄS MER <span>&rarr;</span>
-                </span>
-                   <SocialShare 
-                  articleId={article.id}
-                  articleTitle={article.title}
-                  socialMedia={article.socialMedia}
-                  socialLinks={article.socialLinks}
-                  size="sm"
-                  showLabel={false}
+      <motion.div 
+        layout
+        className="grid gap-8 sm:gap-10 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-3"
+      >
+        <AnimatePresence mode="popLayout">
+          {filteredArticles.map((article, index) => (
+            <motion.article
+              layout
+              initial={{ opacity: 0, scale: 0.98 }}
+              animate={{ opacity: 1, scale: 1 }}
+              exit={{ opacity: 0, scale: 0.95, transition: { duration: 0.2 } }}
+              transition={{ 
+                duration: 0.6,
+                ease: [0.22, 1, 0.36, 1] // Quintic Out - very smooth
+              }}
+              key={article.id}
+              className="group flex flex-col bg-white dark:bg-slate-900 rounded-[2.5rem] overflow-hidden border border-gray-100 dark:border-slate-800 shadow-sm hover:shadow-2xl transition-all duration-700 cursor-pointer h-full"
+              onClick={() => setSelectedArticle(article)}
+            >
+              {/* Image Section */}
+              <div className="relative w-full aspect-video overflow-hidden bg-gray-50 dark:bg-slate-800 flex-shrink-0">
+                <Image
+                  src={article.imageUrl || "/logo.png"}
+                  alt={article.title}
+                  fill
+                  className={`object-cover transition-transform duration-1000 group-hover:scale-105 ${!article.imageUrl && "p-12 object-contain opacity-40"}`}
                 />
+                <div className="absolute top-5 left-5 z-10">
+                  <span className={`px-5 py-2 rounded-full text-[9px] font-black tracking-widest shadow-xl backdrop-blur-md ${getTypeColor(article.type)}`}>
+                    {article.type.toUpperCase()}
+                  </span>
+                </div>
+                {/* Subtle overlay on hover */}
+                <div className="absolute inset-0 bg-brand-teal/5 opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
               </div>
-            </div>
-          </article>
-        ))}
-      </div>
+
+              {/* White Content Section */}
+              <div className="p-5 sm:p-6 flex-1 flex flex-col bg-white dark:bg-slate-900">
+                <div className="flex items-center gap-3 mb-2 transition-transform duration-500 group-hover:translate-x-1">
+                   <div className="h-[2px] w-8 bg-brand-teal rounded-full" />
+                   <time className="text-[10px] font-black text-gray-400 uppercase tracking-widest italic">{formatDate(article.date)}</time>
+                </div>
+                
+                <h2 
+                  className="text-xl font-black text-brand-dark dark:text-white mb-3 line-clamp-2 leading-[1.2] uppercase italic group-hover:text-brand-teal transition-colors duration-300"
+                  title={article.title}
+                >
+                  {article.title}
+                </h2>
+                
+                {/* Ingress - restored but limited */}
+                <div 
+                  className="article-rich-content text-gray-500 dark:text-gray-400 line-clamp-2 mb-3 leading-relaxed text-sm font-medium opacity-80"
+                  dangerouslySetInnerHTML={{ __html: article.ingress || "" }}
+                />
+
+                <div className="mt-auto pt-4 border-t border-gray-50 dark:border-slate-800/50 flex items-center justify-end">
+                  <div className="transition-opacity duration-500">
+                    <SocialShare 
+                      articleId={article.id}
+                      articleTitle={article.title}
+                      socialMedia={article.socialMedia}
+                      socialLinks={article.socialLinks}
+                      size="sm"
+                      showLabel={false}
+                    />
+                  </div>
+                </div>
+              </div>
+            </motion.article>
+          ))}
+        </AnimatePresence>
+      </motion.div>
 
       {/* Delete Confirmation Modal */}
       {deletingId && (
