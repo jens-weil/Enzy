@@ -191,13 +191,21 @@ export default function SocialShare({
                 rel="noopener noreferrer"
                 onClick={(e) => {
                   e.stopPropagation();
+                  e.preventDefault();
                   if (isMobileTarget && platform === "facebook") {
-                    // On mobile, React's SPA synthetic events can prevent the OS from
-                    // catching facebook.com URLs as Universal Links (to open the app).
-                    // Bypassing React by using window.location.href directly forces
-                    // a real navigation that iOS/Android can intercept.
-                    e.preventDefault();
-                    window.location.href = postUrl;
+                    // iOS Universal Links only fire when a real native DOM anchor
+                    // with target="_blank" is clicked — not via React synthetic events
+                    // or window.location.href. We create a real DOM element and click
+                    // it programmatically to bypass React's event system entirely.
+                    const a = document.createElement("a");
+                    a.href = postUrl;
+                    a.target = "_blank";
+                    a.rel = "noopener noreferrer";
+                    document.body.appendChild(a);
+                    a.click();
+                    document.body.removeChild(a);
+                  } else {
+                    window.open(postUrl, "_blank", "noopener,noreferrer");
                   }
                 }}
                 className={`${sizeClasses[size]} flex items-center justify-center transition-all ${
