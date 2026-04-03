@@ -181,15 +181,43 @@ export default function SocialShare({
               onClick={(e) => e.stopPropagation()}
               className="flex items-center justify-center p-1"
             >
-              <a
-                href={postUrl}
-                rel="noopener noreferrer"
+              <button
                 onClick={(e) => {
                   e.stopPropagation();
                   e.preventDefault();
-                  // Use window.open so popup blockers don't interfere on mobile,
-                  // and Facebook app can catch the sharer.php URL via Universal Links
-                  window.open(postUrl, "_blank", "noopener,noreferrer");
+
+                  if (platform === "facebook") {
+                    // On mobile: navigator.share() opens the native OS share sheet.
+                    // The user picks Facebook from the list → Facebook app opens a proper
+                    // compose/share screen for the article. This is the ONLY reliable way
+                    // to share a URL into Facebook from mobile web.
+                    // On desktop or if share API unavailable: fall back to sharer.php popup.
+                    if (typeof navigator !== "undefined" && navigator.share) {
+                      navigator.share({
+                        title: articleTitle,
+                        text: "Kolla in den här artikeln från Enzymatica:",
+                        url: articleUrl,
+                      }).catch((err) => {
+                        if ((err as Error).name !== "AbortError") {
+                          // User cancelled or error — fall back to sharer.php
+                          window.open(
+                            `https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(articleUrl)}`,
+                            "_blank",
+                            "noopener,noreferrer,width=600,height=400"
+                          );
+                        }
+                      });
+                    } else {
+                      // Desktop fallback: open Facebook sharer popup
+                      window.open(
+                        `https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(articleUrl)}`,
+                        "_blank",
+                        "noopener,noreferrer,width=600,height=400"
+                      );
+                    }
+                  } else {
+                    window.open(postUrl!, "_blank", "noopener,noreferrer");
+                  }
                 }}
                 className={`${sizeClasses[size]} flex items-center justify-center transition-all ${
                   variant === "filled" 
@@ -200,13 +228,15 @@ export default function SocialShare({
               >
                 <div className="w-full h-full relative">
                   {SOCIAL_ICONS[platform]}
-                  <div className="absolute -top-1 -right-1 bg-white dark:bg-brand-dark rounded-full p-0.5 shadow-sm">
-                    <svg className="w-2 h-2 text-brand-dark dark:text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
-                    </svg>
-                  </div>
+                  {platform !== "facebook" && (
+                    <div className="absolute -top-1 -right-1 bg-white dark:bg-brand-dark rounded-full p-0.5 shadow-sm">
+                      <svg className="w-2 h-2 text-brand-dark dark:text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
+                      </svg>
+                    </div>
+                  )}
                 </div>
-              </a>
+              </button>
             </div>
           );
         })}
