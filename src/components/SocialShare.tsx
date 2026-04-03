@@ -188,12 +188,17 @@ export default function SocialShare({
             >
               <a
                 href={postUrl}
-                target={isMobileTarget ? "_top" : "_blank"}
                 rel="noopener noreferrer"
                 onClick={(e) => {
                   e.stopPropagation();
-                  // By avoiding e.preventDefault(), we allow the mobile OS to natively 
-                  // intercept the URL via Universal Links and open the correct post in the app.
+                  if (isMobileTarget && platform === "facebook") {
+                    // On mobile, React's SPA synthetic events can prevent the OS from
+                    // catching facebook.com URLs as Universal Links (to open the app).
+                    // Bypassing React by using window.location.href directly forces
+                    // a real navigation that iOS/Android can intercept.
+                    e.preventDefault();
+                    window.location.href = postUrl;
+                  }
                 }}
                 className={`${sizeClasses[size]} flex items-center justify-center transition-all ${
                   variant === "filled" 
