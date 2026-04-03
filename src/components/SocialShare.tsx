@@ -146,7 +146,10 @@ export default function SocialShare({
       <div className={`flex flex-wrap items-center ${size === "xs" ? "gap-1" : "gap-3"}`}>
         {/* Universal Share Button */}
         <button
-          onClick={(e) => handleShareClick(e as any, "share")}
+          onClick={(e) => {
+            e.stopPropagation();
+            handleShareClick(e as any, "share");
+          }}
           className={`${sizeClasses[size]} flex items-center justify-center transition-all ${
             variant === "filled" 
               ? `${colors.share} shadow-lg hover:scale-110` 
@@ -172,6 +175,7 @@ export default function SocialShare({
             <div 
               key={platform} 
               onPointerDown={(e) => e.stopPropagation()}
+              onPointerUp={(e) => e.stopPropagation()}
               onClick={(e) => e.stopPropagation()}
               className="flex items-center justify-center p-1"
             >
@@ -179,6 +183,7 @@ export default function SocialShare({
                 href={postUrl}
                 target="_blank"
                 rel="noopener noreferrer"
+                onClick={(e) => e.stopPropagation()}
                 className={`${sizeClasses[size]} flex items-center justify-center transition-all ${
                   variant === "filled" 
                     ? `${colors[platform]} shadow-md hover:scale-110` 

@@ -993,16 +993,20 @@ export default function ArticleFeed({ initialArticles }: ArticleFeedProps) {
           {filteredArticles.map((article, index) => (
             <motion.article
               layout
-              initial={{ opacity: 0, scale: 0.98 }}
-              animate={{ opacity: 1, scale: 1 }}
+              initial={{ opacity: 0, y: 15 }}
+              animate={{ opacity: 1, y: 0 }}
               exit={{ opacity: 0, scale: 0.95, transition: { duration: 0.2 } }}
-              transition={{ 
-                duration: 0.6,
-                ease: [0.22, 1, 0.36, 1] // Quintic Out - very smooth
-              }}
+              transition={{ duration: 0.3, ease: "easeOut" }}
               key={article.id}
               className="group flex flex-col bg-white dark:bg-slate-900 rounded-[2.5rem] overflow-hidden border border-gray-100 dark:border-slate-800 shadow-sm hover:shadow-2xl transition-all duration-700 cursor-pointer h-full"
-              onClick={() => setSelectedArticle(article)}
+              onClick={(e) => {
+                // If the click is on a social icon or its container, don't open the article modal
+                const target = e.target as HTMLElement;
+                if (target.closest(".social-share-container")) {
+                  return;
+                }
+                setSelectedArticle(article);
+              }}
             >
               {/* Image Section */}
               <div className="relative w-full aspect-video overflow-hidden bg-gray-50 dark:bg-slate-800 flex-shrink-0">
@@ -1042,7 +1046,7 @@ export default function ArticleFeed({ initialArticles }: ArticleFeedProps) {
                 />
 
                 <div className="mt-auto pt-4 border-t border-gray-50 dark:border-slate-800/50 flex items-center justify-end">
-                  <div className="transition-opacity duration-500">
+                  <div className="social-share-container transition-opacity duration-500">
                     <SocialShare 
                       articleId={article.id}
                       articleTitle={article.title}
