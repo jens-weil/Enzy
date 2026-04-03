@@ -70,6 +70,7 @@ export default function SocialShare({
 }: SocialShareProps) {
   const { profile } = useAuth();
   const [copied, setCopied] = useState(false);
+  const [showFbDialog, setShowFbDialog] = useState(false);
   const isAdmin = profile?.role === "Admin" || profile?.role === "Editor";
 
   const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || (typeof window !== "undefined" ? window.location.origin : "https://enzymatica.se");
@@ -185,36 +186,8 @@ export default function SocialShare({
                 onClick={(e) => {
                   e.stopPropagation();
                   e.preventDefault();
-
                   if (platform === "facebook") {
-                    // On mobile: navigator.share() opens the native OS share sheet.
-                    // The user picks Facebook from the list → Facebook app opens a proper
-                    // compose/share screen for the article. This is the ONLY reliable way
-                    // to share a URL into Facebook from mobile web.
-                    // On desktop or if share API unavailable: fall back to sharer.php popup.
-                    if (typeof navigator !== "undefined" && navigator.share) {
-                      navigator.share({
-                        title: articleTitle,
-                        text: "Kolla in den här artikeln från Enzymatica:",
-                        url: articleUrl,
-                      }).catch((err) => {
-                        if ((err as Error).name !== "AbortError") {
-                          // User cancelled or error — fall back to sharer.php
-                          window.open(
-                            `https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(articleUrl)}`,
-                            "_blank",
-                            "noopener,noreferrer,width=600,height=400"
-                          );
-                        }
-                      });
-                    } else {
-                      // Desktop fallback: open Facebook sharer popup
-                      window.open(
-                        `https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(articleUrl)}`,
-                        "_blank",
-                        "noopener,noreferrer,width=600,height=400"
-                      );
-                    }
+                    setShowFbDialog(true);
                   } else {
                     window.open(postUrl!, "_blank", "noopener,noreferrer");
                   }
@@ -241,6 +214,86 @@ export default function SocialShare({
           );
         })}
       </div>
+
+      {/* Facebook Share Dialog */}
+      {showFbDialog && (
+        <div
+          className="fixed inset-0 z-[9999] flex items-end sm:items-center justify-center"
+          onPointerDown={(e) => e.stopPropagation()}
+          onClick={(e) => {
+            e.stopPropagation();
+            setShowFbDialog(false);
+          }}
+        >
+          {/* Backdrop */}
+          <div className="absolute inset-0 bg-black/50 backdrop-blur-sm" />
+
+          {/* Dialog card */}
+          <div
+            className="relative z-10 bg-white dark:bg-slate-900 rounded-t-3xl sm:rounded-3xl w-full sm:max-w-sm mx-0 sm:mx-4 p-6 shadow-2xl"
+            onClick={(e) => e.stopPropagation()}
+          >
+            {/* Facebook branding */}
+            <div className="flex items-center gap-3 mb-4">
+              <div className="w-10 h-10 bg-blue-600 rounded-xl flex items-center justify-center text-white flex-shrink-0">
+                {SOCIAL_ICONS.facebook}
+              </div>
+              <div>
+                <p className="font-bold text-gray-900 dark:text-white text-sm">Dela på Facebook</p>
+                <p className="text-xs text-gray-500 dark:text-gray-400 truncate max-w-[200px]">{articleTitle}</p>
+              </div>
+              <button
+                onClick={(e) => { e.stopPropagation(); setShowFbDialog(false); }}
+                className="ml-auto text-gray-400 hover:text-gray-600 dark:hover:text-gray-200 p-1"
+              >
+                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                </svg>
+              </button>
+            </div>
+
+            {/* Share button */}
+            <button
+              className="w-full bg-blue-600 hover:bg-blue-700 active:bg-blue-800 text-white font-bold py-3 rounded-2xl transition-colors text-sm flex items-center justify-center gap-2"
+              onClick={(e) => {
+                e.stopPropagation();
+                setShowFbDialog(false);
+
+                const isAndroid = /android/i.test(navigator.userAgent);
+                const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
+
+                if (isAndroid) {
+                  // Android: intent URL opens Facebook app directly to share screen
+                  window.location.href = `intent://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(articleUrl)}#Intent;package=com.facebook.katana;scheme=https;S.browser_fallback_url=${encodeURIComponent(`https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(articleUrl)}`)};end`;
+                } else if (isMobile && typeof navigator.share === "function") {
+                  // iOS: navigator.share() is the only way to reach the Facebook app share dialog
+                  navigator.share({
+                    title: articleTitle,
+                    text: "Kolla in den här artikeln från Enzymatica:",
+                    url: articleUrl,
+                  }).catch(() => {});
+                } else {
+                  // Desktop
+                  window.open(
+                    `https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(articleUrl)}`,
+                    "_blank",
+                    "noopener,noreferrer,width=600,height=400"
+                  );
+                }
+              }}
+            >
+              <span className="w-5 h-5">{SOCIAL_ICONS.facebook}</span>
+              Dela på Facebook
+            </button>
+
+            <p className="text-center text-xs text-gray-400 dark:text-gray-500 mt-3">
+              {/iPhone|iPad|iPod/i.test(typeof navigator !== "undefined" ? navigator.userAgent : "")
+                ? "Välj Facebook i dela-menyn som öppnas"
+                : "Öppnar Facebooks dela-dialog"}
+            </p>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
