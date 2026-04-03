@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useAuth } from "./AuthContext";
 
 type SocialMedia = {
@@ -70,7 +70,14 @@ export default function SocialShare({
 }: SocialShareProps) {
   const { profile } = useAuth();
   const [copied, setCopied] = useState(false);
+  const [isMobileTarget, setIsMobileTarget] = useState(false);
   const isAdmin = profile?.role === "Admin" || profile?.role === "Editor";
+
+  useEffect(() => {
+    if (typeof window !== "undefined") {
+      setIsMobileTarget(/iPhone|iPad|iPod|Android/i.test(navigator.userAgent));
+    }
+  }, []);
 
   const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || (typeof window !== "undefined" ? window.location.origin : "https://enzymatica.se");
   const articleUrl = `${siteUrl}/articles/${articleId}`;
@@ -181,32 +188,12 @@ export default function SocialShare({
             >
               <a
                 href={postUrl}
-                target="_blank"
+                target={isMobileTarget ? "_top" : "_blank"}
                 rel="noopener noreferrer"
                 onClick={(e) => {
                   e.stopPropagation();
-                  
-                  // Aggressive App-Opening Logic for Facebook
-                  if (platform === "facebook") {
-                    e.preventDefault();
-                    
-                    const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) && !(window as any).MSStream;
-                    const isAndroid = /android/i.test(navigator.userAgent);
-                    
-                    if (isAndroid) {
-                      // Android intent handles fallback internally
-                      window.location.href = `intent://facewebmodal/f?href=${encodeURIComponent(postUrl)}#Intent;package=com.facebook.katana;scheme=fb;S.browser_fallback_url=${encodeURIComponent(postUrl)};end`;
-                    } else if (isIOS) {
-                      // iOS force scheme with timeout fallback to browser
-                      window.location.href = `fb://facewebmodal/f?href=${encodeURIComponent(postUrl)}`;
-                      setTimeout(() => {
-                        window.open(postUrl, "_blank");
-                      }, 1000); // 1s window for iOS to switch to the app
-                    } else {
-                      // Desktop
-                      window.open(postUrl, "_blank");
-                    }
-                  }
+                  // By avoiding e.preventDefault(), we allow the mobile OS to natively 
+                  // intercept the URL via Universal Links and open the correct post in the app.
                 }}
                 className={`${sizeClasses[size]} flex items-center justify-center transition-all ${
                   variant === "filled" 
