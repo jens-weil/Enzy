@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { useAuth } from "./AuthContext";
 
 type SocialMedia = {
@@ -70,14 +70,7 @@ export default function SocialShare({
 }: SocialShareProps) {
   const { profile } = useAuth();
   const [copied, setCopied] = useState(false);
-  const [isMobileTarget, setIsMobileTarget] = useState(false);
   const isAdmin = profile?.role === "Admin" || profile?.role === "Editor";
-
-  useEffect(() => {
-    if (typeof window !== "undefined") {
-      setIsMobileTarget(/iPhone|iPad|iPod|Android/i.test(navigator.userAgent));
-    }
-  }, []);
 
   const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || (typeof window !== "undefined" ? window.location.origin : "https://enzymatica.se");
   const articleUrl = `${siteUrl}/articles/${articleId}`;
@@ -171,7 +164,9 @@ export default function SocialShare({
 
         {/* Platform View Links (only if link provided) */}
         {platforms.map((platform) => {
-          const postUrl = socialLinks[platform as keyof SocialLinks];
+          const postUrl = platform === "facebook"
+            ? `https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(articleUrl)}`
+            : socialLinks[platform as keyof SocialLinks];
           if (!postUrl || postUrl === "#") return null;
 
           const iconColor = variant === "ghost" 
@@ -192,28 +187,16 @@ export default function SocialShare({
                 onClick={(e) => {
                   e.stopPropagation();
                   e.preventDefault();
-                  if (isMobileTarget && platform === "facebook") {
-                    // iOS Universal Links only fire when a real native DOM anchor
-                    // with target="_blank" is clicked — not via React synthetic events
-                    // or window.location.href. We create a real DOM element and click
-                    // it programmatically to bypass React's event system entirely.
-                    const a = document.createElement("a");
-                    a.href = postUrl;
-                    a.target = "_blank";
-                    a.rel = "noopener noreferrer";
-                    document.body.appendChild(a);
-                    a.click();
-                    document.body.removeChild(a);
-                  } else {
-                    window.open(postUrl, "_blank", "noopener,noreferrer");
-                  }
+                  // Use window.open so popup blockers don't interfere on mobile,
+                  // and Facebook app can catch the sharer.php URL via Universal Links
+                  window.open(postUrl, "_blank", "noopener,noreferrer");
                 }}
                 className={`${sizeClasses[size]} flex items-center justify-center transition-all ${
                   variant === "filled" 
                     ? `${colors[platform]} shadow-md hover:scale-110` 
                     : `${iconColor} opacity-90 hover:opacity-100 hover:scale-125`
                 }`}
-                title={`Öppna inlägg på ${platform}`}
+                title={platform === "facebook" ? "Dela artikel på Facebook" : `Öppna inlägg på ${platform}`}
               >
                 <div className="w-full h-full relative">
                   {SOCIAL_ICONS[platform]}
