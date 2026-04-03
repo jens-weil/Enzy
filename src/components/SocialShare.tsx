@@ -183,7 +183,31 @@ export default function SocialShare({
                 href={postUrl}
                 target="_blank"
                 rel="noopener noreferrer"
-                onClick={(e) => e.stopPropagation()}
+                onClick={(e) => {
+                  e.stopPropagation();
+                  
+                  // Aggressive App-Opening Logic for Facebook
+                  if (platform === "facebook") {
+                    e.preventDefault();
+                    
+                    const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) && !(window as any).MSStream;
+                    const isAndroid = /android/i.test(navigator.userAgent);
+                    
+                    if (isAndroid) {
+                      // Android intent handles fallback internally
+                      window.location.href = `intent://facewebmodal/f?href=${encodeURIComponent(postUrl)}#Intent;package=com.facebook.katana;scheme=fb;S.browser_fallback_url=${encodeURIComponent(postUrl)};end`;
+                    } else if (isIOS) {
+                      // iOS force scheme with timeout fallback to browser
+                      window.location.href = `fb://facewebmodal/f?href=${encodeURIComponent(postUrl)}`;
+                      setTimeout(() => {
+                        window.open(postUrl, "_blank");
+                      }, 1000); // 1s window for iOS to switch to the app
+                    } else {
+                      // Desktop
+                      window.open(postUrl, "_blank");
+                    }
+                  }
+                }}
                 className={`${sizeClasses[size]} flex items-center justify-center transition-all ${
                   variant === "filled" 
                     ? `${colors[platform]} shadow-md hover:scale-110` 
