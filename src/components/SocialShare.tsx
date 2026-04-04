@@ -193,8 +193,10 @@ export default function SocialShare({
                   e.preventDefault();
                   
                   if (platform === "facebook") {
-                    // Use the official Facebook SDK if available
-                    if (typeof window !== "undefined" && window.FB) {
+                    const isMobile = /iPhone|iPad|iPod|Android/i.test(typeof navigator !== "undefined" ? navigator.userAgent : "");
+                    
+                    // On mobile, the official SDK (FB.ui) is better at bridging to the app
+                    if (isMobile && typeof window !== "undefined" && window.FB) {
                       window.FB.ui({
                         method: 'share',
                         href: articleUrl,
@@ -202,7 +204,8 @@ export default function SocialShare({
                         console.log('FB Share Response:', response);
                       });
                     } else {
-                      // Fallback to sharer.php if SDK not loaded
+                      // On desktop (or if SDK is blocked), use the rock-solid sharer.php link
+                      // This avoids the "Facebook Platform Disabled" error that some users get with the SDK
                       window.open(postUrl!, "_blank", "noopener,noreferrer,width=600,height=400");
                     }
                   } else {
