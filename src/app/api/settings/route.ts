@@ -34,7 +34,10 @@ function getSettings() {
       accessToken: ""
     },
     stock: {
-      ticker: "ENZY.ST"
+      isActive: true,
+      ticker: "ENZY.ST",
+      shares: "142 823 696",
+      sector: "Hälsovård"
     }
   };
 
@@ -84,7 +87,12 @@ export async function GET(request: NextRequest) {
     linkedin: { isActive: settings.linkedin.isActive },
     tiktok: { isActive: settings.tiktok.isActive },
     x: { isActive: settings.x?.isActive || false },
-    stock: { ticker: settings.stock?.ticker || "ENZY.ST" }
+    stock: { 
+      isActive: settings.stock?.isActive ?? true,
+      ticker: settings.stock?.ticker || "ENZY.ST",
+      shares: settings.stock?.shares || "",
+      sector: settings.stock?.sector || ""
+    }
   };
 
   return NextResponse.json(publicSettings);

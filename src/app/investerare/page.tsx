@@ -45,7 +45,55 @@ export default function InvesterarePage() {
   const [data, setData] = useState<InvestorData | null>(null);
   const [loading, setLoading] = useState(true);
   const [showChart, setShowChart] = useState(false);
-  const [liveStock, setLiveStock] = useState<{ price: string; change: string } | null>(null);
+  const [isStockActive, setIsStockActive] = useState(true);
+  const [tickerSymbol, setTickerSymbol] = useState("ENZY.ST");
+  const [sharesCount, setSharesCount] = useState("142 823 696");
+  const [sectorName, setSectorName] = useState("Hälsovård");
+  const [liveStock, setLiveStock] = useState<{ price: string; change: string; exchangeName: string; fullExchange: string } | null>(null);
+
+  const fetchTickerSettings = async () => {
+    try {
+      const res = await fetch("/api/settings");
+      const settings = await res.json();
+      if (settings?.stock) {
+        setTickerSymbol(settings.stock.ticker || "ENZY.ST");
+        setIsStockActive(settings.stock.isActive ?? true);
+        setSharesCount(settings.stock.shares || "142 823 696");
+        setSectorName(settings.stock.sector || "Hälsovård");
+      }
+    } catch (err) {
+      console.error("Failed to fetch ticker settings:", err);
+    }
+  };
+
+  const fetchLiveStock = async (symbol: string) => {
+    try {
+      const res = await fetch(`/api/stock?symbol=${symbol}&range=1d&interval=1d`);
+      const json = await res.json();
+      
+      if (json.chart && json.chart.result && json.chart.result.length > 0) {
+        const meta = json.chart.result[0].meta;
+        const price = meta.regularMarketPrice;
+        const prevClose = meta.previousClose || meta.chartPreviousClose;
+
+        if (price !== undefined && prevClose !== undefined) {
+          const changePercent = ((price - prevClose) / prevClose) * 100;
+          const prefix = changePercent > 0 ? "+" : "";
+          setLiveStock({
+            price: `${price.toFixed(2)} ${meta.currency || 'SEK'}`,
+            change: `${prefix}${changePercent.toFixed(2)}%`,
+            exchangeName: meta.exchangeName || 'Nasdaq',
+            fullExchange: meta.fullExchangeName || 'First North'
+          });
+          return;
+        }
+      }
+      throw new Error("Missing expected market data in response");
+    } catch (err) {
+      console.error("Failed to fetch live stock price", err);
+      setLiveStock({ price: "4.28 SEK", change: "0%", exchangeName: 'Nasdaq', fullExchange: 'First North' });
+    }
+  };
 
   useEffect(() => {
     // Fetch base investor data
@@ -60,33 +108,20 @@ export default function InvesterarePage() {
         setLoading(false);
       });
 
-    // Fetch live stock price
-    fetch("/api/stock?symbol=ENZY.ST&range=1d&interval=1d")
-      .then(res => res.json())
-      .then(json => {
-        if (json.chart && json.chart.result && json.chart.result.length > 0) {
-          const meta = json.chart.result[0].meta;
-          const price = meta.regularMarketPrice;
-          const prevClose = meta.previousClose || meta.chartPreviousClose;
+    fetchTickerSettings();
 
-          if (price !== undefined && prevClose !== undefined) {
-            const changePercent = ((price - prevClose) / prevClose) * 100;
-            const prefix = changePercent > 0 ? "+" : "";
-            setLiveStock({
-              price: `${price.toFixed(2)} ${meta.currency || 'SEK'}`,
-              change: `${prefix}${changePercent.toFixed(2)}%`
-            });
-            return;
-          }
-        }
-        throw new Error("Missing expected market data in response");
-      })
-      .catch(err => {
-        console.error("Failed to fetch live stock price", err);
-        // Fallback to static if dynamic fails
-        setLiveStock({ price: "4.28 SEK", change: "0%" });
-      });
+    // Listen for setting updates from Admin
+    const handleSettingsUpdate = () => {
+      fetchTickerSettings();
+    };
+    window.addEventListener('settingsUpdated', handleSettingsUpdate);
+    return () => window.removeEventListener('settingsUpdated', handleSettingsUpdate);
   }, []);
+
+  // Fetch stock data whenever the ticker symbol changes
+  useEffect(() => {
+    fetchLiveStock(tickerSymbol);
+  }, [tickerSymbol]);
 
   if (loading) {
     return (
@@ -123,36 +158,42 @@ export default function InvesterarePage() {
                 Enzymatica är ett Life Science-bolag som utvecklar och säljer hälsoprodukter baserade på en barriärteknologi med marina enzymer.
               </p>
 
-              <div className="flex flex-wrap gap-4 pt-4">
-                <div
-                  onClick={() => setShowChart(true)}
-                  className="px-8 py-5 rounded-3xl bg-brand-dark text-white shadow-2xl flex flex-col justify-center transform hover:scale-105 transition-all cursor-pointer group relative"
-                >
-                  <div className="absolute top-4 right-4 text-white/30 group-hover:text-brand-teal transition-colors">
-                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 12l3-3 3 3 4-4M8 21l4-4 4 4M3 4h18M4 4h16v12a1 1 0 01-1 1H5a1 1 0 01-1-1V4z" />
-                    </svg>
+              {isStockActive && (
+                <div className="flex flex-wrap gap-4 pt-4">
+                  <div
+                    onClick={() => setShowChart(true)}
+                    className="px-8 py-5 rounded-3xl bg-brand-dark text-white shadow-2xl flex flex-col justify-center transform hover:scale-105 transition-all cursor-pointer group relative"
+                  >
+                    <div className="absolute top-4 right-4 text-white/30 group-hover:text-brand-teal transition-colors">
+                      <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 12l3-3 3 3 4-4M8 21l4-4 4 4M3 4h18M4 4h16v12a1 1 0 01-1 1H5a1 1 0 01-1-1V4z" />
+                      </svg>
+                    </div>
+                    <div className="flex justify-between items-start gap-8 mb-1">
+                      <span className="text-[10px] font-black uppercase tracking-[0.2em] opacity-60">Ticker</span>
+                      <span className={`text-[10px] font-black uppercase ${liveStock?.change.startsWith('-') ? 'text-red-400' : 'text-green-400'}`}>
+                        {liveStock ? liveStock.change : "..."}
+                      </span>
+                    </div>
+                    <div className="flex items-baseline gap-2">
+                      <span className="text-3xl font-black italic">{tickerSymbol.split('.')[0]}</span>
+                      <span className="text-xl font-bold text-brand-teal italic">
+                        {liveStock ? liveStock.price : (
+                          <span className="text-sm text-brand-teal/50 animate-pulse">Hämtar...</span>
+                        )}
+                      </span>
+                    </div>
                   </div>
-                  <div className="flex justify-between items-start gap-8 mb-1">
-                    <span className="text-[10px] font-black uppercase tracking-[0.2em] opacity-60">Ticker</span>
-                    <span className={`text-[10px] font-black uppercase ${liveStock?.change.startsWith('-') ? 'text-red-400' : 'text-green-400'}`}>
-                      {liveStock ? liveStock.change : "..."}
+                  <div className="px-8 py-5 rounded-3xl bg-white dark:bg-slate-900 border border-gray-100 dark:border-slate-800 shadow-xl flex flex-col justify-center transform hover:scale-105 transition-all">
+                    <span className="text-[10px] font-black uppercase tracking-[0.2em] text-brand-teal mb-1">
+                      {liveStock?.exchangeName || 'Nasdaq'}
                     </span>
-                  </div>
-                  <div className="flex items-baseline gap-2">
-                    <span className="text-3xl font-black italic">{data.stock.ticker}</span>
-                    <span className="text-xl font-bold text-brand-teal italic">
-                      {liveStock ? liveStock.price : (
-                        <span className="text-sm text-brand-teal/50 animate-pulse">Hämtar...</span>
-                      )}
+                    <span className="text-xl font-black text-brand-dark dark:text-white uppercase italic">
+                      {liveStock?.fullExchange || 'First North'}
                     </span>
                   </div>
                 </div>
-                <div className="px-8 py-5 rounded-3xl bg-white dark:bg-slate-900 border border-gray-100 dark:border-slate-800 shadow-xl flex flex-col justify-center transform hover:scale-105 transition-all">
-                  <span className="text-[10px] font-black uppercase tracking-[0.2em] text-brand-teal mb-1">Nasdaq</span>
-                  <span className="text-xl font-black text-brand-dark dark:text-white uppercase italic">First North</span>
-                </div>
-              </div>
+              )}
             </div>
 
             <div className="flex-1 relative">
@@ -171,18 +212,20 @@ export default function InvesterarePage() {
                 </div>
               </div>
               {/* Floating Stat Card */}
-              <div className="absolute -bottom-8 -left-8 bg-white dark:bg-slate-900 p-8 rounded-[2rem] shadow-2xl border border-gray-100 dark:border-slate-800 hidden lg:block">
-                <div className="space-y-4">
-                  <div>
-                    <span className="text-[10px] font-black uppercase text-gray-400 block tracking-widest">Antal aktier</span>
-                    <span className="text-2xl font-black text-brand-dark dark:text-white italic">{data.stock.shares}</span>
-                  </div>
-                  <div>
-                    <span className="text-[10px] font-black uppercase text-gray-400 block tracking-widest">Sektor</span>
-                    <span className="text-lg font-bold text-brand-teal uppercase italic">{data.stock.sector}</span>
+              {isStockActive && (
+                <div className="absolute -bottom-8 -left-8 bg-white dark:bg-slate-900 p-8 rounded-[2rem] shadow-2xl border border-gray-100 dark:border-slate-800 hidden lg:block">
+                  <div className="space-y-4">
+                    <div>
+                      <span className="text-[10px] font-black uppercase text-gray-400 block tracking-widest">Antal aktier</span>
+                      <span className="text-2xl font-black text-brand-dark dark:text-white italic">{sharesCount}</span>
+                    </div>
+                    <div>
+                      <span className="text-[10px] font-black uppercase text-gray-400 block tracking-widest">Sektor</span>
+                      <span className="text-lg font-bold text-brand-teal uppercase italic">{sectorName}</span>
+                    </div>
                   </div>
                 </div>
-              </div>
+              )}
             </div>
           </div>
         </div>
@@ -339,7 +382,7 @@ export default function InvesterarePage() {
         </div>
       </section>
 
-      <StockChartModal isOpen={showChart} onClose={() => setShowChart(false)} ticker="ENZY.ST" />
+      <StockChartModal isOpen={showChart} onClose={() => setShowChart(false)} ticker={tickerSymbol} />
     </div>
   );
 }

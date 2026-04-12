@@ -33,7 +33,8 @@ export default function StockChartModal({ isOpen, onClose, ticker = 'ENZY.ST' }:
   const [data, setData] = useState<any[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
-  const [stockInfo, setStockInfo] = useState({ price: 0, changePercent: 0, changeValue: 0, currency: 'SEK' });
+  const [stockInfo, setStockInfo] = useState({ price: 0, changePercent: 0, changeValue: 0, currency: 'SEK', exchangeName: 'Stockholm' });
+  const [lastFetchedTicker, setLastFetchedTicker] = useState('');
   
   // Chart View States
   const [showLog, setShowLog] = useState(false);
@@ -71,8 +72,10 @@ export default function StockChartModal({ isOpen, onClose, ticker = 'ENZY.ST' }:
         price: meta.regularMarketPrice || 0,
         changePercent: meta.regularMarketPrice && prevClose ? ((meta.regularMarketPrice - prevClose) / prevClose) * 100 : 0,
         changeValue: meta.regularMarketPrice && prevClose ? (meta.regularMarketPrice - prevClose) : 0,
-        currency: meta.currency || 'SEK'
+        currency: meta.currency || 'SEK',
+        exchangeName: meta.fullExchangeName || meta.exchangeName || 'Stockholm'
       });
+      setLastFetchedTicker(ticker);
 
       // Format and compute indicators
       const formattedData = timestamps.map((ts: number, index: number) => {
@@ -138,9 +141,14 @@ export default function StockChartModal({ isOpen, onClose, ticker = 'ENZY.ST' }:
   useEffect(() => {
     if (!isOpen) return;
 
-    // Skip fetch if we already have data for the default timeframe from pre-fetch
-    if (data.length > 0 && selectedTimeframe.range === timeframes[2].range && !loading) {
+    // Skip fetch if we already have up-to-date data for the current ticker and timeframe
+    if (data.length > 0 && selectedTimeframe.range === timeframes[2].range && !loading && lastFetchedTicker === ticker) {
       return;
+    }
+
+    // If ticker changed, clear old data first to avoid flickering
+    if (lastFetchedTicker !== ticker) {
+      setData([]);
     }
 
     let isMounted = true;
@@ -198,7 +206,7 @@ export default function StockChartModal({ isOpen, onClose, ticker = 'ENZY.ST' }:
                  {ticker.split('.')[0]}
                </h2>
                <span className="px-3 py-1 rounded-full bg-brand-light text-brand-teal text-[10px] font-black uppercase tracking-widest">
-                 Nasdaq First North
+                 {stockInfo.exchangeName}
                </span>
             </div>
             

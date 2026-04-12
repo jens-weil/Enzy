@@ -13,7 +13,7 @@ export default function SettingsPage() {
   const [linkedin, setLinkedin] = useState({ isActive: false, authorUrn: "", accessToken: "" });
   const [tiktok, setTiktok] = useState({ isActive: false, openId: "", accessToken: "" });
   const [x, setX] = useState({ isActive: false, accessToken: "" });
-  const [stock, setStock] = useState({ ticker: "ENZY.ST" });
+  const [stock, setStock] = useState({ isActive: true, ticker: "ENZY.ST", shares: "142 823 696", sector: "Hälsovård" });
   
   const [expandedSection, setExpandedSection] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(true);
@@ -79,6 +79,8 @@ export default function SettingsPage() {
 
       if (res.ok) {
         setMessage({ type: "success", text: "Inställningarna har sparats!" });
+        // Notify other components (Navbar, etc.) to refresh settings
+        window.dispatchEvent(new CustomEvent('settingsUpdated'));
         setTimeout(() => setMessage(null), 3000);
       } else {
         const errData = await res.json();
@@ -196,9 +198,9 @@ export default function SettingsPage() {
               {
                 id: "stock",
                 title: "Marknad & Aktie",
-                subtitle: "Styr vilken aktiesymbol som visas",
-                state: { isActive: true }, // Always consider active for layout
-                setter: (val: any) => {}, // Dummy setter to satisfy TS
+                subtitle: "Styr vilken aktie som visas i portalen",
+                state: stock,
+                setter: setStock,
                 icon: (
                   <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} className="w-6 h-6">
                     <path strokeLinecap="round" strokeLinejoin="round" d="M7 12l3-3 3 3 4-4M8 21l4-4 4 4M3 4h18" />
@@ -234,7 +236,6 @@ export default function SettingsPage() {
                         type="checkbox" 
                         className="sr-only peer" 
                         checked={channel.state.isActive}
-                        disabled={channel.id === 'stock'}
                         onChange={(e) => {
                           if (channel.setter) {
                             channel.setter((prev: any) => ({ ...prev, isActive: e.target.checked }));
@@ -244,7 +245,7 @@ export default function SettingsPage() {
                       />
                       <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none rounded-full peer dark:bg-slate-700 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all dark:border-gray-600 peer-checked:bg-brand-teal"></div>
                       <span className={`ml-3 text-[10px] font-black uppercase tracking-widest ${channel.state.isActive ? 'text-brand-teal' : 'text-gray-400'}`}>
-                        {channel.id === 'stock' ? "Alltid aktiv" : (channel.state.isActive ? "Aktiv" : "Inaktiv")}
+                        {channel.state.isActive ? "Aktiv" : "Inaktiv"}
                       </span>
                     </label>
 
@@ -335,10 +336,9 @@ export default function SettingsPage() {
                         </label>
                       </div>
                     )}
-                    
                     {channel.id === 'stock' && (
-                      <div className="grid grid-cols-1 gap-6 mt-6">
-                        <label className="space-y-4">
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-8 mt-6">
+                        <label className="space-y-4 md:col-span-2">
                            <div className="flex justify-between items-center">
                               <span className="text-[10px] font-black text-gray-400 uppercase tracking-widest ml-2">Tickersymbol (Yahoo Finance ID)</span>
                               <span className="text-[10px] font-bold text-brand-teal/60 italic">Exempel: ENZY.ST eller AAPL</span>
@@ -351,8 +351,30 @@ export default function SettingsPage() {
                              placeholder="ENZY.ST"
                            />
                            <p className="text-[10px] text-gray-400 font-medium ml-2 uppercase italic leading-loose">
-                              Detta styr vilken aktie som visas i navbarens ticker och tillhörande graf.
+                               Detta styr vilken aktie som visas i navbarens ticker och tillhörande graf.
                            </p>
+                        </label>
+
+                        <label className="space-y-4">
+                           <span className="text-[10px] font-black text-gray-400 uppercase tracking-widest ml-2">Sektor / Bransch</span>
+                           <input 
+                             type="text" 
+                             value={stock.sector} 
+                             onChange={e => setStock(p => ({ ...p, sector: e.target.value }))} 
+                             className="w-full px-4 py-4 rounded-xl border border-gray-200 dark:border-slate-700 bg-white dark:bg-slate-900 focus:border-brand-teal outline-none font-bold text-sm dark:text-white" 
+                             placeholder="Hälsovård"
+                           />
+                        </label>
+
+                        <label className="space-y-4">
+                           <span className="text-[10px] font-black text-gray-400 uppercase tracking-widest ml-2">Antal aktier</span>
+                           <input 
+                             type="text" 
+                             value={stock.shares} 
+                             onChange={e => setStock(p => ({ ...p, shares: e.target.value }))} 
+                             className="w-full px-4 py-4 rounded-xl border border-gray-200 dark:border-slate-700 bg-white dark:bg-slate-900 focus:border-brand-teal outline-none font-bold text-sm dark:text-white" 
+                             placeholder="142 823 696"
+                           />
                         </label>
                       </div>
                     )}

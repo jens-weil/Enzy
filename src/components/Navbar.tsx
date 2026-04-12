@@ -35,17 +35,27 @@ export default function Navbar() {
 
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [tickerSymbol, setTickerSymbol] = useState("ENZY.ST");
+  const [isTickerActive, setIsTickerActive] = useState(true);
 
-  useEffect(() => {
-    // Fetch public settings for stock ticker
+  const fetchSettings = () => {
     fetch("/api/settings")
       .then(res => res.ok ? res.json() : null)
       .then(data => {
         if (data?.stock?.ticker) {
           setTickerSymbol(data.stock.ticker);
+          setIsTickerActive(data.stock.isActive ?? true);
         }
       })
       .catch(console.error);
+  };
+
+  useEffect(() => {
+    fetchSettings();
+
+    // Listen for settings updates from Admin
+    const handleUpdate = () => fetchSettings();
+    window.addEventListener('settingsUpdated', handleUpdate);
+    return () => window.removeEventListener('settingsUpdated', handleUpdate);
   }, []);
 
   const handleLogin = async (e: React.FormEvent) => {
@@ -191,11 +201,13 @@ export default function Navbar() {
                   </button>
                 )}
               </div>
-              <StockTicker 
-                onOpenChart={() => setShowStockChart(true)} 
-                ticker={tickerSymbol}
-                className="hidden lg:flex ml-4" 
-              />
+              {isTickerActive && (
+                <StockTicker 
+                  onOpenChart={() => setShowStockChart(true)} 
+                  ticker={tickerSymbol}
+                  className="hidden lg:flex ml-4" 
+                />
+              )}
             </div>
 
             {/* Mobile Menu Button */}
@@ -246,13 +258,15 @@ export default function Navbar() {
                 Kontakt
               </button>
               
-              <div className="pt-2 pb-4">
-                <StockTicker 
-                  onOpenChart={() => { setShowStockChart(true); setIsMobileMenuOpen(false); }} 
-                  ticker={tickerSymbol}
-                  className="flex !w-full" 
-                />
-              </div>
+              {isTickerActive && (
+                <div className="pt-2 pb-4">
+                  <StockTicker 
+                    onOpenChart={() => { setShowStockChart(true); setIsMobileMenuOpen(false); }} 
+                    ticker={tickerSymbol}
+                    className="flex !w-full" 
+                  />
+                </div>
+              )}
             </div>
 
             <div className="pt-6 border-t border-gray-100 dark:border-slate-800 flex flex-col space-y-4">

@@ -120,6 +120,8 @@ export async function POST(request: NextRequest) {
     articles.unshift(newArticle);
     fs.writeFileSync(filePath, JSON.stringify(articles, null, 2), 'utf8');
     revalidatePath('/articles');
+    revalidatePath('/');
+    revalidatePath('/investerare');
 
     return NextResponse.json({ 
       success: true, 
@@ -257,6 +259,8 @@ export async function PATCH(request: NextRequest) {
     fs.writeFileSync(filePath, JSON.stringify(articles, null, 2), 'utf8');
     revalidatePath('/articles');
     revalidatePath(`/articles/${id}`);
+    revalidatePath('/');
+    revalidatePath('/investerare');
 
     return NextResponse.json({ 
       success: true, 
@@ -305,6 +309,8 @@ export async function DELETE(request: NextRequest) {
 
     fs.writeFileSync(filePath, JSON.stringify(filteredArticles, null, 2), 'utf8');
     revalidatePath('/articles');
+    revalidatePath('/');
+    revalidatePath('/investerare');
 
     return NextResponse.json({ success: true });
   } catch (error) {
