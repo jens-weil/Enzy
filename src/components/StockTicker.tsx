@@ -15,6 +15,7 @@ export default function StockTicker({ onOpenChart, ticker = 'ENZY.ST', className
 
   useEffect(() => {
     const fetchStock = () => {
+      setLoading(true);
       fetch(`/api/stock?symbol=${ticker}&range=1d&interval=1d`)
         .then(res => res.json())
         .then(json => {
@@ -48,7 +49,9 @@ export default function StockTicker({ onOpenChart, ticker = 'ENZY.ST', className
     // Refresh every 5 minutes
     const interval = setInterval(fetchStock, 5 * 60 * 1000);
     return () => clearInterval(interval);
-  }, []);
+  }, [ticker]);
+
+  const displaySymbol = ticker.split('.')[0];
 
   return (
     <button
@@ -56,7 +59,7 @@ export default function StockTicker({ onOpenChart, ticker = 'ENZY.ST', className
       className={`${className || ""} flex-col items-center justify-center px-4 py-1.5 rounded-2xl bg-brand-dark text-white shadow-lg hover:scale-105 transition-all group border border-white/10 h-[54px] min-w-[100px]`}
     >
       <div className="flex items-center gap-1.5 mb-0.5">
-        <span className="italic text-brand-teal text-[10px] font-black uppercase tracking-widest">ENZY</span>
+        <span className="italic text-brand-teal text-[10px] font-black uppercase tracking-widest">{displaySymbol}</span>
         <svg className="w-2.5 h-2.5 text-white/20 group-hover:text-brand-teal transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24">
           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M7 12l3-3 3 3 4-4M8 21l4-4 4 4M3 4h18" />
         </svg>
