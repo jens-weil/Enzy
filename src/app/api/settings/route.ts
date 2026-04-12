@@ -6,25 +6,88 @@ import { requireRole } from '@/lib/auth';
 const settingsPath = path.join(process.cwd(), 'data', 'settings.json');
 
 function getSettings() {
+  const defaultSettings = {
+    facebook: {
+      isActive: true,
+      postStrategy: "comment",
+      pageId: "",
+      accessToken: "",
+      appId: ""
+    },
+    instagram: {
+      isActive: false,
+      accountId: "",
+      accessToken: ""
+    },
+    linkedin: {
+      isActive: false,
+      authorUrn: "",
+      accessToken: ""
+    },
+    tiktok: {
+      isActive: false,
+      openId: "",
+      accessToken: ""
+    },
+    x: {
+      isActive: false,
+      accessToken: ""
+    },
+    stock: {
+      ticker: "ENZY.ST"
+    }
+  };
+
   if (!fs.existsSync(settingsPath)) {
-    return { facebookPostStrategy: "comment" };
+    return defaultSettings;
   }
-  const data = fs.readFileSync(settingsPath, 'utf8');
-  return JSON.parse(data);
+  
+  try {
+    const data = fs.readFileSync(settingsPath, 'utf8');
+    const parsed = JSON.parse(data);
+    
+    // Migrate legacy unstructured setting if present
+    if (parsed.facebookPostStrategy && !parsed.facebook) {
+      parsed.facebook = { ...defaultSettings.facebook, postStrategy: parsed.facebookPostStrategy };
+      delete parsed.facebookPostStrategy;
+    }
+    
+    return {
+      facebook: { ...defaultSettings.facebook, ...parsed.facebook },
+      instagram: { ...defaultSettings.instagram, ...parsed.instagram },
+      linkedin: { ...defaultSettings.linkedin, ...parsed.linkedin },
+      tiktok: { ...defaultSettings.tiktok, ...parsed.tiktok },
+      x: { ...defaultSettings.x, ...parsed.x },
+      stock: { ...defaultSettings.stock, ...parsed.stock }
+    };
+  } catch (e) {
+    return defaultSettings;
+  }
 }
 
+
+
 export async function GET(request: NextRequest) {
+  const settings = getSettings();
+  
+  // check for Admin/Editor role
   const auth = await requireRole(request, ['Admin', 'Editor']);
-  if (!auth.authorized) {
-    return NextResponse.json({ error: auth.error }, { status: auth.status });
+  if (auth.authorized) {
+    // If authorized, return everything (sensitive tokens included)
+    return NextResponse.json(settings);
   }
 
-  try {
-    const settings = getSettings();
-    return NextResponse.json(settings);
-  } catch (error) {
-    return NextResponse.json({ error: "Failed to read settings" }, { status: 500 });
-  }
+  // If not authorized, return a public-safe subset (only isActive flag for each channel)
+  const publicSettings = {
+    facebook: { isActive: settings.facebook.isActive },
+    instagram: { isActive: settings.instagram.isActive },
+    linkedin: { isActive: settings.linkedin.isActive },
+    tiktok: { isActive: settings.tiktok.isActive },
+    x: { isActive: settings.x?.isActive || false },
+    stock: { ticker: settings.stock?.ticker || "ENZY.ST" }
+  };
+
+  return NextResponse.json(publicSettings);
 }
 
 export async function POST(request: NextRequest) {
@@ -37,9 +100,33 @@ export async function POST(request: NextRequest) {
     const body = await request.json();
     const currentSettings = getSettings();
     
+    // Deep merge for facebook, instagram, linkedin, tiktok
     const newSettings = {
       ...currentSettings,
-      ...body
+      facebook: {
+        ...currentSettings.facebook,
+        ...(body.facebook || {})
+      },
+      instagram: {
+        ...currentSettings.instagram,
+        ...(body.instagram || {})
+      },
+      linkedin: {
+        ...currentSettings.linkedin,
+        ...(body.linkedin || {})
+      },
+      tiktok: {
+        ...currentSettings.tiktok,
+        ...(body.tiktok || {})
+      },
+      x: {
+        ...currentSettings.x,
+        ...(body.x || {})
+      },
+      stock: {
+        ...currentSettings.stock,
+        ...(body.stock || {})
+      }
     };
 
     // Ensure directory exists

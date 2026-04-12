@@ -24,22 +24,32 @@ async function fetchWithTimeout(url: string, options: any = {}, timeout = 10000)
   }
 }
 
-const FB_PAGE_ID = process.env.FB_PAGE_ID;
-const FB_PAGE_ACCESS_TOKEN = process.env.FB_PAGE_ACCESS_TOKEN;
 const API_VERSION = "v22.0";
-
 const settingsPath = path.join(process.cwd(), 'data', 'settings.json');
 
-function getStrategy(): "comment" | "direct" {
+function getFacebookSettings() {
+  let settings = {
+    strategy: "comment" as "comment" | "direct",
+    pageId: process.env.FB_PAGE_ID,
+    accessToken: process.env.FB_PAGE_ACCESS_TOKEN
+  };
+
   try {
     if (fs.existsSync(settingsPath)) {
       const data = JSON.parse(fs.readFileSync(settingsPath, 'utf8'));
-      return data.facebookPostStrategy || "comment";
+      if (data.facebook) {
+        settings.strategy = data.facebook.postStrategy || settings.strategy;
+        settings.pageId = data.facebook.pageId || settings.pageId;
+        settings.accessToken = data.facebook.accessToken || settings.accessToken;
+      } else if (data.facebookPostStrategy) {
+        // Fallback for very old format
+        settings.strategy = data.facebookPostStrategy;
+      }
     }
   } catch (e) {
     console.error("Error reading settings.json", e);
   }
-  return "comment";
+  return settings;
 }
 
 const errorLogPath = path.join(process.cwd(), 'data', 'facebook_errors.log');
@@ -60,17 +70,19 @@ export async function postToFacebook(data: {
   link: string;
   imageUrl?: string;
 }) {
-  if (!FB_PAGE_ID || !FB_PAGE_ACCESS_TOKEN || FB_PAGE_ID === "your-page-id-here") {
-    const errorMsg = `Facebook credentials missing: ID=${!!FB_PAGE_ID}, Token=${!!FB_PAGE_ACCESS_TOKEN}`;
+  const { pageId, accessToken, strategy } = getFacebookSettings();
+
+  if (!pageId || !accessToken || pageId === "your-page-id-here") {
+    const errorMsg = `Facebook credentials missing: ID=${!!pageId}, Token=${!!accessToken}`;
     console.warn("FB_POST_FAILURE:", errorMsg);
     logError(errorMsg);
     return null;
   }
 
-  const strategy = getStrategy();
   const isDirect = strategy === "direct";
 
   console.log(`FB_POST_START: Strategy=${strategy}, Image=${!!data.imageUrl}`);
+
 
   const message = isDirect 
     ? `${data.title}\n\n${data.ingress || ""}`
@@ -93,9 +105,9 @@ export async function postToFacebook(data: {
         const blob = new Blob([fileBuffer], { type: 'image/jpeg' });
         formData.append("source", blob, path.basename(filePath));
         formData.append("caption", message);
-        formData.append("access_token", FB_PAGE_ACCESS_TOKEN);
+        formData.append("access_token", accessToken);
 
-        const response = await fetchWithTimeout(`https://graph.facebook.com/${API_VERSION}/${FB_PAGE_ID}/photos`, {
+        const response = await fetchWithTimeout(`https://graph.facebook.com/${API_VERSION}/${pageId}/photos`, {
           method: "POST",
           body: formData,
         });
@@ -113,7 +125,7 @@ export async function postToFacebook(data: {
           method: "POST",
           body: new URLSearchParams({
             message: data.link,
-            access_token: FB_PAGE_ACCESS_TOKEN || "",
+            access_token: accessToken || "",
           }),
         });
 
@@ -122,7 +134,7 @@ export async function postToFacebook(data: {
         // Fetch permalink_url
         let permalinkUrl = `https://www.facebook.com/${postId}`;
         try {
-          const urlRes = await fetchWithTimeout(`https://graph.facebook.com/${API_VERSION}/${postId}?fields=permalink_url&access_token=${FB_PAGE_ACCESS_TOKEN}`);
+          const urlRes = await fetchWithTimeout(`https://graph.facebook.com/${API_VERSION}/${postId}?fields=permalink_url&access_token=${accessToken}`);
           if (urlRes.ok) {
             const urlData = await urlRes.json();
             if (urlData.permalink_url) permalinkUrl = urlData.permalink_url;
@@ -139,9 +151,9 @@ export async function postToFacebook(data: {
     formData.append("message", message);
     if (!data.link.includes('localhost')) formData.append("link", data.link);
     else formData.set("message", message + `\n\nLink: ${data.link}`);
-    formData.append("access_token", FB_PAGE_ACCESS_TOKEN);
+    formData.append("access_token", accessToken);
 
-    const response = await fetchWithTimeout(`https://graph.facebook.com/${API_VERSION}/${FB_PAGE_ID}/feed`, {
+    const response = await fetchWithTimeout(`https://graph.facebook.com/${API_VERSION}/${pageId}/feed`, {
       method: "POST",
       body: formData,
     });
@@ -160,14 +172,14 @@ export async function postToFacebook(data: {
         method: "POST",
         body: new URLSearchParams({
           message: data.link,
-          access_token: FB_PAGE_ACCESS_TOKEN || "",
+          access_token: accessToken || "",
         }),
       }).catch(e => console.warn("FB_COMMENT_FAILURE:", e.message));
     }
 
     let permalinkUrl = `https://www.facebook.com/${postId}`;
     try {
-      const urlResponse = await fetchWithTimeout(`https://graph.facebook.com/${API_VERSION}/${postId}?fields=permalink_url&access_token=${FB_PAGE_ACCESS_TOKEN}`);
+      const urlResponse = await fetchWithTimeout(`https://graph.facebook.com/${API_VERSION}/${postId}?fields=permalink_url&access_token=${accessToken}`);
       if (urlResponse.ok) {
         const urlData = await urlResponse.json();
         if (urlData.permalink_url) permalinkUrl = urlData.permalink_url;
@@ -187,7 +199,9 @@ export async function postToFacebook(data: {
 }
 
 export async function deleteFromFacebook(postId: string) {
-  if (!FB_PAGE_ACCESS_TOKEN || FB_PAGE_ACCESS_TOKEN === "your-page-access-token-here") {
+  const { accessToken } = getFacebookSettings();
+
+  if (!accessToken || accessToken === "your-page-access-token-here") {
     return false;
   }
 
@@ -195,7 +209,7 @@ export async function deleteFromFacebook(postId: string) {
     console.log(`FB_DELETING_POST: ${postId}`);
     const response = await fetchWithTimeout(`https://graph.facebook.com/${API_VERSION}/${postId}`, {
       method: "DELETE",
-      body: new URLSearchParams({ access_token: FB_PAGE_ACCESS_TOKEN }),
+      body: new URLSearchParams({ access_token: accessToken }),
     });
 
     const result = await response.json();

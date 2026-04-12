@@ -5,16 +5,17 @@ import StockChartModal from "./StockChartModal";
 
 interface StockTickerProps {
   onOpenChart: () => void;
+  ticker?: string;
   className?: string;
 }
 
-export default function StockTicker({ onOpenChart, className }: StockTickerProps) {
+export default function StockTicker({ onOpenChart, ticker = 'ENZY.ST', className }: StockTickerProps) {
   const [liveStock, setLiveStock] = useState<{ price: string; change: string; isNegative: boolean } | null>(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     const fetchStock = () => {
-      fetch("/api/stock?symbol=ENZY.ST&range=1d&interval=1d")
+      fetch(`/api/stock?symbol=${ticker}&range=1d&interval=1d`)
         .then(res => res.json())
         .then(json => {
           if (json.chart && json.chart.result && json.chart.result.length > 0) {

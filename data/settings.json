@@ -1,3 +1,31 @@
 {
-  "facebookPostStrategy": "comment"
+  "facebook": {
+    "isActive": true,
+    "postStrategy": "comment",
+    "pageId": "116337051521934",
+    "accessToken": "EAASQ3xroMxoBREhtvUlHQICPDTLInsvZCSX1WfcFByDcKiw5C4WUJyuZAQEZAJHW6WZB8LphaMYWdu8dbcCnaiCpZBNUVgaNFfNnsEQyIZAhAta02XJ5tuy3HS8DzldXZA2TfGwItuZA19aKmpx8Lz3Di39vSJbbO83FYYA6nOLHNsKQRtJfw64ZCtLyZBKAorR1KSyYphxEhPZAPbau5mqR6aXwIVx",
+    "appId": "1285187810374426"
+  },
+  "instagram": {
+    "isActive": true,
+    "accountId": "jens@jenka.se",
+    "accessToken": "Test12"
+  },
+  "linkedin": {
+    "isActive": true,
+    "authorUrn": "jens@jenka.se",
+    "accessToken": "Test12"
+  },
+  "tiktok": {
+    "isActive": true,
+    "openId": "jens@jenka.se",
+    "accessToken": "Test12"
+  },
+  "x": {
+    "isActive": true,
+    "accessToken": ""
+  },
+  "stock": {
+    "ticker": "AAPL"
+  }
 }

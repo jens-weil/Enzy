@@ -20,12 +20,14 @@ type Article = {
     instagram: boolean;
     linkedin: boolean;
     tiktok: boolean;
+    x: boolean;
   };
   socialLinks: {
     facebook?: string;
     instagram?: string;
     linkedin?: string;
     tiktok?: string;
+    x?: string;
   };
   facebookPostId?: string;
 };
@@ -44,12 +46,14 @@ interface ArticleForm {
     instagram: boolean;
     linkedin: boolean;
     tiktok: boolean;
+    x: boolean;
   };
   socialLinks: {
     facebook?: string;
     instagram?: string;
     linkedin?: string;
     tiktok?: string;
+    x?: string;
   };
   facebookPostId?: string;
 }
@@ -61,7 +65,7 @@ const initialFormState: ArticleForm = {
   ingress: "",
   content: "",
   imageUrl: "",
-  socialMedia: { facebook: false, instagram: false, linkedin: false, tiktok: false },
+  socialMedia: { facebook: false, instagram: false, linkedin: false, tiktok: false, x: false },
   socialLinks: {},
 };
 
@@ -141,8 +145,28 @@ function ArticleModal({ article, isAdmin, onClose, onDelete, onEdit }: ArticleMo
 
         <div className="p-8 md:p-16 flex-1 space-y-12 max-w-3xl mx-auto w-full pb-24">
           {article.imageUrl && (
-            <div className="relative w-full aspect-video rounded-[2rem] overflow-hidden shadow-2xl mb-12 transform hover:scale-[1.01] transition-transform duration-500">
+            <div className="relative w-full aspect-video rounded-[2rem] overflow-hidden shadow-2xl mb-12 transform hover:scale-[1.01] transition-transform duration-500 group">
               <Image src={article.imageUrl} alt={article.title} fill className="object-cover" />
+              
+              {/* Social Post Overlay (Admin Only) */}
+              {isAdmin && (
+                <div className="absolute top-6 right-6 flex gap-2 z-20">
+                  {["facebook", "linkedin", "instagram", "tiktok", "x"].map(p => {
+                    const link = article.socialLinks[p as keyof typeof article.socialLinks];
+                    if (!link || link === "#" || link === "") return null;
+                    return (
+                      <button
+                        key={p}
+                        onClick={(e) => { e.stopPropagation(); window.open(link, "_blank"); }}
+                        className="w-10 h-10 rounded-full bg-white/20 backdrop-blur-md border border-white/30 flex items-center justify-center text-white hover:bg-brand-teal hover:scale-110 transition-all shadow-lg"
+                        title={`Visa inlägg på ${p}`}
+                      >
+                        <div className="w-5 h-5">{SOCIAL_ICONS[p]}</div>
+                      </button>
+                    );
+                  })}
+                </div>
+              )}
             </div>
           )}
           <div className="space-y-6">
@@ -170,6 +194,7 @@ function ArticleModal({ article, isAdmin, onClose, onDelete, onEdit }: ArticleMo
               socialLinks={article.socialLinks}
               size="md"
               showLabel={true}
+              hideAdminLinks={true}
             />
           </div>
           <div
@@ -222,13 +247,21 @@ function ArticleEditModal({ editingArticle, accessToken, onClose, onSaved }: Art
   const [searchQuery, setSearchQuery] = useState("");
   const [searchResults, setSearchResults] = useState<{ id: string; title: string; thumbnail: string }[]>([]);
   const [searching, setSearching] = useState(false);
+  const [channelSettings, setChannelSettings] = useState<any>(null);
 
   useEffect(() => {
+    fetch("/api/settings", { 
+      headers: accessToken ? { 'Authorization': `Bearer ${accessToken}` } : {} 
+    })
+      .then(res => res.ok ? res.json() : null)
+      .then(data => data && setChannelSettings(data))
+      .catch(console.error);
+
     fetch("/api/images")
       .then(r => r.ok ? r.json() : { images: [] })
       .then(d => setAvailableImages(d.images || []))
       .catch(() => {});
-  }, []);
+  }, [accessToken]);
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
     const { name, value } = e.target;
@@ -283,6 +316,18 @@ function ArticleEditModal({ editingArticle, accessToken, onClose, onSaved }: Art
       return;
     }
 
+    // Filter out inactive channels before sending to API
+    const finalSocialMedia = { ...formData.socialMedia };
+    if (channelSettings) {
+      Object.keys(finalSocialMedia).forEach(p => {
+        const platform = p as keyof typeof finalSocialMedia;
+        const isActive = channelSettings?.[platform]?.isActive ?? (platform === 'facebook');
+        if (!isActive) {
+          finalSocialMedia[platform] = false;
+        }
+      });
+    }
+
     try {
       const res = await fetch("/api/articles", {
         method: isEditing ? "PATCH" : "POST",
@@ -290,7 +335,7 @@ function ArticleEditModal({ editingArticle, accessToken, onClose, onSaved }: Art
           "Content-Type": "application/json",
           "Authorization": `Bearer ${accessToken}`,
         },
-        body: JSON.stringify(isEditing ? { ...formData, id: editingArticle!.id } : formData),
+        body: JSON.stringify(isEditing ? { ...formData, socialMedia: finalSocialMedia, id: editingArticle!.id } : { ...formData, socialMedia: finalSocialMedia }),
       });
       if (res.ok) {
         const data = await res.json();
@@ -525,49 +570,65 @@ function ArticleEditModal({ editingArticle, accessToken, onClose, onSaved }: Art
 
           <div className="space-y-4">
             <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest block">Delad via</label>
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-              {["facebook", "linkedin", "instagram", "tiktok"].map(platform => (
-                <div key={platform} className="space-y-2">
-                  <label
-                    className={`flex items-center justify-between p-4 rounded-2xl border transition-all cursor-pointer ${
-                      formData.socialMedia[platform as keyof typeof formData.socialMedia]
-                        ? "bg-brand-teal/5 border-brand-teal text-brand-teal"
-                        : "bg-gray-50 dark:bg-slate-800 border-transparent text-gray-400"
-                    }`}
-                  >
-                    <div className="flex items-center gap-3">
-                      <span className="w-8 h-8 rounded-lg bg-gray-200 dark:bg-slate-700 flex items-center justify-center p-1.5">
-                        {SOCIAL_ICONS[platform]}
-                      </span>
-                      <span className="font-black text-[10px] uppercase tracking-widest">{platform}</span>
-                    </div>
-                    <input
-                      type="checkbox"
-                      name={platform}
-                      checked={formData.socialMedia[platform as keyof typeof formData.socialMedia]}
-                      onChange={handleSocialChange}
-                      className="w-5 h-5 rounded-lg border-gray-300 text-brand-teal focus:ring-brand-teal"
-                    />
-                  </label>
-                  
-                  {formData.socialMedia[platform as keyof typeof formData.socialMedia] && platform !== 'facebook' && (
-                    <div className="animate-in slide-in-from-top-2 duration-300">
-                      <input
-                        type="url"
-                        name={platform}
-                        value={formData.socialLinks[platform as keyof typeof formData.socialLinks] || ''}
-                        onChange={handleLinkChange}
-                        placeholder={`Länk till ${platform}-inlägg...`}
-                        className="w-full px-4 py-2 rounded-xl bg-white dark:bg-slate-900 border border-brand-teal/20 focus:border-brand-teal outline-none transition-all font-bold text-[8px] text-gray-600 dark:text-gray-300 placeholder:text-gray-400"
-                      />
-                    </div>
-                  )}
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4">
+              {["facebook", "linkedin", "instagram", "tiktok", "x"]
+              .sort((a, b) => {
+                const isLoaded = channelSettings !== null;
+                if (!isLoaded) return 0;
+                const aActive = channelSettings?.[a]?.isActive ?? (a === 'facebook');
+                const bActive = channelSettings?.[b]?.isActive ?? (b === 'facebook');
+                return (aActive === bActive) ? 0 : aActive ? -1 : 1;
+              })
+              .map(platform => {
+                const isLoaded = channelSettings !== null;
+                const isActive = channelSettings?.[platform]?.isActive ?? (platform === 'facebook');
 
-                  {platform === 'facebook' && formData.socialMedia.facebook && (
-                    <p className="text-[8px] font-black uppercase text-brand-teal px-2 italic opacity-60">Länk genereras automatiskt vid publicering</p>
-                  )}
-                </div>
-              ))}
+                return (
+                  <div key={platform} className="space-y-2">
+                    <label
+                      className={`flex items-center justify-between p-4 rounded-2xl border transition-all ${
+                        !isLoaded ? 'opacity-50 cursor-wait' :
+                        !isActive ? 'opacity-40 cursor-not-allowed bg-gray-50 dark:bg-slate-800 border-transparent grayscale' :
+                        formData.socialMedia[platform as keyof typeof formData.socialMedia]
+                          ? "bg-brand-teal/5 border-brand-teal text-brand-teal cursor-pointer"
+                          : "bg-gray-50 dark:bg-slate-800 border-transparent text-gray-400 cursor-pointer"
+                      }`}
+                    >
+                      <div className="flex items-center gap-3">
+                        <span className="w-8 h-8 rounded-lg bg-gray-200 dark:bg-slate-700 flex items-center justify-center p-1.5">
+                          {SOCIAL_ICONS[platform]}
+                        </span>
+                        <span className="font-black text-[10px] uppercase tracking-widest">{platform}</span>
+                      </div>
+                      <input
+                        type="checkbox"
+                        name={platform}
+                        checked={isActive ? formData.socialMedia[platform as keyof typeof formData.socialMedia] : false}
+                        onChange={handleSocialChange}
+                        disabled={!isLoaded || !isActive}
+                        className="w-5 h-5 rounded-lg border-gray-300 text-brand-teal focus:ring-brand-teal disabled:opacity-50"
+                      />
+                    </label>
+                    
+                    {!isLoaded ? null : !isActive ? (
+                      <p className="text-[8px] font-black uppercase text-red-400 px-2 italic">Aktivera i inställningar</p>
+                    ) : formData.socialMedia[platform as keyof typeof formData.socialMedia] && (platform !== 'facebook' && platform !== 'instagram') ? (
+                      <div className="animate-in slide-in-from-top-2 duration-300">
+                        <input
+                          type="url"
+                          name={platform}
+                          value={formData.socialLinks[platform as keyof typeof formData.socialLinks] || ''}
+                          onChange={handleLinkChange}
+                          placeholder={`Länk till ${platform}-inlägg...`}
+                          className="w-full px-4 py-2 rounded-xl bg-white dark:bg-slate-900 border border-brand-teal/20 focus:border-brand-teal outline-none transition-all font-bold text-[8px] text-gray-600 dark:text-gray-300 placeholder:text-gray-400"
+                        />
+                      </div>
+                    ) : (platform === 'facebook' || platform === 'instagram') && formData.socialMedia[platform as keyof typeof formData.socialMedia] ? (
+                      <p className="text-[8px] font-black uppercase text-brand-teal px-2 italic opacity-60">Länk genereras automatiskt vid publicering</p>
+                    ) : null}
+                  </div>
+                );
+              })}
             </div>
           </div>
 
@@ -818,7 +879,7 @@ export default function ArticleFeed({ initialArticles }: ArticleFeedProps) {
   const [filterType, setFilterType] = useState<string>("Alla");
   const [startDate, setStartDate] = useState<string>("");
   const [endDate, setEndDate] = useState<string>("");
-  const [socialFilters, setSocialFilters] = useState({ facebook: false, instagram: false, linkedin: false, tiktok: false });
+  const [socialFilters, setSocialFilters] = useState({ facebook: false, instagram: false, linkedin: false, tiktok: false, x: false });
   const [selectedArticle, setSelectedArticle] = useState<Article | null>(null);
   const [articles, setArticles] = useState(initialArticles);
   const [deletingId, setDeletingId] = useState<string | null>(null);
@@ -966,7 +1027,7 @@ export default function ArticleFeed({ initialArticles }: ArticleFeedProps) {
           <div className="space-y-3">
             <label className="text-xs font-black text-gray-400 uppercase tracking-widest">Sociala medier</label>
             <div className="flex gap-2">
-              {["facebook", "linkedin", "instagram", "tiktok"].map(p => (
+              {["facebook", "linkedin", "x", "instagram", "tiktok"].map(p => (
                 <button
                   key={p}
                   onClick={() => toggleSocial(p as any)}
@@ -1023,6 +1084,26 @@ export default function ArticleFeed({ initialArticles }: ArticleFeedProps) {
                 </div>
                 {/* Subtle overlay on hover */}
                 <div className="absolute inset-0 bg-brand-teal/5 opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
+                
+                {/* Social Post Overlay (Admin Only) */}
+                {isAdmin && (
+                  <div className="absolute top-4 right-4 flex gap-1.5 z-20 opacity-0 group-hover:opacity-100 transition-all duration-300 translate-y-2 group-hover:translate-y-0">
+                    {["facebook", "linkedin", "instagram", "tiktok", "x"].map(p => {
+                      const link = article.socialLinks[p as keyof typeof article.socialLinks];
+                      if (!link || link === "#" || link === "") return null;
+                      return (
+                        <button
+                          key={p}
+                          onClick={(e) => { e.stopPropagation(); window.open(link, "_blank"); }}
+                          className="w-7 h-7 rounded-full bg-black/20 backdrop-blur-md border border-white/20 flex items-center justify-center text-white hover:bg-brand-teal transition-all shadow-lg"
+                          title={`Visa inlägg på ${p}`}
+                        >
+                          <div className="w-3.5 h-3.5">{SOCIAL_ICONS[p]}</div>
+                        </button>
+                      );
+                    })}
+                  </div>
+                )}
               </div>
 
               {/* White Content Section */}
@@ -1054,6 +1135,7 @@ export default function ArticleFeed({ initialArticles }: ArticleFeedProps) {
                       socialLinks={article.socialLinks}
                       size="sm"
                       showLabel={false}
+                      hideAdminLinks={true}
                     />
                   </div>
                 </div>

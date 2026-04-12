@@ -41,78 +41,110 @@ export default function StockChartModal({ isOpen, onClose, ticker = 'ENZY.ST' }:
   const [showMA30, setShowMA30] = useState(false);
   const [showMA100, setShowMA100] = useState(false);
 
+  const [hasInitialFetchStarted, setHasInitialFetchStarted] = useState(false);
+
+  // Helper to fetch and process data
+  const fetchStockData = async (tf: TimeframeOption, isMounted: boolean) => {
+    try {
+      if (isMounted) setLoading(true);
+      setError('');
+
+      const res = await fetch(`/api/stock?symbol=${ticker}&range=${tf.range}&interval=${tf.interval}`);
+      const json = await res.json();
+      
+      if (!isMounted) return;
+      
+      if (json.error || !json.chart || !json.chart.result) {
+        setError(json.error || 'Ingen data tillgänglig');
+        setLoading(false);
+        return;
+      }
+
+      const result = json.chart.result[0];
+      const timestamps = result.timestamp || [];
+      const closes = result.indicators?.quote?.[0]?.close || [];
+      const volumes = result.indicators?.quote?.[0]?.volume || [];
+      const meta = result.meta;
+      const prevClose = meta.previousClose || meta.chartPreviousClose;
+
+      setStockInfo({
+        price: meta.regularMarketPrice || 0,
+        changePercent: meta.regularMarketPrice && prevClose ? ((meta.regularMarketPrice - prevClose) / prevClose) * 100 : 0,
+        changeValue: meta.regularMarketPrice && prevClose ? (meta.regularMarketPrice - prevClose) : 0,
+        currency: meta.currency || 'SEK'
+      });
+
+      // Format and compute indicators
+      const formattedData = timestamps.map((ts: number, index: number) => {
+        const date = fromUnixTime(ts);
+        const price = closes[index] !== null ? Number(closes[index].toFixed(2)) : null;
+        
+        return {
+          timestamp: ts,
+          date: date,
+          price: price,
+          volume: volumes[index] || 0,
+        };
+      }).filter((item: any) => item.price !== null);
+
+      // Simple Moving Average Calculation
+      const calculateSMA = (dataList: any[], period: number) => {
+        return dataList.map((point, index) => {
+          if (index < period - 1) return null;
+          const slice = dataList.slice(index - period + 1, index + 1);
+          const sum = slice.reduce((acc, curr) => acc + (curr.price || 0), 0);
+          return Number((sum / period).toFixed(2));
+        });
+      };
+
+      const ma30Values = calculateSMA(formattedData, 30);
+      const ma100Values = calculateSMA(formattedData, 100);
+
+      const dataWithIndicators = formattedData.map((d: any, i: number) => ({
+        ...d,
+        ma30: ma30Values[i],
+        ma100: ma100Values[i],
+      }));
+
+      setData(dataWithIndicators);
+      setLoading(false);
+    } catch (err) {
+      if (!isMounted) return;
+      setError('Kunde inte ladda aktiedata');
+      setLoading(false);
+    }
+  };
+
+  // Background Pre-fetch on Mount
+  useEffect(() => {
+    let isMounted = true;
+    
+    const preFetch = () => {
+      if (data.length > 0) return; // Already have data
+      fetchStockData(selectedTimeframe, isMounted);
+      setHasInitialFetchStarted(true);
+    };
+
+    // Delay slightly to not block initial page load
+    const timeout = setTimeout(preFetch, 2000);
+    
+    return () => { 
+      isMounted = false;
+      clearTimeout(timeout);
+    };
+  }, []);
+
+  // Manual timeframe changes or when opened
   useEffect(() => {
     if (!isOpen) return;
 
+    // Skip fetch if we already have data for the default timeframe from pre-fetch
+    if (data.length > 0 && selectedTimeframe.range === timeframes[2].range && !loading) {
+      return;
+    }
+
     let isMounted = true;
-    setLoading(true);
-    setError('');
-
-    fetch(`/api/stock?symbol=${ticker}&range=${selectedTimeframe.range}&interval=${selectedTimeframe.interval}`)
-      .then(res => res.json())
-      .then(json => {
-        if (!isMounted) return;
-        
-        if (json.error || !json.chart || !json.chart.result) {
-          setError(json.error || 'Ingen data tillgänglig');
-          setLoading(false);
-          return;
-        }
-
-        const result = json.chart.result[0];
-        const timestamps = result.timestamp || [];
-        const closes = result.indicators?.quote?.[0]?.close || [];
-        const volumes = result.indicators?.quote?.[0]?.volume || [];
-        const meta = result.meta;
-        const prevClose = meta.previousClose || meta.chartPreviousClose;
-
-        setStockInfo({
-          price: meta.regularMarketPrice || 0,
-          changePercent: meta.regularMarketPrice && prevClose ? ((meta.regularMarketPrice - prevClose) / prevClose) * 100 : 0,
-          changeValue: meta.regularMarketPrice && prevClose ? (meta.regularMarketPrice - prevClose) : 0,
-          currency: meta.currency || 'SEK'
-        });
-
-        // Format and compute indicators
-        const formattedData = timestamps.map((ts: number, index: number) => {
-          const date = fromUnixTime(ts);
-          const price = closes[index] !== null ? Number(closes[index].toFixed(2)) : null;
-          
-          return {
-            timestamp: ts,
-            date: date,
-            price: price,
-            volume: volumes[index] || 0,
-          };
-        }).filter((item: any) => item.price !== null);
-
-        // Simple Moving Average Calculation
-        const calculateSMA = (dataList: any[], period: number) => {
-          return dataList.map((point, index) => {
-            if (index < period - 1) return null;
-            const slice = dataList.slice(index - period + 1, index + 1);
-            const sum = slice.reduce((acc, curr) => acc + (curr.price || 0), 0);
-            return Number((sum / period).toFixed(2));
-          });
-        };
-
-        const ma30Values = calculateSMA(formattedData, 30);
-        const ma100Values = calculateSMA(formattedData, 100);
-
-        const dataWithIndicators = formattedData.map((d: any, i: number) => ({
-          ...d,
-          ma30: ma30Values[i],
-          ma100: ma100Values[i],
-        }));
-
-        setData(dataWithIndicators);
-        setLoading(false);
-      })
-      .catch(err => {
-        if (!isMounted) return;
-        setError('Kunde inte ladda aktiedata');
-        setLoading(false);
-      });
+    fetchStockData(selectedTimeframe, isMounted);
 
     return () => { isMounted = false; };
   }, [isOpen, selectedTimeframe, ticker]);

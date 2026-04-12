@@ -18,12 +18,14 @@ interface ArticleForm {
     instagram: boolean;
     linkedin: boolean;
     tiktok: boolean;
+    x: boolean;
   };
   socialLinks: {
     facebook?: string;
     instagram?: string;
     linkedin?: string;
     tiktok?: string;
+    x?: string;
   };
 }
 
@@ -38,12 +40,14 @@ const initialFormState: ArticleForm = {
     instagram: false,
     linkedin: false,
     tiktok: false,
+    x: false,
   },
   socialLinks: {
     facebook: '',
     instagram: '',
     linkedin: '',
     tiktok: '',
+    x: '',
   },
 };
 
@@ -59,6 +63,7 @@ function AdminForm() {
   const [availableImages, setAvailableImages] = useState<string[]>([]);
   const [isEditing, setIsEditing] = useState(false);
   const [uploading, setUploading] = useState(false);
+  const [channelSettings, setChannelSettings] = useState<any>(null);
 
   // Redirect if not Admin or Editor
   useEffect(() => {
@@ -67,8 +72,15 @@ function AdminForm() {
       router.push('/');
       return;
     }
-    // Fetch initial images
+    // Fetch initial images and settings
     fetchImages();
+    // Fetch global channel settings to know what's active
+    supabase.auth.getSession().then(({ data: { session } }) => {
+       fetch("/api/settings", { headers: { 'Authorization': `Bearer ${session?.access_token}` } })
+         .then(res => res.ok ? res.json() : null)
+         .then(data => data && setChannelSettings(data))
+         .catch(console.error);
+    });
   }, [user, profile, authLoading, router]);
 
   useEffect(() => {
@@ -193,13 +205,25 @@ function AdminForm() {
         return;
       }
 
+      // Ensure inactive channels are not sent as active, fixing the PATCH persistence bug
+      const finalSocialMedia = { ...formData.socialMedia };
+      if (channelSettings) {
+        Object.keys(finalSocialMedia).forEach(p => {
+          const platform = p as keyof typeof finalSocialMedia;
+          const isActive = channelSettings?.[platform]?.isActive ?? (platform === 'facebook');
+          if (!isActive) {
+            finalSocialMedia[platform] = false;
+          }
+        });
+      }
+
       const res = await fetch('/api/articles', {
         method: isEditing ? 'PATCH' : 'POST',
         headers: {
           'Content-Type': 'application/json',
           'Authorization': `Bearer ${session.access_token}`,
         },
-        body: JSON.stringify(isEditing ? { ...formData, id: editId } : formData),
+        body: JSON.stringify(isEditing ? { ...formData, socialMedia: finalSocialMedia, id: editId } : { ...formData, socialMedia: finalSocialMedia }),
       });
 
       if (res.ok) {
@@ -342,39 +366,58 @@ function AdminForm() {
           <div className="space-y-4">
             <label className="text-xs font-black text-gray-400 uppercase tracking-widest ml-1">Social Media</label>
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-              {['facebook', 'linkedin', 'instagram', 'tiktok'].map((platform) => (
-                <div key={platform} className="space-y-3">
-                  <label 
-                    className={`flex items-center justify-between p-4 rounded-2xl border transition-all cursor-pointer ${formData.socialMedia[platform as keyof typeof formData.socialMedia] ? 'bg-brand-teal/5 border-brand-teal text-brand-teal' : 'bg-gray-50 dark:bg-slate-800 border-transparent text-gray-400'}`}
-                  >
-                    <span className="font-black text-[10px] uppercase tracking-widest">{platform}</span>
-                    <input
-                      type="checkbox"
-                      name={platform}
-                      checked={formData.socialMedia[platform as keyof typeof formData.socialMedia]}
-                      onChange={handleSocialChange}
-                      className="w-5 h-5 rounded-lg border-gray-300 text-brand-teal focus:ring-brand-teal"
-                    />
-                  </label>
-                  
-                  {formData.socialMedia[platform as keyof typeof formData.socialMedia] && platform !== 'facebook' && (
-                    <div className="animate-in slide-in-from-top-2 duration-300">
-                      <input
-                        type="url"
-                        name={platform}
-                        value={formData.socialLinks[platform as keyof typeof formData.socialLinks] || ''}
-                        onChange={handleLinkChange}
-                        placeholder={`Länk till ${platform}-inlägg...`}
-                        className="w-full px-4 py-2 rounded-xl bg-white dark:bg-slate-900 border border-brand-teal/20 focus:border-brand-teal outline-none transition-all font-bold text-[10px] text-gray-600 dark:text-gray-300 placeholder:text-gray-400"
-                      />
-                    </div>
-                  )}
+              {['facebook', 'linkedin', 'instagram', 'tiktok', 'x']
+              .sort((a, b) => {
+                const isLoaded = channelSettings !== null;
+                if (!isLoaded) return 0;
+                const aActive = channelSettings?.[a]?.isActive ?? (a === 'facebook');
+                const bActive = channelSettings?.[b]?.isActive ?? (b === 'facebook');
+                return (aActive === bActive) ? 0 : aActive ? -1 : 1;
+              })
+              .map((platform) => {
+                // If channelSettings is loaded, use its isActive. If not, default to false (except facebook which was always true historically, but we wait for load ideally)
+                const isLoaded = channelSettings !== null;
+                const isActive = channelSettings?.[platform]?.isActive ?? (platform === 'facebook');
 
-                  {platform === 'facebook' && formData.socialMedia.facebook && (
-                    <p className="text-[8px] font-black uppercase text-brand-teal px-2 italic opacity-60">Länk genereras automatiskt vid publicering</p>
-                  )}
-                </div>
-              ))}
+                return (
+                  <div key={platform} className="space-y-3">
+                    <label 
+                      className={`flex items-center justify-between p-4 rounded-2xl border transition-all ${
+                        !isLoaded ? 'opacity-50 cursor-wait' :
+                        !isActive ? 'opacity-40 cursor-not-allowed bg-gray-50 dark:bg-slate-800 border-transparent grayscale' :
+                        formData.socialMedia[platform as keyof typeof formData.socialMedia] ? 'bg-brand-teal/5 border-brand-teal text-brand-teal cursor-pointer' : 'bg-gray-50 dark:bg-slate-800 border-transparent text-gray-400 cursor-pointer'
+                      }`}
+                    >
+                      <span className="font-black text-[10px] uppercase tracking-widest">{platform}</span>
+                      <input
+                        type="checkbox"
+                        name={platform}
+                        checked={isActive ? formData.socialMedia[platform as keyof typeof formData.socialMedia] : false}
+                        onChange={handleSocialChange}
+                        disabled={!isLoaded || !isActive}
+                        className="w-5 h-5 rounded-lg border-gray-300 text-brand-teal focus:ring-brand-teal disabled:opacity-50"
+                      />
+                    </label>
+                    
+                    {!isLoaded ? null : !isActive ? (
+                      <p className="text-[8px] font-black uppercase text-red-400 px-2 italic">Aktivera i inställningar</p>
+                    ) : formData.socialMedia[platform as keyof typeof formData.socialMedia] && platform !== 'facebook' ? (
+                      <div className="animate-in slide-in-from-top-2 duration-300">
+                        <input
+                          type="url"
+                          name={platform}
+                          value={formData.socialLinks[platform as keyof typeof formData.socialLinks] || ''}
+                          onChange={handleLinkChange}
+                          placeholder={`Länk till ${platform}-inlägg...`}
+                          className="w-full px-4 py-2 rounded-xl bg-white dark:bg-slate-900 border border-brand-teal/20 focus:border-brand-teal outline-none transition-all font-bold text-[10px] text-gray-600 dark:text-gray-300 placeholder:text-gray-400"
+                        />
+                      </div>
+                    ) : platform === 'facebook' && formData.socialMedia.facebook ? (
+                      <p className="text-[8px] font-black uppercase text-brand-teal px-2 italic opacity-60">Länk genereras automatiskt vid publicering</p>
+                    ) : null}
+                  </div>
+                );
+              })}
             </div>
           </div>
 

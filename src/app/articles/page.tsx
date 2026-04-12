@@ -14,12 +14,14 @@ type Article = {
     instagram: boolean;
     linkedin: boolean;
     tiktok: boolean;
+    x: boolean;
   };
   socialLinks: {
     facebook?: string;
     instagram?: string;
     linkedin?: string;
     tiktok?: string;
+    x?: string;
   };
   facebookPostId?: string;
 };

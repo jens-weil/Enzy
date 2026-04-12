@@ -34,6 +34,19 @@ export default function Navbar() {
   const [profileMessage, setProfileMessage] = useState<{ type: "success" | "error"; text: string } | null>(null);
 
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+  const [tickerSymbol, setTickerSymbol] = useState("ENZY.ST");
+
+  useEffect(() => {
+    // Fetch public settings for stock ticker
+    fetch("/api/settings")
+      .then(res => res.ok ? res.json() : null)
+      .then(data => {
+        if (data?.stock?.ticker) {
+          setTickerSymbol(data.stock.ticker);
+        }
+      })
+      .catch(console.error);
+  }, []);
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -178,7 +191,11 @@ export default function Navbar() {
                   </button>
                 )}
               </div>
-              <StockTicker onOpenChart={() => setShowStockChart(true)} className="hidden lg:flex ml-4" />
+              <StockTicker 
+                onOpenChart={() => setShowStockChart(true)} 
+                ticker={tickerSymbol}
+                className="hidden lg:flex ml-4" 
+              />
             </div>
 
             {/* Mobile Menu Button */}
@@ -230,7 +247,11 @@ export default function Navbar() {
               </button>
               
               <div className="pt-2 pb-4">
-                <StockTicker onOpenChart={() => { setShowStockChart(true); setIsMobileMenuOpen(false); }} className="flex !w-full" />
+                <StockTicker 
+                  onOpenChart={() => { setShowStockChart(true); setIsMobileMenuOpen(false); }} 
+                  ticker={tickerSymbol}
+                  className="flex !w-full" 
+                />
               </div>
             </div>
 
@@ -455,7 +476,7 @@ export default function Navbar() {
       <StockChartModal 
         isOpen={showStockChart} 
         onClose={() => setShowStockChart(false)} 
-        ticker="ENZY.ST" 
+        ticker={tickerSymbol} 
       />
     </>
 

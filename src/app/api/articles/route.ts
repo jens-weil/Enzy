@@ -3,6 +3,7 @@ import { revalidatePath } from 'next/cache';
 import fs from 'fs';
 import path from 'path';
 import { postToFacebook, deleteFromFacebook } from '@/lib/facebook';
+import { postToInstagram } from '@/lib/instagram';
 import { requireRole } from '@/lib/auth';
 
 // GET — public, no auth required
@@ -52,7 +53,8 @@ export async function POST(request: NextRequest) {
         tiktok: false
       },
       socialLinks: body.socialLinks || {},
-      facebookPostId: undefined
+      facebookPostId: undefined,
+      instagramPostId: undefined
     };
 
     const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://enzymatica.se';
@@ -80,6 +82,25 @@ export async function POST(request: NextRequest) {
       }
     }
 
+    const hasManualIG = isManualLink(newArticle.socialLinks?.instagram);
+
+    if (newArticle.socialMedia.instagram && !hasManualIG) {
+      const igResult = await postToInstagram({
+        title: newArticle.title,
+        ingress: newArticle.ingress,
+        link: articleUrl,
+        imageUrl: newArticle.imageUrl ? (newArticle.imageUrl.startsWith('http') ? newArticle.imageUrl : `${siteUrl}${newArticle.imageUrl}`) : undefined
+      });
+      if (igResult) {
+        console.log("Article API: Instagram post SUCCESS:", igResult.id);
+        newArticle.instagramPostId = igResult.id;
+        newArticle.socialLinks.instagram = igResult.url;
+      } else {
+        console.warn("Article API: Instagram post FAILED (check logs)");
+        newArticle._igWarning = "Instagram-inlägget kunde inte skapas automatisk.";
+      }
+    }
+
     const filePath = path.join(process.cwd(), 'data', 'articles.json');
     const dirPath = path.dirname(filePath);
     if (!fs.existsSync(dirPath)) {
@@ -103,7 +124,7 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ 
       success: true, 
       article: newArticle,
-      warning: newArticle._fbWarning 
+      warning: [newArticle._fbWarning, newArticle._igWarning].filter(Boolean).join(" | ") || undefined
     }, { status: 201 });
   } catch (error) {
     console.error("Error saving article:", error);
@@ -148,6 +169,7 @@ export async function PATCH(request: NextRequest) {
     const oldFB = articles[articleIndex].socialMedia.facebook;
     const newFB = socialMedia?.facebook !== undefined ? socialMedia.facebook : oldFB;
     let facebookPostId = articles[articleIndex].facebookPostId;
+    let instagramPostId = articles[articleIndex].instagramPostId;
     let updatedSocialLinks = { ...(socialLinks || articles[articleIndex].socialLinks || {}) };
 
     const platforms = ["facebook", "linkedin", "instagram", "tiktok"] as const;
@@ -163,6 +185,9 @@ export async function PATCH(request: NextRequest) {
             deleteFromFacebook(facebookPostId).catch(e => console.warn("Background FB delete failed:", e));
           }
           facebookPostId = undefined;
+        } else if (p === 'instagram') {
+          // Instagram does not support API deletion easily without the user container ID but we clear the link and ID locally
+          instagramPostId = undefined;
         }
       }
     });
@@ -189,6 +214,27 @@ export async function PATCH(request: NextRequest) {
       }
     }
 
+    const newIG = socialMedia?.instagram !== undefined ? socialMedia.instagram : articles[articleIndex].socialMedia.instagram;
+    const hasManualIG = isManualLink(updatedSocialLinks.instagram);
+
+    if (newIG && !instagramPostId && !hasManualIG) {
+      console.log(`Article API (PATCH): Attempting automated Instagram post for ${id}...`);
+      const igResult = await postToInstagram({
+        title: title || articles[articleIndex].title,
+        ingress: ingress !== undefined ? ingress : articles[articleIndex].ingress,
+        link: articleUrl,
+        imageUrl: imageUrl ? (imageUrl.startsWith('http') ? imageUrl : `${siteUrl}${imageUrl}`) : (articles[articleIndex].imageUrl ? (articles[articleIndex].imageUrl.startsWith('http') ? articles[articleIndex].imageUrl : `${siteUrl}${articles[articleIndex].imageUrl}`) : undefined)
+      });
+      if (igResult) {
+        console.log("Article API (PATCH): Instagram post SUCCESS:", igResult.id);
+        instagramPostId = igResult.id;
+        updatedSocialLinks.instagram = igResult.url;
+      } else {
+        console.warn("Article API (PATCH): Instagram post FAILED");
+        articles[articleIndex]._igWarning = "Instagram-inlägget kunde inte skapas automatisk.";
+      }
+    }
+
     articles[articleIndex] = {
       ...articles[articleIndex],
       title: title || articles[articleIndex].title,
@@ -204,7 +250,8 @@ export async function PATCH(request: NextRequest) {
         tiktok: socialMedia?.tiktok !== undefined ? socialMedia.tiktok : articles[articleIndex].socialMedia.tiktok,
       },
       socialLinks: updatedSocialLinks,
-      facebookPostId
+      facebookPostId,
+      instagramPostId
     };
 
     fs.writeFileSync(filePath, JSON.stringify(articles, null, 2), 'utf8');
@@ -214,7 +261,7 @@ export async function PATCH(request: NextRequest) {
     return NextResponse.json({ 
       success: true, 
       article: articles[articleIndex],
-      warning: articles[articleIndex]._fbWarning 
+      warning: [articles[articleIndex]._fbWarning, articles[articleIndex]._igWarning].filter(Boolean).join(" | ") || undefined
     });
   } catch (error: any) {
     console.error("Error updating article:", error);

@@ -11,7 +11,8 @@
       "facebook": false,
       "instagram": false,
       "linkedin": false,
-      "tiktok": false
+      "tiktok": false,
+      "x": false
     },
     "socialLinks": {}
   },
@@ -27,9 +28,11 @@
       "facebook": false,
       "instagram": false,
       "linkedin": false,
-      "tiktok": false
+      "tiktok": false,
+      "x": false
     },
-    "socialLinks": {}
+    "socialLinks": {},
+    "_fbWarning": "Facebook-inlägget kunde inte skapas automatisk."
   },
   {
     "id": "1773422519230",
@@ -42,7 +45,8 @@
       "facebook": false,
       "instagram": false,
       "linkedin": false,
-      "tiktok": false
+      "tiktok": false,
+      "x": false
     },
     "ingress": "Den nya smaken Eucalyptos ger ny säljrekord. Marknaden tog emot den med hull och hår och apoteken säljer ut den så fort de får påfyllning.",
     "socialLinks": {
@@ -62,7 +66,8 @@
       "facebook": false,
       "instagram": false,
       "linkedin": false,
-      "tiktok": false
+      "tiktok": false,
+      "x": false
     },
     "ingress": "Enzymatica redovisar en stark avslutning på året och välkomnar den nya vd:n som kommer leda den fortsatta internationella expansionen. Omsättningen fö...",
     "socialLinks": {
@@ -78,15 +83,21 @@
     "imageUrl": "/uploads/scraped/article_1773426972282_0.png",
     "content": "Se presentationen från Stora Aktiedagarna i Stockholm där ledningen presenterade bolagets framtidsutsikter och den senaste kliniska datan för ColdZyme®.\n\n<div class=\"aspect-video w-full rounded-2xl overflow-hidden shadow-lg my-8\"><iframe src=\"https://www.youtube.com/embed/ruOA1MWRqAU\" class=\"w-full h-full border-0\" allow=\"accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture\" allowfullscreen></iframe></div>",
     "socialMedia": {
-      "facebook": false,
-      "instagram": false,
-      "linkedin": false,
-      "tiktok": false
+      "facebook": true,
+      "instagram": true,
+      "linkedin": true,
+      "tiktok": true,
+      "x": false
     },
     "ingress": "Se presentationen från Stora Aktiedagarna i Stockholm där ledningen presenterade bolagets framtidsutsikter och den senaste kliniska datan för ColdZyme...",
     "socialLinks": {
-      "instagram": "https://nya.jenka.se"
-    }
+      "linkedin": "https://www.linkedin.com/company/enzymatica/",
+      "x": "https://www.linkedin.com/company/enzymatica/",
+      "instagram": "https://nya.jenka.se",
+      "facebook": "https://www.facebook.com/832124036610397",
+      "tiktok": "https://www.linkedin.com/com"
+    },
+    "facebookPostId": "832124036610397"
   },
   {
     "id": "3",
@@ -99,7 +110,8 @@
       "facebook": false,
       "instagram": false,
       "linkedin": false,
-      "tiktok": false
+      "tiktok": false,
+      "x": false
     },
     "ingress": "En vetenskaplig artikel publicerad i Journal of Physiology bekräftar att ColdZyme® inte bara lindrar förkylningssymtom, utan angriper den underliggand...",
     "socialLinks": {
@@ -120,7 +132,8 @@
       "facebook": false,
       "instagram": true,
       "linkedin": true,
-      "tiktok": true
+      "tiktok": true,
+      "x": false
     },
     "ingress": "Ett år har gått sedan de kliniska resultaten för ColdZyme publicerades i den vetenskapliga tidskriften The Journal of Physiology....",
     "socialLinks": {
@@ -140,7 +153,8 @@
       "facebook": false,
       "instagram": false,
       "linkedin": false,
-      "tiktok": false
+      "tiktok": false,
+      "x": false
     },
     "ingress": "I en aktuell intervju med BioStock berättar Enzymaticas vd Sana Alajmovic om sin första tid i bolaget och om ambitionerna framåt....",
     "socialLinks": {
@@ -159,7 +173,8 @@
       "facebook": false,
       "instagram": false,
       "linkedin": false,
-      "tiktok": false
+      "tiktok": false,
+      "x": false
     },
     "ingress": "Se när Enzymaticas nya vd, Sana Alajmovic, gästar BioStocks studio för ett samtal om sitt nya uppdrag, bolagets kommersiella strategi och vägen framåt...",
     "socialLinks": {
@@ -178,7 +193,8 @@
       "facebook": false,
       "instagram": false,
       "linkedin": false,
-      "tiktok": false
+      "tiktok": false,
+      "x": false
     },
     "ingress": "Sana Alajmovic har nu officiellt tillträtt som vd för bolaget....",
     "socialLinks": {
@@ -197,7 +213,8 @@
       "facebook": false,
       "instagram": false,
       "linkedin": false,
-      "tiktok": false
+      "tiktok": false,
+      "x": false
     },
     "ingress": "Den kliniska studien om ColdZyme som visade signifikant kortare sjukdomstid och lindrigare symptom vid förkylning har uppmärksammats i nationell tv....",
     "socialLinks": {
@@ -216,7 +233,8 @@
       "facebook": false,
       "instagram": false,
       "linkedin": false,
-      "tiktok": false
+      "tiktok": false,
+      "x": false
     },
     "ingress": "VERIFIERAD INGRESS",
     "socialLinks": {
@@ -235,7 +253,8 @@
       "facebook": false,
       "instagram": false,
       "linkedin": false,
-      "tiktok": false
+      "tiktok": false,
+      "x": false
     },
     "ingress": "Enzymatica AB har tecknat ett samarbetsavtal med UK Sports Institute (UKSI)....",
     "socialLinks": {
@@ -256,7 +275,8 @@
       "facebook": false,
       "instagram": false,
       "linkedin": false,
-      "tiktok": false
+      "tiktok": false,
+      "x": false
     },
     "ingress": "ColdZyme har blivit en del av det brittiska landslagets medicinska utrustning....",
     "socialLinks": {
@@ -275,7 +295,8 @@
       "facebook": false,
       "instagram": false,
       "linkedin": false,
-      "tiktok": false
+      "tiktok": false,
+      "x": false
     },
     "ingress": "Enzymatica utökar sitt produktsortiment med ColdZyme® Eucalyptus....",
     "socialLinks": {
@@ -294,7 +315,8 @@
       "facebook": false,
       "instagram": false,
       "linkedin": false,
-      "tiktok": false
+      "tiktok": false,
+      "x": false
     },
     "ingress": "Lär känna den professionella cyklisten Charlotte Hodgkins-Byrne och professor Glen Davison, som diskuterar fördelarna med ColdZyme....",
     "socialLinks": {
@@ -313,7 +335,8 @@
       "facebook": false,
       "instagram": false,
       "linkedin": false,
-      "tiktok": false
+      "tiktok": false,
+      "x": false
     },
     "ingress": "BioStock analyserar de slutgiltiga resultaten från den kliniska studien om ColdZyme....",
     "socialLinks": {
@@ -332,7 +355,8 @@
       "facebook": false,
       "instagram": false,
       "linkedin": false,
-      "tiktok": false
+      "tiktok": false,
+      "x": false
     },
     "ingress": "Professor Glen Davison presenterade resultaten från den kliniska studien vid Global Health Summit....",
     "socialLinks": {
@@ -351,7 +375,8 @@
       "facebook": false,
       "instagram": false,
       "linkedin": false,
-      "tiktok": false
+      "tiktok": false,
+      "x": false
     },
     "ingress": "Enzymatica deltar i en internationell kampanj för global hälsa....",
     "socialLinks": {
@@ -370,7 +395,8 @@
       "facebook": false,
       "instagram": false,
       "linkedin": false,
-      "tiktok": false
+      "tiktok": false,
+      "x": false
     },
     "ingress": "Ett abstract om den kliniska studien har publicerats i den ansedda tidskriften British Journal of Sports Medicine....",
     "socialLinks": {
@@ -389,7 +415,8 @@
       "facebook": false,
       "instagram": false,
       "linkedin": false,
-      "tiktok": false
+      "tiktok": false,
+      "x": false
     },
     "ingress": "Resultat från den senaste studien om ColdZyme presenterades vid en internationell olympisk konferens....",
     "socialLinks": {
@@ -408,7 +435,8 @@
       "facebook": false,
       "instagram": false,
       "linkedin": false,
-      "tiktok": false
+      "tiktok": false,
+      "x": false
     },
     "ingress": "ColdZyme visades upp i den populära amerikanska morgonshowen \"The Balancing Act\"....",
     "socialLinks": {
@@ -427,7 +455,8 @@
       "facebook": false,
       "instagram": false,
       "linkedin": false,
-      "tiktok": false
+      "tiktok": false,
+      "x": false
     },
     "ingress": "Följ med på en resa genom 10 år av reklamfilmer för ColdZyme....",
     "socialLinks": {
@@ -446,7 +475,8 @@
       "facebook": false,
       "instagram": false,
       "linkedin": false,
-      "tiktok": false
+      "tiktok": false,
+      "x": false
     },
     "ingress": "En djupintervju med Enzymaticas dåvarande vd Claus Egstrand....",
     "socialLinks": {
@@ -465,7 +495,8 @@
       "facebook": false,
       "instagram": false,
       "linkedin": false,
-      "tiktok": false
+      "tiktok": false,
+      "x": false
     },
     "ingress": "Enzymatica lanserar en ny marknadskampanj i Sverige för ColdZyme....",
     "socialLinks": {
