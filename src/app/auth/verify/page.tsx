@@ -1,0 +1,208 @@
+"use client";
+
+import { useEffect, Suspense, useState, useRef } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
+import Image from "next/image";
+import { createClient } from "@supabase/supabase-js";
+
+function VerifyContent() {
+  const searchParams = useSearchParams();
+  const router = useRouter();
+  const [isProcessing, setIsProcessing] = useState(false);
+  const [errorMessage, setErrorMessage] = useState<string | null>(null);
+  const [statusText, setStatusText] = useState("");
+  
+  const [email, setEmail] = useState(searchParams.get("email") || "");
+  const [otp, setOtp] = useState(["", "", "", "", "", "", "", ""]);
+  const inputRefs = [
+    useRef<HTMLInputElement>(null),
+    useRef<HTMLInputElement>(null),
+    useRef<HTMLInputElement>(null),
+    useRef<HTMLInputElement>(null),
+    useRef<HTMLInputElement>(null),
+    useRef<HTMLInputElement>(null),
+    useRef<HTMLInputElement>(null),
+    useRef<HTMLInputElement>(null),
+  ];
+
+  // Create a passive local client
+  const [passiveSupabase] = useState(() => createClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+    {
+      auth: {
+        persistSession: true,
+        autoRefreshToken: true,
+        detectSessionInUrl: false
+      }
+    }
+  ));
+
+  const handleOtpChange = (index: number, value: string) => {
+    if (value.length > 1) value = value.slice(-1);
+    // Allow both letters and numbers
+    if (!/^[a-zA-Z0-9]*$/.test(value)) return;
+
+    const newOtp = [...otp];
+    newOtp[index] = value.toUpperCase(); // Normalize to uppercase
+    setOtp(newOtp);
+
+    // Auto-focus next
+    if (value && index < 7) {
+      inputRefs[index + 1].current?.focus();
+    }
+  };
+
+  const handleKeyDown = (index: number, e: React.KeyboardEvent) => {
+    if (e.key === "Backspace" && !otp[index] && index > 0) {
+      inputRefs[index - 1].current?.focus();
+    }
+  };
+
+  const handleVerify = async (e?: React.FormEvent) => {
+    if (e) e.preventDefault();
+    const token = otp.join("");
+    
+    if (!email) {
+      setErrorMessage("Ange din e-postadress.");
+      return;
+    }
+    if (token.length < 8) {
+      setErrorMessage("Ange hela den åttasiffriga koden.");
+      return;
+    }
+
+    setIsProcessing(true);
+    setErrorMessage(null);
+    setStatusText("Verifierar kod...");
+
+    try {
+      const { data, error } = await passiveSupabase.auth.verifyOtp({
+        email,
+        token,
+        type: 'signup',
+      });
+
+      if (error) {
+        setErrorMessage(error.message === "Email link is invalid or has expired" 
+          ? "Koden är ogiltig eller har gått ut. Kontrollera att du angett rätt kod." 
+          : error.message);
+        return;
+      }
+
+      if (data.session) {
+        setStatusText("Godkänner medlemskap...");
+        try {
+          await fetch("/api/auth/confirm", {
+            method: "POST",
+            headers: { "Authorization": `Bearer ${data.session.access_token}` }
+          });
+        } catch (e) {}
+
+        setStatusText("Välkommen!");
+        setTimeout(() => { router.replace("/"); }, 1000);
+      }
+    } catch (err: any) {
+      setErrorMessage(err.message || "Ett oväntat fel uppstod.");
+    } finally {
+      setIsProcessing(false);
+    }
+  };
+
+  if (errorMessage) {
+    return (
+      <div className="min-h-screen flex flex-col items-center justify-center p-6 bg-gray-50 dark:bg-slate-950">
+        <div className="w-full max-w-md bg-white dark:bg-slate-900 rounded-[2.5rem] shadow-2xl border border-red-100 dark:border-red-900/20 p-10 text-center animate-in zoom-in-95 duration-300">
+          <div className="w-20 h-20 bg-red-50 dark:bg-red-900/20 text-red-500 rounded-full flex items-center justify-center text-4xl mx-auto mb-8">!</div>
+          <h1 className="text-2xl font-black text-brand-dark dark:text-white uppercase italic tracking-tighter mb-4">
+            Misslyckades
+          </h1>
+          <p className="text-gray-500 dark:text-gray-400 font-medium mb-10 leading-relaxed">
+            {errorMessage}
+          </p>
+          <button 
+            onClick={() => setErrorMessage(null)}
+            className="w-full py-5 bg-brand-dark text-white rounded-2xl font-black uppercase tracking-widest text-xs hover:bg-brand-teal transition-all"
+          >
+            Försök igen
+          </button>
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <div className="min-h-screen flex flex-col items-center justify-center p-6 bg-gray-50 dark:bg-slate-950">
+      <div className="w-full max-w-2xl bg-white dark:bg-slate-900 rounded-[3rem] shadow-2xl border border-gray-100 dark:border-slate-800 p-12 text-center animate-in zoom-in-95 duration-500">
+         <div className="w-24 h-24 bg-brand-teal/10 text-brand-teal rounded-3xl flex items-center justify-center mx-auto mb-10 shadow-inner overflow-hidden rotate-3">
+           <Image src="/logo.png" alt="Enzy" width={60} height={60} className="opacity-90 object-contain -rotate-3" />
+         </div>
+         
+         <h1 className="text-4xl font-black text-brand-dark dark:text-white uppercase italic tracking-tighter mb-4">
+          Bekräfta konto
+        </h1>
+        <p className="text-gray-500 dark:text-gray-400 font-medium mb-10 max-w-md mx-auto leading-relaxed">
+          Vi har skickat en åttasiffrig kod till din e-post. Ange den nedan för att slutföra din registrering.
+        </p>
+
+        <form onSubmit={handleVerify} className="space-y-8">
+          <div className="space-y-2 text-left max-w-xs mx-auto">
+            <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest ml-4">Din e-post</label>
+            <input 
+              type="email"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              placeholder="namn@företag.se"
+              className="w-full px-6 py-4 rounded-2xl bg-gray-50 dark:bg-slate-800 border border-transparent focus:border-brand-teal focus:ring-4 focus:ring-brand-teal/10 outline-none transition-all font-bold text-gray-900 dark:text-white"
+              required
+            />
+          </div>
+
+          <div className="flex justify-center flex-wrap gap-2 sm:gap-3">
+            {otp.map((digit, idx) => (
+              <input
+                key={idx}
+                ref={inputRefs[idx]}
+                type="text"
+                autoCapitalize="characters"
+                value={digit}
+                onChange={(e) => handleOtpChange(idx, e.target.value)}
+                onKeyDown={(e) => handleKeyDown(idx, e)}
+                className="w-10 h-14 sm:w-12 sm:h-16 text-center text-xl sm:text-2xl font-black bg-gray-50 dark:bg-slate-800 border-2 border-transparent focus:border-brand-teal focus:bg-white dark:focus:bg-slate-900 rounded-xl outline-none transition-all text-brand-dark dark:text-white shadow-sm"
+              />
+            ))}
+          </div>
+          
+          <button 
+            disabled={isProcessing || otp.join("").length < 8 || !email}
+            type="submit"
+            className="w-full max-w-md py-6 bg-brand-teal hover:bg-brand-dark text-white rounded-[2rem] font-black uppercase tracking-widest text-sm shadow-xl shadow-brand-teal/20 transition-all hover:scale-[1.02] active:scale-[0.98] disabled:opacity-40 flex items-center justify-center gap-3 mx-auto"
+          >
+            {isProcessing ? (
+              <span className="w-6 h-6 border-3 border-white/20 border-t-white rounded-full animate-spin" />
+            ) : null}
+            {isProcessing ? "Verifierar..." : "Slutför registrering"}
+          </button>
+        </form>
+
+        <div className="mt-12 pt-8 border-t border-gray-50 dark:border-slate-800 flex flex-col items-center">
+          <p className="text-[10px] font-black uppercase tracking-[0.3em] text-gray-300">
+            Säker portal • Enzymatica AB
+          </p>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+export default function VerifyPage() {
+  return (
+    <Suspense fallback={
+      <div className="min-h-screen flex flex-col items-center justify-center p-4 bg-white dark:bg-slate-950">
+        <div className="w-16 h-16 border-4 border-brand-teal/20 border-t-brand-teal rounded-full animate-spin" />
+      </div>
+    }>
+      <VerifyContent />
+    </Suspense>
+  );
+}

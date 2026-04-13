@@ -6,8 +6,12 @@ import { supabase } from "@/lib/supabase";
 
 interface Profile {
   id: string;
-  role: "Admin" | "Editor" | "Partner" | "Investor" | "Sales" | "Regular";
+  role: "Admin" | "Redaktör" | "Partner" | "Investerare" | "Säljare" | "Medlem" | "Regular" | "Editor" | "Investor" | "Sales";
   display_name: string;
+  full_name?: string;
+  company?: string;
+  phone?: string;
+  linkedin_url?: string;
   membership_status: "Pending" | "Approved" | "Rejected";
 }
 

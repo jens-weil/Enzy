@@ -4,7 +4,7 @@ import path from 'path';
 import { requireRole } from '@/lib/auth';
 
 export async function GET(request: NextRequest) {
-  const auth = await requireRole(request, ['Admin', 'Editor']);
+  const auth = await requireRole(request, ['Admin', 'Editor', 'Redaktör']);
   if (!auth.authorized) {
     return NextResponse.json({ error: auth.error }, { status: auth.status });
   }
@@ -52,7 +52,7 @@ export async function GET(request: NextRequest) {
 }
 
 export async function POST(request: NextRequest) {
-  const auth = await requireRole(request, ['Admin', 'Editor']);
+  const auth = await requireRole(request, ['Admin', 'Editor', 'Redaktör']);
   if (!auth.authorized) {
     return NextResponse.json({ error: auth.error }, { status: auth.status });
   }

@@ -22,7 +22,7 @@ export async function GET() {
 
 // POST — Admin or Editor only
 export async function POST(request: NextRequest) {
-  const auth = await requireRole(request, ['Admin', 'Editor']);
+  const auth = await requireRole(request, ['Admin', 'Editor', 'Redaktör', 'Investor', 'Investerare', 'Regular', 'Medlem', 'Sales', 'Säljare']);
   if (!auth.authorized) {
     return NextResponse.json({ error: auth.error }, { status: auth.status });
   }
@@ -136,7 +136,7 @@ export async function POST(request: NextRequest) {
 
 // PATCH — Admin or Editor only
 export async function PATCH(request: NextRequest) {
-  const auth = await requireRole(request, ['Admin', 'Editor']);
+  const auth = await requireRole(request, ['Admin', 'Editor', 'Redaktör', 'Investor', 'Investerare', 'Regular', 'Medlem', 'Sales', 'Säljare']);
   if (!auth.authorized) {
     return NextResponse.json({ error: auth.error }, { status: auth.status });
   }

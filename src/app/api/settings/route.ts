@@ -38,6 +38,14 @@ function getSettings() {
       ticker: "ENZY.ST",
       shares: "142 823 696",
       sector: "Hälsovård"
+    },
+    translations: {
+      userStatuses: {
+        "Approved": "Godkänd",
+        "Pending": "Väntar",
+        "Rejected": "Nekad",
+        "Banned": "Deaktiverad"
+      }
     }
   };
 
@@ -61,7 +69,8 @@ function getSettings() {
       linkedin: { ...defaultSettings.linkedin, ...parsed.linkedin },
       tiktok: { ...defaultSettings.tiktok, ...parsed.tiktok },
       x: { ...defaultSettings.x, ...parsed.x },
-      stock: { ...defaultSettings.stock, ...parsed.stock }
+      stock: { ...defaultSettings.stock, ...parsed.stock },
+      translations: { ...defaultSettings.translations, ...(parsed.translations || {}) }
     };
   } catch (e) {
     return defaultSettings;
@@ -74,7 +83,7 @@ export async function GET(request: NextRequest) {
   const settings = getSettings();
   
   // check for Admin/Editor role
-  const auth = await requireRole(request, ['Admin', 'Editor']);
+  const auth = await requireRole(request, ['Admin', 'Editor', 'Redaktör']);
   if (auth.authorized) {
     // If authorized, return everything (sensitive tokens included)
     return NextResponse.json(settings);
@@ -92,7 +101,8 @@ export async function GET(request: NextRequest) {
       ticker: settings.stock?.ticker || "ENZY.ST",
       shares: settings.stock?.shares || "",
       sector: settings.stock?.sector || ""
-    }
+    },
+    translations: settings.translations
   };
 
   return NextResponse.json(publicSettings);
@@ -108,7 +118,7 @@ export async function POST(request: NextRequest) {
     const body = await request.json();
     const currentSettings = getSettings();
     
-    // Deep merge for facebook, instagram, linkedin, tiktok
+    // Deep merge
     const newSettings = {
       ...currentSettings,
       facebook: {
@@ -134,6 +144,10 @@ export async function POST(request: NextRequest) {
       stock: {
         ...currentSettings.stock,
         ...(body.stock || {})
+      },
+      translations: {
+        ...currentSettings.translations,
+        ...(body.translations || {})
       }
     };
 

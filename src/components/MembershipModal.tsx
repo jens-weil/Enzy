@@ -11,7 +11,7 @@ interface MembershipModalProps {
 export default function MembershipModal({ isOpen, onClose }: MembershipModalProps) {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-  const [role, setRole] = useState("Regular");
+  const [role, setRole] = useState("Medlem");
   const [fullName, setFullName] = useState("");
   const [phone, setPhone] = useState("");
   const [company, setCompany] = useState("");
@@ -30,7 +30,7 @@ export default function MembershipModal({ isOpen, onClose }: MembershipModalProp
     setError(null);
 
     try {
-      const isStaff = role === "Admin" || role === "Editor";
+      const isStaff = role === "Admin" || role === "Editor" || role === "Redaktör";
 
       // Skicka all data som metadata – triggern i databasen läser och skapar profilen
       const { data: authData, error: authErr } = await supabase.auth.signUp({
@@ -45,6 +45,7 @@ export default function MembershipModal({ isOpen, onClose }: MembershipModalProp
             linkedin_url: isStaff ? "" : linkedin,
             display_name: fullName || email.split("@")[0],
           },
+          emailRedirectTo: `${window.location.origin}/auth/callback`,
         },
       });
 
@@ -93,10 +94,10 @@ export default function MembershipModal({ isOpen, onClose }: MembershipModalProp
                     onChange={e => setRole(e.target.value)}
                     className="w-full px-5 py-3 rounded-2xl bg-gray-50 dark:bg-slate-800 border-none font-bold text-gray-900 dark:text-white appearance-none"
                   >
-                    <option value="Regular">Vanlig prenumerant</option>
-                    <option value="Investor">Investerare</option>
+                    <option value="Medlem">Medlem</option>
+                    <option value="Investerare">Investerare</option>
                     <option value="Partner">Partner</option>
-                    <option value="Sales">Säljare</option>
+                    <option value="Säljare">Säljare</option>
                   </select>
                 </div>
                 <div className="space-y-2">

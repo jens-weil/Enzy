@@ -30,10 +30,15 @@ export default function Navbar() {
 
   // Profile form state
   const [newDisplayName, setNewDisplayName] = useState("");
+  const [newFullName, setNewFullName] = useState("");
+  const [newCompany, setNewCompany] = useState("");
+  const [newPhone, setNewPhone] = useState("");
+  const [newLinkedinUrl, setNewLinkedinUrl] = useState("");
   const [newPassword, setNewPassword] = useState("");
   const [profileMessage, setProfileMessage] = useState<{ type: "success" | "error"; text: string } | null>(null);
 
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+  const [showAdminMenu, setShowAdminMenu] = useState(false);
   const [tickerSymbol, setTickerSymbol] = useState("ENZY.ST");
   const [isTickerActive, setIsTickerActive] = useState(true);
 
@@ -94,24 +99,28 @@ export default function Navbar() {
     try {
       const trimmedName = newDisplayName.trim();
 
-      // Update display_name via server-side API (bypasses Supabase RLS)
-      if (trimmedName && trimmedName !== username) {
-        const { data: { session } } = await supabase.auth.getSession();
-        if (!session?.access_token) throw new Error("Ingen aktiv session.");
+      // Update profile via server-side API (bypasses Supabase RLS)
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session?.access_token) throw new Error("Ingen aktiv session.");
 
-        const res = await fetch("/api/profile", {
-          method: "PATCH",
-          headers: {
-            "Content-Type": "application/json",
-            "Authorization": `Bearer ${session.access_token}`,
-          },
-          body: JSON.stringify({ display_name: trimmedName }),
-        });
+      const res = await fetch("/api/profile", {
+        method: "PATCH",
+        headers: {
+          "Content-Type": "application/json",
+          "Authorization": `Bearer ${session.access_token}`,
+        },
+        body: JSON.stringify({ 
+          display_name: newDisplayName.trim(),
+          full_name: newFullName.trim(),
+          company: newCompany.trim(),
+          phone: newPhone.trim(),
+          linkedin_url: newLinkedinUrl.trim(),
+        }),
+      });
 
-        if (!res.ok) {
-          const data = await res.json();
-          throw new Error(data.error || "Kunde inte uppdatera profilen.");
-        }
+      if (!res.ok) {
+        const data = await res.json();
+        throw new Error(data.error || "Kunde inte uppdatera profilen.");
       }
 
       // Password update goes through Supabase Auth directly (not affected by RLS)
@@ -134,7 +143,11 @@ export default function Navbar() {
   };
 
   const openProfile = () => {
-    setNewDisplayName(username);
+    setNewDisplayName(profile?.display_name || "");
+    setNewFullName(profile?.full_name || "");
+    setNewCompany(profile?.company || "");
+    setNewPhone(profile?.phone || "");
+    setNewLinkedinUrl(profile?.linkedin_url || "");
     setNewPassword("");
     setProfileMessage(null);
     setShowProfileModal(true);
@@ -181,7 +194,46 @@ export default function Navbar() {
                 Kontakt
               </button>
 
-              <div className="pl-4 border-l border-gray-200 dark:border-gray-800 ml-2">
+              <div className="pl-4 border-l border-gray-200 dark:border-gray-800 ml-2 flex items-center gap-2">
+                {isLoggedIn && profile?.role === "Admin" && (
+                  <div className="relative">
+                    <button
+                      onClick={() => setShowAdminMenu(!showAdminMenu)}
+                      className={`w-10 h-10 rounded-full flex items-center justify-center transition-all ${showAdminMenu ? 'bg-brand-teal text-white shadow-lg shadow-brand-teal/20' : 'bg-gray-50 dark:bg-slate-800 text-gray-400 hover:text-brand-teal hover:bg-brand-teal/10'}`}
+                      title="Adminverktyg"
+                    >
+                      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2.5} className={`w-5 h-5 transition-transform duration-500 ${showAdminMenu ? 'rotate-90' : ''}`}>
+                        <path strokeLinecap="round" strokeLinejoin="round" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" />
+                        <path strokeLinecap="round" strokeLinejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                      </svg>
+                    </button>
+
+                    {showAdminMenu && (
+                      <>
+                        <div className="fixed inset-0 z-40" onClick={() => setShowAdminMenu(false)} />
+                        <div className="absolute right-0 mt-4 w-56 bg-white dark:bg-slate-900 rounded-2xl shadow-2xl border border-gray-100 dark:border-slate-800 py-2 z-50 animate-in fade-in zoom-in-95 duration-200">
+                          <Link
+                            href="/admin/users"
+                            onClick={() => setShowAdminMenu(false)}
+                            className="flex items-center gap-3 px-4 py-3 text-xs font-black uppercase tracking-widest text-gray-600 dark:text-gray-300 hover:bg-brand-light dark:hover:bg-slate-800 hover:text-brand-teal transition-colors"
+                          >
+                            <span className="text-lg">👥</span>
+                            Användare
+                          </Link>
+                          <Link
+                            href="/admin/settings"
+                            onClick={() => setShowAdminMenu(false)}
+                            className="flex items-center gap-3 px-4 py-3 text-xs font-black uppercase tracking-widest text-gray-600 dark:text-gray-300 hover:bg-brand-light dark:hover:bg-slate-800 hover:text-brand-teal transition-colors"
+                          >
+                            <span className="text-lg">⚙️</span>
+                            Inställningar
+                          </Link>
+                        </div>
+                      </>
+                    )}
+                  </div>
+                )}
+
                 {isLoggedIn ? (
                   <button
                     onClick={openProfile}
@@ -270,6 +322,26 @@ export default function Navbar() {
             </div>
 
             <div className="pt-6 border-t border-gray-100 dark:border-slate-800 flex flex-col space-y-4">
+              {isLoggedIn && profile?.role === "Admin" && (
+                <div className="grid grid-cols-2 gap-3 mb-2">
+                   <Link
+                    href="/admin/users"
+                    onClick={() => setIsMobileMenuOpen(false)}
+                    className="flex flex-col items-center justify-center p-4 rounded-2xl bg-brand-teal/5 text-brand-teal font-black text-[10px] uppercase tracking-widest border border-brand-teal/10 active:bg-brand-teal active:text-white transition-all"
+                  >
+                    <span className="text-2xl mb-2">👥</span>
+                    Användare
+                  </Link>
+                  <Link
+                    href="/admin/settings"
+                    onClick={() => setIsMobileMenuOpen(false)}
+                    className="flex flex-col items-center justify-center p-4 rounded-2xl bg-gray-50 dark:bg-slate-800 text-gray-500 dark:text-gray-400 font-black text-[10px] uppercase tracking-widest border border-gray-100 dark:border-slate-800 active:bg-brand-teal active:text-white transition-all"
+                  >
+                    <span className="text-2xl mb-2">⚙️</span>
+                    Inställningar
+                  </Link>
+                </div>
+              )}
               {isLoggedIn ? (
                 <button
                   onClick={() => { openProfile(); setIsMobileMenuOpen(false); }}
@@ -383,7 +455,7 @@ export default function Navbar() {
           onClick={(e) => { if (e.target === e.currentTarget) setShowProfileModal(false); }}
         >
           <div
-            className="bg-white dark:bg-slate-900 w-full max-w-md rounded-[2rem] shadow-2xl overflow-hidden animate-in zoom-in-95 duration-300"
+            className="bg-white dark:bg-slate-900 w-full max-w-2xl rounded-[2.5rem] shadow-2xl overflow-hidden animate-in zoom-in-95 duration-300"
             onClick={e => e.stopPropagation()}
           >
             {/* Header */}
@@ -405,65 +477,96 @@ export default function Navbar() {
             </div>
 
             {/* Form */}
-            <form onSubmit={handleProfileSave} className="p-8 space-y-5">
+            <form onSubmit={handleProfileSave} className="p-8 space-y-6">
               {profileMessage && (
-                <div className={`p-3 rounded-xl text-sm font-bold border ${profileMessage.type === "success" ? "bg-green-50 dark:bg-green-900/30 border-green-200 text-green-700" : "bg-red-50 border-red-200 text-red-700"}`}>
+                <div className={`p-4 rounded-2xl text-sm font-bold border animate-in slide-in-from-top duration-300 ${profileMessage.type === "success" ? "bg-green-50 dark:bg-green-900/40 border-green-200 dark:border-green-800 text-green-700 dark:text-green-300" : "bg-red-50 dark:bg-red-900/40 border-red-200 dark:border-red-800 text-red-700 dark:text-red-300"}`}>
                   {profileMessage.text}
                 </div>
               )}
-              <div className="space-y-2">
-                <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest">Nytt visningsnamn</label>
-                <input
-                  type="text"
-                  value={newDisplayName}
-                  onChange={e => setNewDisplayName(e.target.value)}
-                  className="w-full px-5 py-3.5 rounded-2xl bg-gray-50 dark:bg-slate-800 border border-transparent focus:border-brand-teal focus:ring-4 focus:ring-brand-teal/10 outline-none transition-all font-bold text-gray-900 dark:text-white"
-                  placeholder={username}
-                />
-              </div>
-              <div className="space-y-2">
-                <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest">Nytt lösenord</label>
-                <input
-                  type="password"
-                  value={newPassword}
-                  onChange={e => setNewPassword(e.target.value)}
-                  className="w-full px-5 py-3.5 rounded-2xl bg-gray-50 dark:bg-slate-800 border border-transparent focus:border-brand-teal focus:ring-4 focus:ring-brand-teal/10 outline-none transition-all font-bold text-gray-900 dark:text-white"
-                  placeholder="Lämna tomt för att behålla"
-                />
-              </div>
-              <button
-                type="submit"
-                className="w-full bg-brand-teal hover:bg-brand-dark text-white py-4 rounded-2xl font-black text-sm uppercase tracking-widest shadow-lg transition-all"
-              >
-                Spara ändringar
-              </button>
-              {profile?.role === "Admin" && (
-                <div className="grid grid-cols-2 gap-3 pb-2 pt-2 border-t border-gray-100 dark:border-slate-800">
-                  <Link
-                    href="/admin/users"
-                    onClick={() => { setShowProfileModal(false); setIsMobileMenuOpen(false); }}
-                    className="w-full bg-brand-teal/10 text-brand-teal hover:bg-brand-teal hover:text-white py-3 rounded-xl font-black text-xs uppercase tracking-widest transition-all flex items-center justify-center gap-2"
-                  >
-                    <span>👥</span> Användare
-                  </Link>
-                  <Link
-                    href="/admin"
-                    onClick={() => { setShowProfileModal(false); setIsMobileMenuOpen(false); }}
-                    className="w-full bg-gray-50 dark:bg-slate-800 text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-slate-700 border border-gray-100 dark:border-slate-800 py-3 rounded-xl font-black text-xs uppercase tracking-widest transition-all flex items-center justify-center gap-2"
-                  >
-                    <span>✍️</span> Innehåll
-                  </Link>
+
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div className="space-y-2">
+                  <label className="text-[10px] font-black text-gray-400 uppercase tracking-[0.2em] ml-2">Visningsnamn</label>
+                  <input
+                    type="text"
+                    value={newDisplayName}
+                    onChange={e => setNewDisplayName(e.target.value)}
+                    className="w-full px-6 py-4 rounded-2xl bg-gray-50 dark:bg-slate-800/50 border border-transparent focus:border-brand-teal focus:ring-4 focus:ring-brand-teal/10 outline-none transition-all font-bold text-gray-900 dark:text-white"
+                    placeholder="Välj ett namn..."
+                  />
                 </div>
-              )}
-              {profile?.role === "Admin" && (
-                <Link
-                  href="/admin/settings"
-                  onClick={() => { setShowProfileModal(false); setIsMobileMenuOpen(false); }}
-                  className="w-full bg-gray-50 dark:bg-slate-800 hover:bg-gray-100 dark:hover:bg-slate-700 text-gray-700 dark:text-gray-300 py-3 rounded-2xl font-black text-sm uppercase tracking-widest transition-all border border-gray-100 dark:border-slate-800 flex items-center justify-center gap-2"
+                <div className="space-y-2">
+                  <label className="text-[10px] font-black text-gray-400 uppercase tracking-[0.2em] ml-2">Fullständigt namn</label>
+                  <input
+                    type="text"
+                    value={newFullName}
+                    onChange={e => setNewFullName(e.target.value)}
+                    className="w-full px-6 py-4 rounded-2xl bg-gray-50 dark:bg-slate-800/50 border border-transparent focus:border-brand-teal focus:ring-4 focus:ring-brand-teal/10 outline-none transition-all font-bold text-gray-900 dark:text-white"
+                    placeholder="För- och efternamn..."
+                  />
+                </div>
+                <div className="space-y-2">
+                  <label className="text-[10px] font-black text-gray-400 uppercase tracking-[0.2em] ml-2">Företag / Organisation</label>
+                  <input
+                    type="text"
+                    value={newCompany}
+                    onChange={e => setNewCompany(e.target.value)}
+                    className="w-full px-6 py-4 rounded-2xl bg-gray-50 dark:bg-slate-800/50 border border-transparent focus:border-brand-teal focus:ring-4 focus:ring-brand-teal/10 outline-none transition-all font-bold text-gray-900 dark:text-white"
+                    placeholder="Din arbetsplats..."
+                  />
+                </div>
+                <div className="space-y-2">
+                  <label className="text-[10px] font-black text-gray-400 uppercase tracking-[0.2em] ml-2">Telefonnummer</label>
+                  <input
+                    type="tel"
+                    value={newPhone}
+                    onChange={e => setNewPhone(e.target.value)}
+                    className="w-full px-6 py-4 rounded-2xl bg-gray-50 dark:bg-slate-800/50 border border-transparent focus:border-brand-teal focus:ring-4 focus:ring-brand-teal/10 outline-none transition-all font-bold text-gray-900 dark:text-white"
+                    placeholder="070-000 00 00"
+                  />
+                </div>
+                <div className="space-y-2">
+                  <label className="text-[10px] font-black text-gray-400 uppercase tracking-[0.2em] ml-2">LinkedIn URL</label>
+                  <input
+                    type="url"
+                    value={newLinkedinUrl}
+                    onChange={e => setNewLinkedinUrl(e.target.value)}
+                    className="w-full px-6 py-4 rounded-2xl bg-gray-50 dark:bg-slate-800/50 border border-transparent focus:border-brand-teal focus:ring-4 focus:ring-brand-teal/10 outline-none transition-all font-bold text-gray-900 dark:text-white"
+                    placeholder="https://linkedin.com/in/..."
+                  />
+                </div>
+                <div className="space-y-2">
+                  <label className="text-[10px] font-black text-gray-400 uppercase tracking-[0.2em] ml-2">Byt lösenord</label>
+                  <input
+                    type="password"
+                    value={newPassword}
+                    onChange={e => setNewPassword(e.target.value)}
+                    className="w-full px-6 py-4 rounded-2xl bg-gray-50 dark:bg-slate-800/50 border border-transparent focus:border-brand-teal focus:ring-4 focus:ring-brand-teal/10 outline-none transition-all font-bold text-gray-900 dark:text-white"
+                    placeholder="Minst 6 tecken..."
+                  />
+                </div>
+              </div>
+
+              <div className="flex items-center gap-4 pt-4 border-t border-gray-100 dark:border-slate-800">
+                <div className="flex-1">
+                  <div className="flex items-center gap-2 mb-1">
+                    <span className="text-[10px] font-black text-gray-400 uppercase tracking-widest">Medlemsnivå:</span>
+                    <span className="text-[10px] font-black text-brand-teal uppercase tracking-widest">{profile?.role || "Medlem"}</span>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <span className="text-[10px] font-black text-gray-400 uppercase tracking-widest">Status:</span>
+                    <span className={`text-[10px] font-black uppercase tracking-widest ${profile?.membership_status === 'Approved' ? 'text-green-500' : 'text-orange-500'}`}>
+                      {profile?.membership_status === 'Approved' ? 'Verifierad' : 'Väntar på godkännande'}
+                    </span>
+                  </div>
+                </div>
+                <button
+                  type="submit"
+                  className="bg-brand-teal hover:bg-brand-dark text-white px-8 py-5 rounded-2xl font-black text-xs uppercase tracking-[0.1em] shadow-lg shadow-brand-teal/20 transition-all hover:scale-[1.02] active:scale-[0.98]"
                 >
-                  <span>⚙️</span> Inställningar
-                </Link>
-              )}
+                  Spara ändringar
+                </button>
+              </div>
               <button
                 type="button"
                 onClick={handleLogout}

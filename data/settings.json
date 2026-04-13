@@ -30,5 +30,13 @@
     "ticker": "ENZY.ST",
     "shares": "142 823 696",
     "sector": "Hälsovård"
+  },
+  "translations": {
+    "userStatuses": {
+      "Approved": "Godkänd",
+      "Pending": "Väntar",
+      "Rejected": "Nekad",
+      "Banned": "Deaktiverad"
+    }
   }
 }

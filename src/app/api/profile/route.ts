@@ -73,16 +73,23 @@ export async function PATCH(req: NextRequest) {
 
     // 3. Parse the update payload
     const body = await req.json();
-    const { display_name } = body;
+    const { display_name, full_name, phone, company, linkedin_url } = body;
 
-    if (!display_name || typeof display_name !== "string" || !display_name.trim()) {
-      return NextResponse.json({ error: "display_name is required" }, { status: 400 });
+    const updates: any = {};
+    if (display_name !== undefined) updates.display_name = display_name?.trim() || null;
+    if (full_name !== undefined) updates.full_name = full_name?.trim() || null;
+    if (phone !== undefined) updates.phone = phone?.trim() || null;
+    if (company !== undefined) updates.company = company?.trim() || null;
+    if (linkedin_url !== undefined) updates.linkedin_url = linkedin_url?.trim() || null;
+
+    if (Object.keys(updates).length === 0) {
+      return NextResponse.json({ error: "No fields to update" }, { status: 400 });
     }
 
     // 4. Update using admin client (bypasses RLS)
     const { error: updateError } = await supabaseAdmin
       .from("profiles")
-      .update({ display_name: display_name.trim() })
+      .update(updates)
       .eq("id", user.id);
 
     if (updateError) {
