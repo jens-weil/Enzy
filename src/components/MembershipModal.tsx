@@ -65,10 +65,10 @@ export default function MembershipModal({ isOpen, onClose }: MembershipModalProp
       onClick={onClose}
     >
       <div 
-        className="bg-white dark:bg-slate-900 w-full max-w-2xl rounded-[2.5rem] shadow-2xl overflow-hidden animate-in zoom-in-95 duration-300 my-auto"
+        className="bg-white dark:bg-slate-900 w-full max-w-lg rounded-[2.5rem] shadow-2xl overflow-hidden animate-in zoom-in-95 duration-300 my-auto"
         onClick={e => e.stopPropagation()}
       >
-        <div className="p-8 md:p-12 space-y-8">
+        <div className="p-8 md:p-10 space-y-8">
           <div className="flex justify-between items-start">
             <div>
               <h2 className="text-3xl font-black text-brand-dark dark:text-white tracking-tight">Ansök om medlemskap</h2>

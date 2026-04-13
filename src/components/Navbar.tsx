@@ -15,7 +15,7 @@ export default function Navbar() {
   const { user, profile, loading, signOut, refreshProfile } = useAuth();
   const isLoggedIn = !!user;
   const username = profile?.display_name || user?.email?.split("@")[0] || "Användare";
-  
+
   const [showLoginModal, setShowLoginModal] = useState(false);
   const [showProfileModal, setShowProfileModal] = useState(false);
   const [showContactModal, setShowContactModal] = useState(false);
@@ -66,7 +66,7 @@ export default function Navbar() {
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoginError("");
-    
+
     const { error } = await supabase.auth.signInWithPassword({
       email: loginEmail,
       password: loginPassword,
@@ -109,7 +109,7 @@ export default function Navbar() {
           "Content-Type": "application/json",
           "Authorization": `Bearer ${session.access_token}`,
         },
-        body: JSON.stringify({ 
+        body: JSON.stringify({
           display_name: newDisplayName.trim(),
           full_name: newFullName.trim(),
           company: newCompany.trim(),
@@ -169,20 +169,20 @@ export default function Navbar() {
 
             {/* Desktop Menu */}
             <div className="hidden lg:flex items-center space-x-2">
-              <Link 
-                href="/" 
+              <Link
+                href="/"
                 className={`px-5 py-2.5 rounded-full font-bold transition-all text-sm uppercase tracking-widest ${pathname === "/" ? "bg-brand-teal text-white shadow-lg shadow-brand-teal/20" : "text-gray-600 dark:text-gray-300 hover:text-brand-teal hover:bg-brand-light dark:hover:bg-slate-800"}`}
               >
                 Hem
               </Link>
-              <Link 
-                href="/articles" 
+              <Link
+                href="/articles"
                 className={`px-5 py-2.5 rounded-full font-bold transition-all text-sm uppercase tracking-widest ${pathname.startsWith("/articles") ? "bg-brand-teal text-white shadow-lg shadow-brand-teal/20" : "text-gray-600 dark:text-gray-300 hover:text-brand-teal hover:bg-brand-light dark:hover:bg-slate-800"}`}
               >
                 Nyheter
               </Link>
-              <Link 
-                href="/investerare" 
+              <Link
+                href="/investerare"
                 className={`px-5 py-2.5 rounded-full font-bold transition-all text-sm uppercase tracking-widest ${pathname.startsWith("/investerare") ? "bg-brand-teal text-white shadow-lg shadow-brand-teal/20" : "text-gray-600 dark:text-gray-300 hover:text-brand-teal hover:bg-brand-light dark:hover:bg-slate-800"}`}
               >
                 Investerare
@@ -235,29 +235,40 @@ export default function Navbar() {
                 )}
 
                 {isLoggedIn ? (
-                  <button
-                    onClick={openProfile}
-                    className="bg-brand-teal/10 hover:bg-brand-teal/20 text-brand-teal px-5 py-2.5 rounded-full font-bold transition-all text-sm uppercase tracking-widest flex items-center gap-2"
-                  >
-                    <span className="w-5 h-5 rounded-full bg-brand-teal text-white text-[10px] font-black flex items-center justify-center">
-                      {username.charAt(0).toUpperCase()}
-                    </span>
-                    {username}
-                  </button>
+                  <div className="flex items-center gap-1 group/nav">
+                    <button
+                      onClick={openProfile}
+                      className="bg-brand-teal/10 hover:bg-brand-teal/20 text-brand-teal px-4 py-2.5 rounded-full font-bold transition-all text-sm uppercase tracking-widest flex items-center gap-2"
+                    >
+                      <span className="w-5 h-5 rounded-full bg-brand-teal text-white text-[10px] font-black flex items-center justify-center">
+                        {username.charAt(0).toUpperCase()}
+                      </span>
+                      {username}
+                    </button>
+                    <button
+                      onClick={handleLogout}
+                      className="w-9 h-9 flex items-center justify-center rounded-full text-gray-400 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 transition-all opacity-0 group-hover/nav:opacity-100"
+                      title="Logga ut"
+                    >
+                      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2.5} className="w-4 h-4">
+                        <path strokeLinecap="round" strokeLinejoin="round" d="M15.75 9V5.25A2.25 2.25 0 0013.5 3h-6a2.25 2.25 0 00-2.25 2.25v13.5A2.25 2.25 0 007.5 21h6a2.25 2.25 0 002.25-2.25V15M12 9l-3 3m0 0l3 3m-3-3h12.75" />
+                      </svg>
+                    </button>
+                  </div>
                 ) : (
                   <button
                     onClick={() => { setShowLoginModal(true); setLoginError(""); }}
                     className="bg-brand-teal/10 hover:bg-brand-teal/20 text-brand-teal px-5 py-2.5 rounded-full font-bold transition-all text-sm uppercase tracking-widest"
                   >
-                     Logga in
+                    Logga in
                   </button>
                 )}
               </div>
               {isTickerActive && (
-                <StockTicker 
-                  onOpenChart={() => setShowStockChart(true)} 
+                <StockTicker
+                  onOpenChart={() => setShowStockChart(true)}
                   ticker={tickerSymbol}
-                  className="hidden lg:flex ml-4" 
+                  className="hidden lg:flex ml-4"
                 />
               )}
             </div>
@@ -309,13 +320,13 @@ export default function Navbar() {
               >
                 Kontakt
               </button>
-              
+
               {isTickerActive && (
                 <div className="pt-2 pb-4">
-                  <StockTicker 
-                    onOpenChart={() => { setShowStockChart(true); setIsMobileMenuOpen(false); }} 
+                  <StockTicker
+                    onOpenChart={() => { setShowStockChart(true); setIsMobileMenuOpen(false); }}
                     ticker={tickerSymbol}
-                    className="flex !w-full" 
+                    className="flex !w-full"
                   />
                 </div>
               )}
@@ -324,7 +335,7 @@ export default function Navbar() {
             <div className="pt-6 border-t border-gray-100 dark:border-slate-800 flex flex-col space-y-4">
               {isLoggedIn && profile?.role === "Admin" && (
                 <div className="grid grid-cols-2 gap-3 mb-2">
-                   <Link
+                  <Link
                     href="/admin/users"
                     onClick={() => setIsMobileMenuOpen(false)}
                     className="flex flex-col items-center justify-center p-4 rounded-2xl bg-brand-teal/5 text-brand-teal font-black text-[10px] uppercase tracking-widest border border-brand-teal/10 active:bg-brand-teal active:text-white transition-all"
@@ -455,43 +466,46 @@ export default function Navbar() {
           onClick={(e) => { if (e.target === e.currentTarget) setShowProfileModal(false); }}
         >
           <div
-            className="bg-white dark:bg-slate-900 w-full max-w-2xl rounded-[2.5rem] shadow-2xl overflow-hidden animate-in zoom-in-95 duration-300"
+            className="bg-white dark:bg-slate-900 w-full max-w-lg rounded-[2.5rem] shadow-2xl overflow-hidden animate-in zoom-in-95 duration-300"
             onClick={e => e.stopPropagation()}
           >
             {/* Header */}
-            <div className="bg-brand-dark px-10 py-10 text-center relative overflow-hidden">
+            <div className="bg-brand-dark px-6 py-4 text-center relative overflow-hidden">
               <div className="absolute top-0 right-0 w-32 h-32 bg-brand-teal/20 rounded-full blur-3xl -mr-10 -mt-10" />
               <div className="relative z-10">
-                <div className="w-16 h-16 bg-brand-teal/30 rounded-full flex items-center justify-center mx-auto mb-4 border-2 border-brand-teal/50">
-                  <span className="text-3xl font-black text-white">{username.charAt(0).toUpperCase()}</span>
+                <div className="w-12 h-12 bg-brand-teal/30 rounded-full flex items-center justify-center mx-auto mb-1 border-2 border-brand-teal/50">
+                  <span className="text-xl font-black text-white">{username.charAt(0).toUpperCase()}</span>
                 </div>
-                <h2 className="text-2xl font-black text-white tracking-tight">{username}</h2>
-                <p className="text-white/60 mt-1 text-sm font-medium">Enzymatica {profile?.role || "Medlem"}</p>
+                <h2 className="text-xl font-black text-white tracking-tight leading-tight">{username}</h2>
+                <p className="text-white/60 text-sm font-medium leading-tight">{profile?.role || "Medlem"}</p>
+                <span className={`text-[10px] font-black uppercase tracking-widest ${profile?.membership_status === 'Approved' ? 'text-green-500' : 'text-orange-500'}`}>
+                  {profile?.membership_status === 'Approved' ? 'Verifierad' : 'Väntar på godkännande'}
+                </span>
               </div>
               <button
                 onClick={() => setShowProfileModal(false)}
-                className="absolute top-4 right-4 w-9 h-9 rounded-full bg-white/10 hover:bg-white/20 text-white flex items-center justify-center text-xl font-black transition-all"
+                className="absolute top-4 right-4 w-9 h-9 rounded-full bg-white/10 hover:bg-white/30 text-white flex items-center justify-center text-xl font-black transition-all hover:scale-110 active:scale-95 z-20"
               >
                 ×
               </button>
             </div>
 
             {/* Form */}
-            <form onSubmit={handleProfileSave} className="p-8 space-y-6">
+            <form onSubmit={handleProfileSave} className="p-6 space-y-4">
               {profileMessage && (
                 <div className={`p-4 rounded-2xl text-sm font-bold border animate-in slide-in-from-top duration-300 ${profileMessage.type === "success" ? "bg-green-50 dark:bg-green-900/40 border-green-200 dark:border-green-800 text-green-700 dark:text-green-300" : "bg-red-50 dark:bg-red-900/40 border-red-200 dark:border-red-800 text-red-700 dark:text-red-300"}`}>
                   {profileMessage.text}
                 </div>
               )}
 
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div className="space-y-2">
                   <label className="text-[10px] font-black text-gray-400 uppercase tracking-[0.2em] ml-2">Visningsnamn</label>
                   <input
                     type="text"
                     value={newDisplayName}
                     onChange={e => setNewDisplayName(e.target.value)}
-                    className="w-full px-6 py-4 rounded-2xl bg-gray-50 dark:bg-slate-800/50 border border-transparent focus:border-brand-teal focus:ring-4 focus:ring-brand-teal/10 outline-none transition-all font-bold text-gray-900 dark:text-white"
+                    className="w-full px-6 py-3 rounded-2xl bg-gray-50 dark:bg-slate-800/50 border border-transparent focus:border-brand-teal focus:ring-4 focus:ring-brand-teal/10 outline-none transition-all font-bold text-gray-900 dark:text-white"
                     placeholder="Välj ett namn..."
                   />
                 </div>
@@ -501,7 +515,7 @@ export default function Navbar() {
                     type="text"
                     value={newFullName}
                     onChange={e => setNewFullName(e.target.value)}
-                    className="w-full px-6 py-4 rounded-2xl bg-gray-50 dark:bg-slate-800/50 border border-transparent focus:border-brand-teal focus:ring-4 focus:ring-brand-teal/10 outline-none transition-all font-bold text-gray-900 dark:text-white"
+                    className="w-full px-6 py-3 rounded-2xl bg-gray-50 dark:bg-slate-800/50 border border-transparent focus:border-brand-teal focus:ring-4 focus:ring-brand-teal/10 outline-none transition-all font-bold text-gray-900 dark:text-white"
                     placeholder="För- och efternamn..."
                   />
                 </div>
@@ -511,7 +525,7 @@ export default function Navbar() {
                     type="text"
                     value={newCompany}
                     onChange={e => setNewCompany(e.target.value)}
-                    className="w-full px-6 py-4 rounded-2xl bg-gray-50 dark:bg-slate-800/50 border border-transparent focus:border-brand-teal focus:ring-4 focus:ring-brand-teal/10 outline-none transition-all font-bold text-gray-900 dark:text-white"
+                    className="w-full px-6 py-3 rounded-2xl bg-gray-50 dark:bg-slate-800/50 border border-transparent focus:border-brand-teal focus:ring-4 focus:ring-brand-teal/10 outline-none transition-all font-bold text-gray-900 dark:text-white"
                     placeholder="Din arbetsplats..."
                   />
                 </div>
@@ -521,7 +535,7 @@ export default function Navbar() {
                     type="tel"
                     value={newPhone}
                     onChange={e => setNewPhone(e.target.value)}
-                    className="w-full px-6 py-4 rounded-2xl bg-gray-50 dark:bg-slate-800/50 border border-transparent focus:border-brand-teal focus:ring-4 focus:ring-brand-teal/10 outline-none transition-all font-bold text-gray-900 dark:text-white"
+                    className="w-full px-6 py-3 rounded-2xl bg-gray-50 dark:bg-slate-800/50 border border-transparent focus:border-brand-teal focus:ring-4 focus:ring-brand-teal/10 outline-none transition-all font-bold text-gray-900 dark:text-white"
                     placeholder="070-000 00 00"
                   />
                 </div>
@@ -531,7 +545,7 @@ export default function Navbar() {
                     type="url"
                     value={newLinkedinUrl}
                     onChange={e => setNewLinkedinUrl(e.target.value)}
-                    className="w-full px-6 py-4 rounded-2xl bg-gray-50 dark:bg-slate-800/50 border border-transparent focus:border-brand-teal focus:ring-4 focus:ring-brand-teal/10 outline-none transition-all font-bold text-gray-900 dark:text-white"
+                    className="w-full px-6 py-3 rounded-2xl bg-gray-50 dark:bg-slate-800/50 border border-transparent focus:border-brand-teal focus:ring-4 focus:ring-brand-teal/10 outline-none transition-all font-bold text-gray-900 dark:text-white"
                     placeholder="https://linkedin.com/in/..."
                   />
                 </div>
@@ -541,25 +555,21 @@ export default function Navbar() {
                     type="password"
                     value={newPassword}
                     onChange={e => setNewPassword(e.target.value)}
-                    className="w-full px-6 py-4 rounded-2xl bg-gray-50 dark:bg-slate-800/50 border border-transparent focus:border-brand-teal focus:ring-4 focus:ring-brand-teal/10 outline-none transition-all font-bold text-gray-900 dark:text-white"
+                    className="w-full px-6 py-3 rounded-2xl bg-gray-50 dark:bg-slate-800/50 border border-transparent focus:border-brand-teal focus:ring-4 focus:ring-brand-teal/10 outline-none transition-all font-bold text-gray-900 dark:text-white"
                     placeholder="Minst 6 tecken..."
                   />
                 </div>
               </div>
 
               <div className="flex items-center gap-4 pt-4 border-t border-gray-100 dark:border-slate-800">
-                <div className="flex-1">
-                  <div className="flex items-center gap-2 mb-1">
-                    <span className="text-[10px] font-black text-gray-400 uppercase tracking-widest">Medlemsnivå:</span>
-                    <span className="text-[10px] font-black text-brand-teal uppercase tracking-widest">{profile?.role || "Medlem"}</span>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <span className="text-[10px] font-black text-gray-400 uppercase tracking-widest">Status:</span>
-                    <span className={`text-[10px] font-black uppercase tracking-widest ${profile?.membership_status === 'Approved' ? 'text-green-500' : 'text-orange-500'}`}>
-                      {profile?.membership_status === 'Approved' ? 'Verifierad' : 'Väntar på godkännande'}
-                    </span>
-                  </div>
-                </div>
+                <button
+                  type="button"
+                  onClick={handleLogout}
+                  className="bg-red-50 dark:bg-red-900/20 hover:bg-red-100 text-red-600 dark:text-red-400 px-6 py-5 rounded-2xl font-black text-xs uppercase tracking-widest transition-all border border-red-100 dark:border-red-800/50"
+                >
+                  Logga ut
+                </button>
+                <div className="flex-1"></div>
                 <button
                   type="submit"
                   className="bg-brand-teal hover:bg-brand-dark text-white px-8 py-5 rounded-2xl font-black text-xs uppercase tracking-[0.1em] shadow-lg shadow-brand-teal/20 transition-all hover:scale-[1.02] active:scale-[0.98]"
@@ -567,13 +577,7 @@ export default function Navbar() {
                   Spara ändringar
                 </button>
               </div>
-              <button
-                type="button"
-                onClick={handleLogout}
-                className="w-full bg-red-50 dark:bg-red-900/20 hover:bg-red-100 text-red-600 dark:text-red-400 py-3 rounded-2xl font-black text-sm uppercase tracking-widest transition-all border border-red-100 dark:border-red-800/50"
-              >
-                Logga ut
-              </button>
+
             </form>
           </div>
         </div>
@@ -590,10 +594,10 @@ export default function Navbar() {
         canEdit={profile?.role === "Admin" || profile?.role === "Editor"}
       />
 
-      <StockChartModal 
-        isOpen={showStockChart} 
-        onClose={() => setShowStockChart(false)} 
-        ticker={tickerSymbol} 
+      <StockChartModal
+        isOpen={showStockChart}
+        onClose={() => setShowStockChart(false)}
+        ticker={tickerSymbol}
       />
     </>
 
