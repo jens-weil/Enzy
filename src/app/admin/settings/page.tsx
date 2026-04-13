@@ -101,7 +101,7 @@ export default function SettingsPage() {
     );
   }
 
-  if (profile?.role !== 'Admin') return null;
+  if (profile?.role !== 'Admin' && profile?.role !== 'Editor' && profile?.role !== 'Redaktör') return null;
 
   return (
     <div className="min-h-screen bg-gray-50 dark:bg-slate-950 py-12 md:py-24">
@@ -208,7 +208,7 @@ export default function SettingsPage() {
                 ),
                 color: "text-brand-teal bg-brand-light dark:bg-brand-teal/20"
               }
-            ].map((channel, i) => (
+            ].filter(channel => profile?.role === "Admin" || channel.id !== "stock").map((channel, i) => (
               <section key={channel.id} className="border border-gray-100 dark:border-slate-800 rounded-[2.5rem] overflow-hidden bg-white dark:bg-slate-900 transition-all">
                 {/* Header / Accordion trigger */}
                 <div 

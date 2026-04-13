@@ -68,7 +68,7 @@ function AdminForm() {
   // Redirect if not Admin or Editor
   useEffect(() => {
     if (authLoading) return;
-    if (!user || (profile?.role !== 'Admin' && profile?.role !== 'Editor')) {
+    if (!user || (profile?.role !== 'Admin' && profile?.role !== 'Editor' && profile?.role !== 'Redaktör')) {
       router.push('/');
       return;
     }
@@ -253,7 +253,7 @@ function AdminForm() {
   };
 
 
-  if (authLoading || !user || (profile?.role !== 'Admin' && profile?.role !== 'Editor')) return null;
+  if (authLoading || !user || (profile?.role !== 'Admin' && profile?.role !== 'Editor' && profile?.role !== 'Redaktör')) return null;
 
   return (
     <div className="min-h-screen bg-gray-50 dark:bg-slate-950 pb-20">

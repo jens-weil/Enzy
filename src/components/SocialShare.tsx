@@ -89,7 +89,7 @@ export default function SocialShare({
   const [copied, setCopied] = useState(false);
   const [shareStatus, setShareStatus] = useState<{ type: 'success' | 'info'; message: string } | null>(null);
   const [channelSettings, setChannelSettings] = useState<any>(propChannelSettings || null);
-  const isAdmin = profile?.role === "Admin" || profile?.role === "Editor";
+  const isAdmin = profile?.role === "Admin" || profile?.role === "Editor" || profile?.role === "Redaktör";
 
   useEffect(() => {
     if (!propChannelSettings) {

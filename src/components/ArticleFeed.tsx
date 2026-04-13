@@ -886,7 +886,7 @@ export default function ArticleFeed({ initialArticles }: ArticleFeedProps) {
   const [accessToken, setAccessToken] = useState<string | null>(null);
 
   // Derive admin status from Supabase profile role
-  const isAdmin = profile?.role === "Admin" || profile?.role === "Editor";
+  const isAdmin = profile?.role === "Admin" || profile?.role === "Editor" || profile?.role === "Redaktör";
 
   // Edit / Create lightbox
   const [editingArticle, setEditingArticle] = useState<Article | null | "new">(undefined as any);

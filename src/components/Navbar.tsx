@@ -195,7 +195,7 @@ export default function Navbar() {
               </button>
 
               <div className="pl-4 border-l border-gray-200 dark:border-gray-800 ml-2 flex items-center gap-2">
-                {isLoggedIn && profile?.role === "Admin" && (
+                {isLoggedIn && (profile?.role === "Admin" || profile?.role === "Editor" || profile?.role === "Redaktör") && (
                   <div className="relative">
                     <button
                       onClick={() => setShowAdminMenu(!showAdminMenu)}
@@ -212,14 +212,16 @@ export default function Navbar() {
                       <>
                         <div className="fixed inset-0 z-40" onClick={() => setShowAdminMenu(false)} />
                         <div className="absolute right-0 mt-4 w-56 bg-white dark:bg-slate-900 rounded-2xl shadow-2xl border border-gray-100 dark:border-slate-800 py-2 z-50 animate-in fade-in zoom-in-95 duration-200">
-                          <Link
-                            href="/admin/users"
-                            onClick={() => setShowAdminMenu(false)}
-                            className="flex items-center gap-3 px-4 py-3 text-xs font-black uppercase tracking-widest text-gray-600 dark:text-gray-300 hover:bg-brand-light dark:hover:bg-slate-800 hover:text-brand-teal transition-colors"
-                          >
-                            <span className="text-lg">👥</span>
-                            Användare
-                          </Link>
+                          {profile?.role === "Admin" && (
+                            <Link
+                              href="/admin/users"
+                              onClick={() => setShowAdminMenu(false)}
+                              className="flex items-center gap-3 px-4 py-3 text-xs font-black uppercase tracking-widest text-gray-600 dark:text-gray-300 hover:bg-brand-light dark:hover:bg-slate-800 hover:text-brand-teal transition-colors"
+                            >
+                              <span className="text-lg">👥</span>
+                              Användare
+                            </Link>
+                          )}
                           <Link
                             href="/admin/settings"
                             onClick={() => setShowAdminMenu(false)}
@@ -333,16 +335,18 @@ export default function Navbar() {
             </div>
 
             <div className="pt-6 border-t border-gray-100 dark:border-slate-800 flex flex-col space-y-4">
-              {isLoggedIn && profile?.role === "Admin" && (
+              {isLoggedIn && (profile?.role === "Admin" || profile?.role === "Editor" || profile?.role === "Redaktör") && (
                 <div className="grid grid-cols-2 gap-3 mb-2">
-                  <Link
-                    href="/admin/users"
-                    onClick={() => setIsMobileMenuOpen(false)}
-                    className="flex flex-col items-center justify-center p-4 rounded-2xl bg-brand-teal/5 text-brand-teal font-black text-[10px] uppercase tracking-widest border border-brand-teal/10 active:bg-brand-teal active:text-white transition-all"
-                  >
-                    <span className="text-2xl mb-2">👥</span>
-                    Användare
-                  </Link>
+                  {profile?.role === "Admin" && (
+                    <Link
+                      href="/admin/users"
+                      onClick={() => setIsMobileMenuOpen(false)}
+                      className="flex flex-col items-center justify-center p-4 rounded-2xl bg-brand-teal/5 text-brand-teal font-black text-[10px] uppercase tracking-widest border border-brand-teal/10 active:bg-brand-teal active:text-white transition-all"
+                    >
+                      <span className="text-2xl mb-2">👥</span>
+                      Användare
+                    </Link>
+                  )}
                   <Link
                     href="/admin/settings"
                     onClick={() => setIsMobileMenuOpen(false)}
@@ -591,7 +595,7 @@ export default function Navbar() {
       <ContactModal
         isOpen={showContactModal}
         onClose={() => setShowContactModal(false)}
-        canEdit={profile?.role === "Admin" || profile?.role === "Editor"}
+        canEdit={profile?.role === "Admin" || profile?.role === "Editor" || profile?.role === "Redaktör"}
       />
 
       <StockChartModal
