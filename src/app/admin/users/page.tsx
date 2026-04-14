@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useMemo } from "react";
 import { useAuth } from "@/components/AuthContext";
 import { supabase } from "@/lib/supabase";
 import { useRouter } from "next/navigation";
@@ -55,6 +55,7 @@ export default function AdminUsersPage() {
   const [searchQuery, setSearchQuery] = useState("");
   const [roleFilter, setRoleFilter] = useState("All");
   const [statusFilter, setStatusFilter] = useState("All");
+  const [companyFilter, setCompanyFilter] = useState("All");
   const [sortConfig, setSortConfig] = useState<{ key: keyof UserProfile | 'name', direction: 'asc' | 'desc' | null }>({ key: 'created_at', direction: 'desc' });
 
   // Filtered and Sorted users
@@ -801,21 +802,30 @@ export default function AdminUsersPage() {
       {/* Edit Modal */}
       {showEditModal && editingUser && (
         <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-brand-dark/80 backdrop-blur-xl animate-in fade-in duration-300">
-          <div className="bg-white dark:bg-slate-900 w-full max-w-2xl rounded-[3rem] shadow-3xl overflow-hidden animate-in zoom-in-95 duration-300 border border-white/10">
-            <div className="bg-brand-dark p-10 text-white relative overflow-hidden">
-               <div className="absolute top-0 right-0 w-32 h-32 bg-brand-teal/20 rounded-full blur-2xl -mr-16 -mt-16" />
-               <h2 className="text-3xl font-black uppercase italic tracking-tighter relative z-10">Redigera användare</h2>
-               <p className="text-white/60 font-medium relative z-10">{editingUser.full_name || editingUser.display_name}</p>
+          <div className="bg-white dark:bg-slate-900 w-full max-w-2xl rounded-3xl shadow-3xl overflow-hidden animate-in zoom-in-95 duration-300 border border-white/10">
+            <div className="bg-brand-dark px-6 py-5 md:px-8 md:py-6 text-white relative overflow-hidden flex flex-col justify-center">
+               <div className="absolute top-0 right-0 w-24 h-24 bg-brand-teal/20 rounded-full blur-2xl -mr-12 -mt-12" />
+               <button 
+                 onClick={() => setShowEditModal(false)} 
+                 className="absolute top-5 right-5 text-white/40 hover:text-white transition-colors z-20 group"
+                 aria-label="Stäng"
+               >
+                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2.5} className="w-5 h-5 group-hover:rotate-90 transition-transform">
+                   <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
+                 </svg>
+               </button>
+               <h2 className="text-xl md:text-2xl font-black uppercase italic tracking-tighter relative z-10 leading-none mb-1">Redigera användare</h2>
+               <p className="text-white/60 text-[11px] font-medium uppercase tracking-widest relative z-10">{editingUser.full_name || editingUser.display_name}</p>
             </div>
             
-            <div className="p-10 max-h-[60vh] overflow-y-auto space-y-8 scrollbar-hide">
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6 pb-8 border-b border-gray-100 dark:border-slate-800">
-                  <label className="block space-y-2">
+            <div className="p-6 md:p-8 max-h-[70vh] overflow-y-auto space-y-6 scrollbar-hide">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 pb-6 border-b border-gray-100 dark:border-slate-800">
+                  <label className="block space-y-1">
                     <span className="text-[10px] font-black uppercase text-gray-400 tracking-[0.2em] ml-2">Roll</span>
                     <select 
                       value={editingUser.role}
                       onChange={e => handleUpdate(editingUser.id, { role: e.target.value })}
-                      className="w-full px-6 py-4 rounded-2xl bg-gray-50 dark:bg-slate-800 border-none outline-none focus:ring-4 focus:ring-brand-teal/10 font-black text-[10px] uppercase tracking-widest dark:text-white cursor-pointer"
+                      className="w-full px-5 py-3 rounded-2xl bg-gray-50 dark:bg-slate-800 border-none outline-none focus:ring-4 focus:ring-brand-teal/10 font-black text-[10px] uppercase tracking-widest dark:text-white cursor-pointer"
                     >
                       <option value="Admin">Admin</option>
                       <option value="Redaktör">Redaktör</option>
@@ -826,12 +836,12 @@ export default function AdminUsersPage() {
                     </select>
                   </label>
 
-                  <label className="block space-y-2">
+                  <label className="block space-y-1">
                     <span className="text-[10px] font-black uppercase text-gray-400 tracking-[0.2em] ml-2">Medlemsstatus</span>
                     <select 
                       value={editingUser.membership_status}
                       onChange={e => handleUpdate(editingUser.id, { membership_status: e.target.value })}
-                      className="w-full px-6 py-4 rounded-2xl bg-gray-50 dark:bg-slate-800 border-none outline-none focus:ring-4 focus:ring-brand-teal/10 font-black text-[10px] uppercase tracking-widest dark:text-white cursor-pointer"
+                      className="w-full px-5 py-3 rounded-2xl bg-gray-50 dark:bg-slate-800 border-none outline-none focus:ring-4 focus:ring-brand-teal/10 font-black text-[10px] uppercase tracking-widest dark:text-white cursor-pointer"
                     >
                       <option value="Approved">{translateStatus("Approved")}</option>
                       <option value="Pending">{translateStatus("Pending")}</option>
@@ -841,75 +851,98 @@ export default function AdminUsersPage() {
                   </label>
                 </div>
                 
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                  <label className="block space-y-2">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <label className="block space-y-1">
                     <span className="text-[10px] font-black uppercase text-gray-400 tracking-[0.2em] ml-2">Fullständigt Namn</span>
                     <input 
                      type="text"
                      defaultValue={editingUser.full_name || ""}
                      onBlur={e => handleUpdate(editingUser.id, { full_name: e.target.value })}
-                     className="w-full px-6 py-4 rounded-2xl bg-gray-50 dark:bg-slate-800 border-none outline-none focus:ring-4 focus:ring-brand-teal/10 font-bold dark:text-white"
+                     className="w-full px-5 py-3 rounded-2xl bg-gray-50 dark:bg-slate-800 border-none outline-none focus:ring-4 focus:ring-brand-teal/10 font-bold dark:text-white text-sm"
                     />
                   </label>
 
-                  <label className="block space-y-2">
+                  <label className="block space-y-1">
                     <span className="text-[10px] font-black uppercase text-gray-400 tracking-[0.2em] ml-2">Företag / Organisation</span>
                     <input 
                      type="text"
                      defaultValue={editingUser.company || ""}
                      onBlur={e => handleUpdate(editingUser.id, { company: e.target.value })}
-                     className="w-full px-6 py-4 rounded-2xl bg-gray-50 dark:bg-slate-800 border-none outline-none focus:ring-4 focus:ring-brand-teal/10 font-bold dark:text-white"
+                     className="w-full px-5 py-3 rounded-2xl bg-gray-50 dark:bg-slate-800 border-none outline-none focus:ring-4 focus:ring-brand-teal/10 font-bold dark:text-white text-sm"
                     />
                   </label>
 
-                  <label className="block space-y-2">
+                  <label className="block space-y-1">
                     <span className="text-[10px] font-black uppercase text-gray-400 tracking-[0.2em] ml-2">Telefonnummer</span>
                     <input 
                      type="tel"
                      defaultValue={editingUser.phone || ""}
                      onBlur={e => handleUpdate(editingUser.id, { phone: e.target.value })}
-                     className="w-full px-6 py-4 rounded-2xl bg-gray-50 dark:bg-slate-800 border-none outline-none focus:ring-4 focus:ring-brand-teal/10 font-bold dark:text-white"
+                     className="w-full px-5 py-3 rounded-2xl bg-gray-50 dark:bg-slate-800 border-none outline-none focus:ring-4 focus:ring-brand-teal/10 font-bold dark:text-white text-sm"
                     />
                   </label>
 
-                  <label className="block space-y-2">
+                  <label className="block space-y-1">
                     <span className="text-[10px] font-black uppercase text-gray-400 tracking-[0.2em] ml-2">LinkedIn URL</span>
                     <input 
                      type="url"
                      defaultValue={editingUser.linkedin_url || ""}
                      onBlur={e => handleUpdate(editingUser.id, { linkedin_url: e.target.value })}
-                     className="w-full px-6 py-4 rounded-2xl bg-gray-50 dark:bg-slate-800 border-none outline-none focus:ring-4 focus:ring-brand-teal/10 font-bold dark:text-white"
+                     className="w-full px-5 py-3 rounded-2xl bg-gray-50 dark:bg-slate-800 border-none outline-none focus:ring-4 focus:ring-brand-teal/10 font-bold dark:text-white text-sm"
                     />
                   </label>
                 </div>
                
-               <div className="pt-8 border-t border-gray-100 dark:border-slate-800 flex justify-between items-center">
-                 <button 
-                   onClick={() => handleSendMagicLink(editingUser.email)} 
-                   className="flex items-center gap-3 text-[10px] font-black uppercase tracking-widest text-brand-teal hover:text-brand-dark transition-colors"
-                 >
-                   <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} className="w-4 h-4">
-                     <path strokeLinecap="round" strokeLinejoin="round" d="M15.75 5.25a3 3 0 013 3m3 0a6 6 0 01-7.029 5.912c-.563-.097-1.159.026-1.563.43L10.5 17.25H8.25v2.25H6v2.25H2.25v-2.818c0-.597.237-1.17.659-1.591l6.499-6.499c.404-.404.527-1 .43-1.563A6 6 0 1121.75 8.25z" />
-                   </svg>
-                   Skicka magisk länk
-                 </button>
+               <div className="pt-6 border-t border-gray-100 dark:border-slate-800 flex flex-col sm:flex-row justify-between items-center gap-4">
+                 <div className="flex flex-wrap items-center gap-4 w-full sm:w-auto">
+                   <button 
+                     onClick={() => handleSendMagicLink(editingUser.email)} 
+                     className="flex items-center gap-2 text-[10px] font-black uppercase tracking-widest text-brand-teal hover:text-brand-dark transition-colors"
+                   >
+                     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} className="w-4 h-4">
+                       <path strokeLinecap="round" strokeLinejoin="round" d="M15.75 5.25a3 3 0 013 3m3 0a6 6 0 01-7.029 5.912c-.563-.097-1.159.026-1.563.43L10.5 17.25H8.25v2.25H6v2.25H2.25v-2.818c0-.597.237-1.17.659-1.591l6.499-6.499c.404-.404.527-1 .43-1.563A6 6 0 1121.75 8.25z" />
+                     </svg>
+                     <span className="hidden sm:inline">Skicka magisk länk</span>
+                     <span className="sm:hidden">Magisk länk</span>
+                   </button>
 
-                 <button 
-                   onClick={() => handlePasswordReset(editingUser.email)} 
-                   className="flex items-center gap-3 text-[10px] font-black uppercase tracking-widest text-brand-teal hover:text-brand-dark transition-colors"
-                 >
-                   <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} className="w-4 h-4">
-                     <path strokeLinecap="round" strokeLinejoin="round" d="M16.5 10.5V6.75a4.5 4.5 0 10-9 0v3.75m-.75 11.25h10.5a2.25 2.25 0 002.25-2.25v-6.75a2.25 2.25 0 00-2.25-2.25H6.75a2.25 2.25 0 00-2.25 2.25v6.75a2.25 2.25 0 002.25 2.25z" />
-                   </svg>
-                   Återställ lösenord
-                 </button>
+                   <button 
+                     onClick={() => handlePasswordReset(editingUser.email)} 
+                     className="flex items-center gap-2 text-[10px] font-black uppercase tracking-widest text-brand-teal hover:text-brand-dark transition-colors"
+                   >
+                     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} className="w-4 h-4">
+                       <path strokeLinecap="round" strokeLinejoin="round" d="M16.5 10.5V6.75a4.5 4.5 0 10-9 0v3.75m-.75 11.25h10.5a2.25 2.25 0 002.25-2.25v-6.75a2.25 2.25 0 00-2.25-2.25H6.75a2.25 2.25 0 00-2.25 2.25v6.75a2.25 2.25 0 002.25 2.25z" />
+                     </svg>
+                     <span className="hidden sm:inline">Återställ lösenord</span>
+                     <span className="sm:hidden">Lösenord</span>
+                   </button>
+
+                   <button 
+                     onClick={() => router.push(`/admin/shares?userId=${editingUser.id}`)}
+                     className="flex items-center gap-2 text-[10px] font-black uppercase tracking-widest text-brand-teal hover:text-brand-dark transition-colors"
+                   >
+                     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} className="w-4 h-4">
+                        <path strokeLinecap="round" strokeLinejoin="round" d="M7.217 10.907a2.25 2.25 0 100 2.186m0-2.186c.18.324.283.696.283 1.093s-.103.77-.283 1.093m0-2.186l9.566-5.314m-9.566 7.5l9.566 5.314m0 0a2.25 2.25 0 103.935 2.186 2.25 2.25 0 00-3.935-2.186zm0-12.814a2.25 2.25 0 103.933-2.185 2.25 2.25 0 00-3.933 2.185z" />
+                     </svg>
+                     <span className="hidden sm:inline">Visa delningar</span>
+                     <span className="sm:hidden">Delningar</span>
+                   </button>
+                 </div>
                  
-                 <button 
-                  onClick={() => setShowEditModal(false)}
-                  className="px-8 py-3 rounded-xl bg-brand-dark text-white font-black text-[10px] uppercase tracking-widest"
-                 >
-                   Färdig
-                 </button>
+                 <div className="flex w-full sm:w-auto gap-3 mt-4 sm:mt-0">
+                   <button 
+                    onClick={() => setShowEditModal(false)}
+                    className="flex-1 sm:flex-none px-6 py-3 rounded-xl bg-gray-100 dark:bg-slate-800 hover:bg-gray-200 dark:hover:bg-slate-700 text-gray-600 dark:text-gray-300 font-black text-[10px] uppercase tracking-widest transition-colors text-center"
+                   >
+                     Avbryt
+                   </button>
+                   <button 
+                    onClick={() => setShowEditModal(false)}
+                    className="flex-1 sm:flex-none px-8 py-3 rounded-xl bg-brand-dark text-white hover:bg-brand-teal font-black text-[10px] uppercase tracking-widest transition-colors text-center shadow-lg"
+                   >
+                     Klar
+                   </button>
+                 </div>
                </div>
             </div>
           </div>
