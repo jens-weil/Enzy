@@ -12,10 +12,28 @@ function AuthCallbackContent() {
   const searchParams = useSearchParams();
   const router = useRouter();
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
-  const [statusText, setStatusText] = useState("Verifierar din e-post...");
+  const [statusText, setStatusText] = useState("Verifying your email...");
   const [waitingForClick, setWaitingForClick] = useState(false);
   const [isProcessing, setIsProcessing] = useState(false);
   const [debugInfo, setDebugInfo] = useState<{ query: any, hash: string } | null>(null);
+
+  const navigateToPortal = async (userId: string) => {
+    try {
+      const { data: profile } = await supabase
+        .from('profiles')
+        .select('role')
+        .eq('id', userId)
+        .single();
+      
+      let redirectPath = "/";
+      if (profile?.role === "Partner") redirectPath = "/partner";
+      else if (profile?.role === "Admin" || profile?.role === "Editor") redirectPath = "/admin";
+      
+      router.replace(redirectPath);
+    } catch (err) {
+      router.replace("/");
+    }
+  };
 
   const performExchange = async (code: string) => {
     if (processedCode === code) return;
@@ -24,11 +42,11 @@ function AuthCallbackContent() {
     setWaitingForClick(false);
 
     try {
-      setStatusText("Synkroniserar konto...");
+      setStatusText("Synchronizing account...");
       const { data, error: exchangeError } = await supabase.auth.exchangeCodeForSession(code);
       
       if (exchangeError) {
-        setErrorMessage(`Länken har gått ut eller är ogiltig: ${exchangeError.message}`);
+        setErrorMessage(`Link expired or invalid: ${exchangeError.message}`);
         return;
       }
 
@@ -40,23 +58,11 @@ function AuthCallbackContent() {
           });
         } catch (e) {}
 
-        // Fetch User Role for custom redirect
-        const { data: profile } = await supabase
-          .from('profiles')
-          .select('role')
-          .eq('id', data.user.id)
-          .single();
-
         setStatusText("Welcome! Entering portal...");
-        
-        let redirectPath = "/";
-        if (profile?.role === "Partner") redirectPath = "/partner";
-        else if (profile?.role === "Admin" || profile?.role === "Editor") redirectPath = "/admin";
-
-        setTimeout(() => { router.replace(redirectPath); }, 800);
+        await navigateToPortal(data.user.id);
       }
     } catch (err: any) {
-      setErrorMessage(err.message || "Ett tekniskt fel uppstod.");
+      setErrorMessage(err.message || "A technical error occurred.");
     } finally {
       setIsProcessing(false);
     }
@@ -132,7 +138,9 @@ function AuthCallbackContent() {
 
     const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
       if (session && (event === "SIGNED_IN" || event === "INITIAL_SESSION")) {
-        if (isMounted) router.replace("/");
+        if (isMounted && !isProcessing && !waitingForClick) {
+          navigateToPortal(session.user.id);
+        }
       }
     });
 
