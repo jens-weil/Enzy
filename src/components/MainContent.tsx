@@ -4,7 +4,7 @@ import { usePathname } from "next/navigation";
 
 export default function MainContent({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
-  const isDashboard = pathname.startsWith("/partner") || pathname.startsWith("/admin");
+  const isDashboard = pathname.startsWith("/partner");
 
   // For non-dashboard pages, we want the content to be at least 100vh 
   // so the footer starts below the fold (given the 61px header offset).

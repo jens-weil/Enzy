@@ -7,7 +7,7 @@ export default function ConditionalFooter() {
   const pathname = usePathname();
   
   // Hide footer on partner portal and admin pages for a cleaner dashboard look
-  const hideOnPaths = ["/partner", "/admin"];
+  const hideOnPaths = ["/partner"];
   const shouldHide = hideOnPaths.some(path => pathname.startsWith(path));
 
   if (shouldHide) return null;
