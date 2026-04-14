@@ -40,8 +40,20 @@ function AuthCallbackContent() {
           });
         } catch (e) {}
 
-        setStatusText("Klart! Välkommen tillbaka.");
-        setTimeout(() => { router.replace("/"); }, 800);
+        // Fetch User Role for custom redirect
+        const { data: profile } = await supabase
+          .from('profiles')
+          .select('role')
+          .eq('id', data.user.id)
+          .single();
+
+        setStatusText("Welcome! Entering portal...");
+        
+        let redirectPath = "/";
+        if (profile?.role === "Partner") redirectPath = "/partner";
+        else if (profile?.role === "Admin" || profile?.role === "Editor") redirectPath = "/admin";
+
+        setTimeout(() => { router.replace(redirectPath); }, 800);
       }
     } catch (err: any) {
       setErrorMessage(err.message || "Ett tekniskt fel uppstod.");

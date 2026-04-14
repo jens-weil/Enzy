@@ -194,6 +194,15 @@ export default function Navbar() {
                 Kontakt
               </button>
 
+              {isLoggedIn && profile?.role === "Partner" && (
+                <Link
+                  href="/partner"
+                  className={`px-5 py-2.5 rounded-full font-bold transition-all text-sm uppercase tracking-widest ${pathname.startsWith("/partner") ? "bg-brand-teal text-white shadow-lg shadow-brand-teal/20" : "text-brand-teal bg-brand-teal/10 hover:bg-brand-teal hover:text-white"}`}
+                >
+                  Partner Portal
+                </Link>
+              )}
+
               <div className="pl-4 border-l border-gray-200 dark:border-gray-800 ml-2 flex items-center gap-2">
                 {isLoggedIn && (profile?.role === "Admin" || profile?.role === "Editor" || profile?.role === "Redaktör") && (
                   <div className="relative">
