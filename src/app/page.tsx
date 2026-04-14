@@ -93,7 +93,7 @@ export default function Home() {
                 onClick={() => setShowMembershipModal(true)}
                 className="bg-brand-cyan hover:bg-white text-brand-dark text-xl px-10 py-4 rounded-full font-black transition-all shadow-2xl hover:shadow-cyan-500/20 transform hover:-translate-y-1 inline-block uppercase tracking-widest"
               >
-                Ansök om medlemskap
+                Bli medlem
               </button>
             )}
             <a href="#coldzyme" className="bg-brand-teal hover:bg-brand-dark text-white text-xl px-10 py-4 rounded-full font-bold transition-all shadow-2xl hover:shadow-cyan-500/20 transform hover:-translate-y-1 inline-block scroll-smooth text-center">
