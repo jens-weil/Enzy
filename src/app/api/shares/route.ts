@@ -5,7 +5,9 @@ import { requireAuth } from '@/lib/auth';
 
 export async function POST(request: NextRequest) {
   try {
-    const { articleId, articleTitle, platform, userId, userEmail } = await request.json();
+    const body = await request.json();
+    const { articleId, articleTitle, platform, userId, userEmail, articleImage } = body;
+    console.log("DEBUG: POST /api/shares - incoming:", { articleId, platform, userId, userEmail, articleImage });
 
     if (!userId || !articleId || !platform) {
       return NextResponse.json({ error: "Missing required fields" }, { status: 400 });
@@ -31,21 +33,30 @@ export async function POST(request: NextRequest) {
     }
 
     // 2. Trigg email via Brevo if userEmail is provided
+    let emailSent = false;
+    let emailError = null;
+    
     if (userEmail) {
       const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || "http://localhost:3000";
       const verificationUrl = `${siteUrl}/shares/${share.id}`;
 
-      await sendEmail({
+      // Resolve full image URL if it's relative
+      let fullImageUrl = articleImage;
+      if (fullImageUrl && !fullImageUrl.startsWith('http')) {
+        fullImageUrl = `${siteUrl}${fullImageUrl.startsWith('/') ? '' : '/'}${fullImageUrl}`;
+      }
+
+      const emailResult = await sendEmail({
         to: [{ email: userEmail }],
         subject: `Registrera din delning: ${articleTitle}`,
         htmlContent: `
           <div style="font-family: sans-serif; max-width: 600px; margin: 0 auto; color: #1a1a1a;">
             <div style="background-color: #008080; padding: 40px 20px; text-align: center; border-radius: 20px 20px 0 0;">
               <h1 style="color: white; margin: 0; font-size: 24px; text-transform: uppercase; font-style: italic;">Tack för din delning!</h1>
-            </div>
-            <div style="padding: 40px; background-color: #fff; border: 1px solid #f0f0f0; border-radius: 0 0 20px 20px;">
+            </div><div style="padding: 40px; background-color: #ffffff; border: 1px solid #f0f0f0; border-radius: 0 0 20px 20px; border-top: none; margin-top: -15px;">
+              ${fullImageUrl ? `<img src="${fullImageUrl}" alt="${articleTitle}" style="max-width: 200px; height: auto; border-radius: 12px; margin-bottom: 25px; display: block;" />` : ''}
               <p style="font-size: 16px; font-weight: bold;">Du har precis delat artikeln: <br/>"${articleTitle}" på ${platform}.</p>
-              <p style="color: #666; line-height: 1.6;">För att vi ska kunna verifiera och räkna din delning behöver du registrera länken till ditt inlägg.</p>
+              <p style="color: #666; line-height: 1.6;">För att vi ska kunna verifiera och räkna din delning behöver du registrera länken till ditt inlägg för att få din poäng.</p>
               
               <div style="margin: 40px 0; text-align: center;">
                 <a href="${verificationUrl}" style="background-color: #008080; color: white; padding: 18px 30px; border-radius: 12px; text-decoration: none; font-weight: bold; display: inline-block; text-transform: uppercase; font-size: 14px; letter-spacing: 1px;">Registrera länk nu →</a>
@@ -56,9 +67,17 @@ export async function POST(request: NextRequest) {
           </div>
         `
       });
+      console.log("DEBUG: Email send outcome:", emailResult);
+      emailSent = emailResult.success;
+      emailError = emailResult.error;
     }
 
-    return NextResponse.json({ success: true, shareId: share.id });
+    return NextResponse.json({ 
+      success: true, 
+      shareId: share.id,
+      emailSent,
+      emailError
+    });
   } catch (error) {
     console.error("Share registration error:", error);
     return NextResponse.json({ error: "Internal Server Error" }, { status: 500 });

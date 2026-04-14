@@ -19,10 +19,27 @@ export async function GET(req: NextRequest) {
     
     if (profileError) throw profileError;
 
-    // 3. Join them
+    // 3. Fetch approved shares for points calculation
+    const { data: shares, error: shareError } = await supabaseAdmin
+      .from("shares")
+      .select("user_id")
+      .eq("is_approved", true);
+      
+    if (shareError) throw shareError;
+
+    // Map points by user id
+    const pointMap: Record<string, number> = {};
+    if (shares) {
+      shares.forEach(s => {
+        pointMap[s.user_id] = (pointMap[s.user_id] || 0) + 1;
+      });
+    }
+
+    // 4. Join them
     const combined = authUsers.map(authUser => {
       const profile = profiles.find(p => p.id === authUser.id);
       const isBanned = authUser.banned_until ? new Date(authUser.banned_until) > new Date() : false;
+      const points = pointMap[authUser.id] || 0;
       
       return {
         id: authUser.id,
@@ -37,7 +54,8 @@ export async function GET(req: NextRequest) {
         created_at: authUser.created_at,
         last_sign_in_at: authUser.last_sign_in_at || null,
         confirmed_at: authUser.confirmed_at || null,
-        is_banned: isBanned
+        is_banned: isBanned,
+        points: points
       };
     });
 

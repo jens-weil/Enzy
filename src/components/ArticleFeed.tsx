@@ -190,6 +190,7 @@ function ArticleModal({ article, isAdmin, onClose, onDelete, onEdit }: ArticleMo
             <SocialShare 
               articleId={article.id}
               articleTitle={article.title}
+              articleImage={article.imageUrl}
               socialMedia={article.socialMedia}
               socialLinks={article.socialLinks}
               size="md"
@@ -1131,6 +1132,7 @@ export default function ArticleFeed({ initialArticles }: ArticleFeedProps) {
                     <SocialShare 
                       articleId={article.id}
                       articleTitle={article.title}
+                      articleImage={article.imageUrl}
                       socialMedia={article.socialMedia}
                       socialLinks={article.socialLinks}
                       size="sm"

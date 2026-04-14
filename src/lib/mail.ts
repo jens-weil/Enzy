@@ -38,7 +38,9 @@ async function getEmailSettings() {
 export async function sendEmail({ to, subject, htmlContent, sender: customSender }: SendEmailParams) {
   const settings = await getEmailSettings();
   
-  if (!settings || !settings.isActive || !settings.apiKey) {
+  const activeAPIKey = settings?.apiKey || process.env.BREVO_API_KEY;
+
+  if (!settings?.isActive || !activeAPIKey) {
     console.warn("Email sending skipped: Brevo is not active or API key is missing.");
     return { success: false, message: "Email settings not configured" };
   }
@@ -53,7 +55,7 @@ export async function sendEmail({ to, subject, htmlContent, sender: customSender
       method: "POST",
       headers: {
         "accept": "application/json",
-        "api-key": settings.apiKey,
+        "api-key": activeAPIKey as string,
         "content-type": "application/json"
       },
       body: JSON.stringify({

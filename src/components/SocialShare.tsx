@@ -30,6 +30,7 @@ interface SocialShareProps {
   articleTitle: string;
   socialMedia: SocialMedia;
   socialLinks?: SocialLinks;
+  articleImage?: string;
   size?: "xs" | "sm" | "md" | "lg";
   variant?: "filled" | "ghost";
   showLabel?: boolean;
@@ -79,6 +80,7 @@ export default function SocialShare({
   articleTitle,
   socialMedia,
   socialLinks = {},
+  articleImage,
   channelSettings: propChannelSettings,
   size = "md",
   variant = "filled",
@@ -130,7 +132,8 @@ export default function SocialShare({
             articleTitle,
             platform,
             userId: profile.id,
-            userEmail: user?.email
+            userEmail: user?.email,
+            articleImage: articleImage
           })
         });
       } catch (error) {

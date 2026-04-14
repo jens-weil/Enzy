@@ -19,6 +19,7 @@ interface UserProfile {
   last_sign_in_at: string | null;
   confirmed_at: string | null;
   is_banned: boolean;
+  points: number;
 }
 
 export default function AdminUsersPage() {
@@ -236,6 +237,11 @@ export default function AdminUsersPage() {
 
   const handleUpdate = async (userId: string, updates: Partial<UserProfile>) => {
     setActionLoading(true);
+    
+    if (editingUser && editingUser.id === userId) {
+      setEditingUser({ ...editingUser, ...updates });
+    }
+
     try {
       const { data: { session } } = await supabase.auth.getSession();
       const res = await fetch("/api/admin/users", {
@@ -252,9 +258,7 @@ export default function AdminUsersPage() {
         throw new Error(err.error || "Update failed");
       }
       
-      await fetchUsers(); // Refresh list
-      setShowEditModal(false);
-      setEditingUser(null);
+      await fetchUsers(); // Refresh list silently in background without closing the modal
     } catch (err: any) {
       alert("Error updating user: " + err.message);
     } finally {
@@ -642,8 +646,9 @@ export default function AdminUsersPage() {
                     onClick={() => { setEditingUser(u); setShowEditModal(true); }}
                   >
                     <div className="flex items-center gap-3">
-                      <div className="w-9 h-9 rounded-lg bg-brand-teal/10 flex items-center justify-center text-brand-teal font-black text-sm italic group-hover/user:scale-110 group-hover/user:bg-brand-teal group-hover/user:text-white transition-all">
-                        {(u.full_name || u.display_name)?.charAt(0).toUpperCase()}
+                      <div className="w-9 h-9 rounded-lg bg-brand-teal/10 flex flex-col items-center justify-center text-brand-teal font-black group-hover/user:scale-110 group-hover/user:bg-brand-teal group-hover/user:text-white transition-all">
+                        <span className="text-sm leading-none">{u.points || 0}</span>
+                        <span className="text-[8px] uppercase font-bold opacity-60 leading-none">poäng</span>
                       </div>
                       <div className="flex flex-col">
                         <div className="flex items-center gap-2">
