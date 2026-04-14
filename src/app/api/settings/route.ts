@@ -46,6 +46,12 @@ function getSettings() {
         "Rejected": "Nekad",
         "Banned": "Deaktiverad"
       }
+    },
+    brevo: {
+      isActive: false,
+      apiKey: "",
+      senderName: "Enzymatica",
+      senderEmail: "news@enzymatica.se"
     }
   };
 
@@ -70,6 +76,7 @@ function getSettings() {
       tiktok: { ...defaultSettings.tiktok, ...parsed.tiktok },
       x: { ...defaultSettings.x, ...parsed.x },
       stock: { ...defaultSettings.stock, ...parsed.stock },
+      brevo: { ...defaultSettings.brevo, ...(parsed.brevo || {}) },
       translations: { ...defaultSettings.translations, ...(parsed.translations || {}) }
     };
   } catch (e) {
@@ -109,10 +116,12 @@ export async function GET(request: NextRequest) {
 }
 
 export async function POST(request: NextRequest) {
-  const auth = await requireRole(request, ['Admin']);
+  const auth = await requireRole(request, ['Admin', 'Editor', 'Redaktör']);
   if (!auth.authorized) {
     return NextResponse.json({ error: auth.error }, { status: auth.status });
   }
+
+  const isAdmin = auth.role === 'Admin';
 
   try {
     const body = await request.json();
@@ -141,13 +150,17 @@ export async function POST(request: NextRequest) {
         ...currentSettings.x,
         ...(body.x || {})
       },
-      stock: {
+      stock: isAdmin ? {
         ...currentSettings.stock,
         ...(body.stock || {})
-      },
+      } : currentSettings.stock,
       translations: {
         ...currentSettings.translations,
         ...(body.translations || {})
+      },
+      brevo: {
+        ...currentSettings.brevo,
+        ...(body.brevo || {})
       }
     };
 

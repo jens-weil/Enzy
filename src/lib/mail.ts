@@ -1,0 +1,79 @@
+/**
+ * Utility for sending transactional emails via Brevo HTTP API
+ */
+
+interface Sender {
+  name: string;
+  email: string;
+}
+
+interface Recipient {
+  email: string;
+  name?: string;
+}
+
+interface SendEmailParams {
+  to: Recipient[];
+  subject: string;
+  htmlContent: string;
+  sender?: Sender;
+}
+
+async function getEmailSettings() {
+  const fs = require('fs');
+  const path = require('path');
+  const settingsPath = path.join(process.cwd(), 'data', 'settings.json');
+  
+  if (fs.existsSync(settingsPath)) {
+    try {
+      const data = JSON.parse(fs.readFileSync(settingsPath, 'utf8'));
+      return data.brevo || null;
+    } catch (e) {
+      return null;
+    }
+  }
+  return null;
+}
+
+export async function sendEmail({ to, subject, htmlContent, sender: customSender }: SendEmailParams) {
+  const settings = await getEmailSettings();
+  
+  if (!settings || !settings.isActive || !settings.apiKey) {
+    console.warn("Email sending skipped: Brevo is not active or API key is missing.");
+    return { success: false, message: "Email settings not configured" };
+  }
+
+  const sender = customSender || {
+    name: settings.senderName || "Enzymatica",
+    email: settings.senderEmail || "news@enzymatica.se"
+  };
+
+  try {
+    const response = await fetch("https://api.brevo.com/v3/smtp/email", {
+      method: "POST",
+      headers: {
+        "accept": "application/json",
+        "api-key": settings.apiKey,
+        "content-type": "application/json"
+      },
+      body: JSON.stringify({
+        sender,
+        to,
+        subject,
+        htmlContent
+      })
+    });
+
+    if (response.ok) {
+      const result = await response.json();
+      return { success: true, data: result };
+    } else {
+      const error = await response.json();
+      console.error("Brevo API error:", error);
+      return { success: false, error };
+    }
+  } catch (error) {
+    console.error("Failed to send email via Brevo:", error);
+    return { success: false, error };
+  }
+}

@@ -85,7 +85,7 @@ export default function SocialShare({
   showLabel = true,
   hideAdminLinks = false,
 }: SocialShareProps) {
-  const { profile } = useAuth();
+  const { profile, user } = useAuth();
   const [copied, setCopied] = useState(false);
   const [shareStatus, setShareStatus] = useState<{ type: 'success' | 'info'; message: string } | null>(null);
   const [channelSettings, setChannelSettings] = useState<any>(propChannelSettings || null);
@@ -119,6 +119,25 @@ export default function SocialShare({
     : [];
 
   const handleShare = async (platform: string) => {
+    // 1. Record the share if user is logged in
+    if (profile?.id) {
+      try {
+        await fetch("/api/shares", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            articleId,
+            articleTitle,
+            platform,
+            userId: profile.id,
+            userEmail: user?.email
+          })
+        });
+      } catch (error) {
+        console.error("Failed to record share event:", error);
+      }
+    }
+
     if (platform === "facebook") {
       const postUrl = `https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(articleUrl)}`;
       window.open(postUrl, "_blank", "noopener,noreferrer,width=600,height=400");

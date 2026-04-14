@@ -63,3 +63,27 @@ export async function requireRole(
 
   return { authorized: true, userId: user.id, role: profile.role };
 }
+
+/**
+ * Verifies the Bearer token from the request to ensure the user is authenticated,
+ * without checking for any specific role. Useful for ownership checks.
+ */
+export async function requireAuth(req: NextRequest): Promise<{ authorized: true; userId: string } | { authorized: false; error: string; status: number }> {
+  const authHeader = req.headers.get("authorization");
+  if (!authHeader?.startsWith("Bearer ")) {
+    return { authorized: false, error: "Ej inloggad.", status: 401 };
+  }
+
+  const token = authHeader.replace("Bearer ", "");
+
+  const {
+    data: { user },
+    error: authError,
+  } = await supabaseAnon.auth.getUser(token);
+
+  if (authError || !user) {
+    return { authorized: false, error: "Ogiltig session.", status: 401 };
+  }
+
+  return { authorized: true, userId: user.id };
+}

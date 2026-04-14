@@ -68,9 +68,6 @@ export default function Home() {
         </div>
 
         <div className="relative z-10 text-center px-4 sm:px-6 lg:px-8 max-w-7xl mx-auto">
-          <span className="inline-block py-1 px-4 rounded-full bg-brand-cyan/25 backdrop-blur-sm text-white text-sm font-bold tracking-wider mb-0 border border-white/20">
-            BARRIÄRTEKNIK SOM SKYDDAR
-          </span>
           <h1 className="font-black tracking-tight leading-[1.05] text-white drop-shadow-2xl mt-2 mb-2 relative"
             style={{ fontSize: "clamp(2.5rem, 8vw, 7rem)" }}>
             {heroImages.map((img, idx) => (

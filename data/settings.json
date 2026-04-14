@@ -31,6 +31,12 @@
     "shares": "142 823 696",
     "sector": "Hälsovård"
   },
+  "brevo": {
+    "isActive": true,
+    "apiKey": "",
+    "senderName": "Enzymatica",
+    "senderEmail": "jens@jenka.se"
+  },
   "translations": {
     "userStatuses": {
       "Approved": "Godkänd",

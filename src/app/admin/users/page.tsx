@@ -38,6 +38,7 @@ export default function AdminUsersPage() {
   const [inviteForm, setInviteForm] = useState({ email: "", full_name: "", role: "Medlem" });
   const [actionLoading, setActionLoading] = useState(false);
   const [actionMessage, setActionMessage] = useState<{ type: "success" | "error"; text: string } | null>(null);
+  const [showActionDropdown, setShowActionDropdown] = useState(false);
 
   // Translations & Settings
   const [translations, setTranslations] = useState<any>(null);
@@ -481,53 +482,72 @@ export default function AdminUsersPage() {
               </button>
             </div>
 
-            <div className="flex items-center gap-2">
-              {selectedIds.size === 1 && (
-                <>
-                  <button 
-                    onClick={() => {
-                      const id = Array.from(selectedIds)[0];
-                      const u = users.find(user => user.id === id);
-                      if (u) { setEditingUser(u); setShowEditModal(true); }
-                    }}
-                    className="px-5 py-2.5 rounded-lg border border-brand-teal/20 text-brand-teal hover:bg-brand-teal hover:text-white font-black text-[10px] uppercase tracking-widest transition-all"
-                  >
-                    Redigera
-                  </button>
-                  <button 
-                    onClick={() => {
-                      const id = Array.from(selectedIds)[0];
-                      const u = users.find(user => user.id === id);
-                      if (u) handleSendMagicLink(u.email);
-                    }}
-                    className="px-5 py-2.5 rounded-lg border border-gray-200 dark:border-slate-700 text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-slate-800 transition-all font-black text-[10px] uppercase tracking-widest"
-                  >
-                    Magisk länk
-                  </button>
-                  <button 
-                    onClick={() => {
-                      const id = Array.from(selectedIds)[0];
-                      const u = users.find(user => user.id === id);
-                      if (u) handlePasswordReset(u.email);
-                    }}
-                    className="px-5 py-2.5 rounded-lg border border-gray-200 dark:border-slate-700 text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-slate-800 transition-all font-black text-[10px] uppercase tracking-widest"
-                  >
-                    Lösenord
-                  </button>
-                </>
+            <div className="relative">
+              {showActionDropdown && (
+                <div className="fixed inset-0 z-40" onClick={() => setShowActionDropdown(false)} />
               )}
               <button 
-                onClick={() => handleBulkStatusUpdate("Banned")}
-                className="px-5 py-2.5 rounded-lg border border-red-500/20 text-red-500 hover:bg-red-500 hover:text-white font-black text-[10px] uppercase tracking-widest transition-all"
+                onClick={() => setShowActionDropdown(!showActionDropdown)}
+                className="px-5 py-2.5 rounded-xl bg-brand-teal/10 hover:bg-brand-teal border border-brand-teal/20 text-brand-teal hover:text-white font-black text-[10px] uppercase tracking-widest transition-all shadow-sm flex items-center gap-2 relative z-50"
               >
-                Deaktivera
+                Åtgärder
+                <span className={`text-[8px] transition-transform ${showActionDropdown ? 'rotate-180' : ''}`}>▼</span>
               </button>
-              <button 
-                onClick={handleBulkDelete}
-                className="px-5 py-2.5 rounded-lg bg-red-600/10 text-red-600 hover:bg-red-600 hover:text-white font-black text-[10px] uppercase tracking-widest transition-all"
-              >
-                Radera
-              </button>
+
+              {showActionDropdown && (
+                <div className="absolute right-0 top-full mt-2 w-48 bg-white dark:bg-slate-900 border border-gray-100 dark:border-slate-800 rounded-xl shadow-2xl z-50 py-2 animate-in fade-in zoom-in-95">
+                  {selectedIds.size === 1 && (
+                    <>
+                      <button 
+                        onClick={() => {
+                          const id = Array.from(selectedIds)[0];
+                          const u = users.find(user => user.id === id);
+                          if (u) { setEditingUser(u); setShowEditModal(true); }
+                          setShowActionDropdown(false);
+                        }}
+                        className="w-full text-left px-5 py-3 hover:bg-brand-light dark:hover:bg-slate-800 text-[10px] font-black uppercase tracking-widest text-brand-dark dark:text-gray-200 transition-colors"
+                      >
+                        ✏️ Redigera
+                      </button>
+                      <button 
+                        onClick={() => {
+                          const id = Array.from(selectedIds)[0];
+                          const u = users.find(user => user.id === id);
+                          if (u) handleSendMagicLink(u.email);
+                          setShowActionDropdown(false);
+                        }}
+                        className="w-full text-left px-5 py-3 hover:bg-brand-light dark:hover:bg-slate-800 text-[10px] font-black uppercase tracking-widest text-brand-dark dark:text-gray-200 transition-colors"
+                      >
+                        🔗 Magisk länk
+                      </button>
+                      <button 
+                        onClick={() => {
+                          const id = Array.from(selectedIds)[0];
+                          const u = users.find(user => user.id === id);
+                          if (u) handlePasswordReset(u.email);
+                          setShowActionDropdown(false);
+                        }}
+                        className="w-full text-left px-5 py-3 hover:bg-brand-light dark:hover:bg-slate-800 text-[10px] font-black uppercase tracking-widest text-brand-dark dark:text-gray-200 transition-colors"
+                      >
+                        🔑 Lösenord
+                      </button>
+                      <div className="h-px bg-gray-100 dark:bg-slate-800 my-1"></div>
+                    </>
+                  )}
+                  <button 
+                    onClick={() => { handleBulkStatusUpdate("Banned"); setShowActionDropdown(false); }}
+                    className="w-full text-left px-5 py-3 hover:bg-red-50 dark:hover:bg-red-900/20 text-[10px] font-black uppercase tracking-widest text-red-500 transition-colors"
+                  >
+                    🚫 Deaktivera
+                  </button>
+                  <button 
+                    onClick={() => { handleBulkDelete(); setShowActionDropdown(false); }}
+                    className="w-full text-left px-5 py-3 hover:bg-red-50 dark:hover:bg-red-900/20 text-[10px] font-black uppercase tracking-widest text-red-600 transition-colors"
+                  >
+                    🗑️ Radera
+                  </button>
+                </div>
+              )}
             </div>
           </div>
         )}
@@ -558,7 +578,7 @@ export default function AdminUsersPage() {
                 </th>
                 <th 
                   onClick={() => requestSort('email')}
-                  className="px-6 py-3 text-[10px] font-black uppercase tracking-[0.2em] text-gray-400 cursor-pointer hover:text-brand-teal transition-colors"
+                  className="px-6 py-3 text-[10px] font-black uppercase tracking-[0.2em] text-gray-400 cursor-pointer hover:text-brand-teal transition-colors hidden md:table-cell"
                 >
                   <div className="flex items-center gap-2">
                      E-post
@@ -585,7 +605,7 @@ export default function AdminUsersPage() {
                 </th>
                 <th 
                   onClick={() => requestSort('created_at')}
-                  className="px-6 py-3 text-[10px] font-black uppercase tracking-[0.3em] text-gray-400 cursor-pointer hover:text-brand-teal transition-colors"
+                  className="px-6 py-3 text-[10px] font-black uppercase tracking-[0.3em] text-gray-400 cursor-pointer hover:text-brand-teal transition-colors hidden lg:table-cell"
                 >
                   <div className="flex items-center gap-2">
                      Skapad
@@ -594,7 +614,7 @@ export default function AdminUsersPage() {
                 </th>
                 <th 
                   onClick={() => requestSort('last_sign_in_at')}
-                  className="px-6 py-3 text-[10px] font-black uppercase tracking-[0.3em] text-gray-400 cursor-pointer hover:text-brand-teal transition-colors"
+                  className="px-6 py-3 text-[10px] font-black uppercase tracking-[0.3em] text-gray-400 cursor-pointer hover:text-brand-teal transition-colors hidden xl:table-cell"
                 >
                   <div className="flex items-center gap-2">
                      Senast
@@ -631,7 +651,7 @@ export default function AdminUsersPage() {
                       </div>
                     </div>
                   </td>
-                  <td className="px-6 py-3">
+                  <td className="px-6 py-3 hidden md:table-cell">
                      <span className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">
                       {u.email}
                     </span>
@@ -670,12 +690,12 @@ export default function AdminUsersPage() {
                       <option value="Medlem">Medlem</option>
                     </select>
                   </td>
-                  <td className="px-6 py-3">
+                  <td className="px-6 py-3 hidden lg:table-cell">
                      <span className="text-[9px] font-bold text-gray-400 dark:text-gray-500 uppercase tracking-widest">
                       {new Date(u.created_at).toLocaleDateString('sv-SE')}
                     </span>
                   </td>
-                  <td className="px-6 py-3">
+                  <td className="px-6 py-3 hidden xl:table-cell">
                     {u.last_sign_in_at ? (
                       <span className="text-[9px] font-bold text-brand-teal uppercase tracking-widest">
                         {new Date(u.last_sign_in_at).toLocaleString('sv-SE', { dateStyle: 'short', timeStyle: 'short' })}

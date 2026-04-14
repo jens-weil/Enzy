@@ -14,6 +14,7 @@ export default function SettingsPage() {
   const [tiktok, setTiktok] = useState({ isActive: false, openId: "", accessToken: "" });
   const [x, setX] = useState({ isActive: false, accessToken: "" });
   const [stock, setStock] = useState({ isActive: true, ticker: "ENZY.ST", shares: "142 823 696", sector: "Hälsovård" });
+  const [brevo, setBrevo] = useState({ isActive: false, apiKey: "", senderName: "Enzymatica", senderEmail: "news@enzymatica.se" });
   
   const [expandedSection, setExpandedSection] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(true);
@@ -24,7 +25,7 @@ export default function SettingsPage() {
   useEffect(() => {
     if (authLoading) return;
     
-    if (profile?.role !== 'Admin') {
+    if (profile?.role !== 'Admin' && profile?.role !== 'Editor' && profile?.role !== 'Redaktör') {
       router.push("/articles");
       return;
     }
@@ -47,6 +48,7 @@ export default function SettingsPage() {
           if (data.tiktok) setTiktok(prev => ({ ...prev, ...data.tiktok }));
           if (data.x) setX(prev => ({ ...prev, ...data.x }));
           if (data.stock) setStock(prev => ({ ...prev, ...data.stock }));
+          if (data.brevo) setBrevo(prev => ({ ...prev, ...data.brevo }));
         }
       } catch (err) {
         console.error("Failed to load settings:", err);
@@ -74,7 +76,7 @@ export default function SettingsPage() {
           "Content-Type": "application/json",
           "Authorization": `Bearer ${session.access_token}`
         },
-        body: JSON.stringify({ facebook, instagram, linkedin, tiktok, x, stock })
+        body: JSON.stringify({ facebook, instagram, linkedin, tiktok, x, stock, brevo })
       });
 
       if (res.ok) {
@@ -86,7 +88,7 @@ export default function SettingsPage() {
         const errData = await res.json();
         setMessage({ type: "error", text: errData.error || "Kunde inte spara inställningarna." });
       }
-    } catch (err) {
+    } catch {
       setMessage({ type: "error", text: "Kunde inte spara inställningarna." });
     } finally {
       setIsSaving(false);
@@ -207,8 +209,21 @@ export default function SettingsPage() {
                   </svg>
                 ),
                 color: "text-brand-teal bg-brand-light dark:bg-brand-teal/20"
+              },
+              {
+                id: "brevo",
+                title: "E-post & Mail (Brevo)",
+                subtitle: "Inställningar för automatisk mailutskick vid delning",
+                state: brevo,
+                setter: setBrevo,
+                icon: (
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} className="w-6 h-6">
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
+                  </svg>
+                ),
+                color: "text-indigo-600 bg-indigo-50 dark:bg-indigo-900/20"
               }
-            ].filter(channel => profile?.role === "Admin" || channel.id !== "stock").map((channel, i) => (
+            ].filter(channel => profile?.role === "Admin" || channel.id !== "stock").map((channel) => (
               <section key={channel.id} className="border border-gray-100 dark:border-slate-800 rounded-[2.5rem] overflow-hidden bg-white dark:bg-slate-900 transition-all">
                 {/* Header / Accordion trigger */}
                 <div 
@@ -238,7 +253,7 @@ export default function SettingsPage() {
                         checked={channel.state.isActive}
                         onChange={(e) => {
                           if (channel.setter) {
-                            channel.setter((prev: any) => ({ ...prev, isActive: e.target.checked }));
+                            (channel.setter as React.Dispatch<React.SetStateAction<Record<string, unknown>>>)((prev) => ({ ...prev, isActive: e.target.checked }));
                           }
                           if (!e.target.checked && expandedSection === channel.id) setExpandedSection(null);
                         }}
@@ -310,11 +325,11 @@ export default function SettingsPage() {
                             </span>
                             <input 
                               type="text" 
-                              value={(channel.state as any).accountId || (channel.state as any).authorUrn || (channel.state as any).openId || ""} 
+                              value={((channel.state as Record<string, unknown>).accountId as string) || ((channel.state as Record<string, unknown>).authorUrn as string) || ((channel.state as Record<string, unknown>).openId as string) || ""} 
                               onChange={e => {
                                 const key = channel.id === 'instagram' ? 'accountId' : channel.id === 'linkedin' ? 'authorUrn' : 'openId';
                                 if (channel.setter) {
-                                  channel.setter((p: any) => ({ ...p, [key]: e.target.value }));
+                                  (channel.setter as React.Dispatch<React.SetStateAction<Record<string, unknown>>>)((p) => ({ ...p, [key]: e.target.value }));
                                 }
                               }} 
                               className="w-full px-4 py-3 rounded-xl border border-gray-200 dark:border-slate-700 bg-white dark:bg-slate-900 focus:border-brand-teal outline-none dark:text-white" 
@@ -325,10 +340,10 @@ export default function SettingsPage() {
                            <span className="text-[10px] font-black text-gray-400 uppercase tracking-widest ml-2">Access Token</span>
                            <input 
                              type="password" 
-                             value={(channel.state as any).accessToken || ""} 
+                             value={((channel.state as Record<string, unknown>).accessToken as string) || ""} 
                              onChange={e => {
                                if (channel.setter) {
-                                 channel.setter((p: any) => ({ ...p, accessToken: e.target.value }));
+                                 (channel.setter as React.Dispatch<React.SetStateAction<Record<string, unknown>>>)((p) => ({ ...p, accessToken: e.target.value }));
                                }
                              }} 
                              className="w-full px-4 py-3 rounded-xl border border-gray-200 dark:border-slate-700 bg-white dark:bg-slate-900 focus:border-brand-teal outline-none font-mono text-sm dark:text-white" 
@@ -376,6 +391,41 @@ export default function SettingsPage() {
                              placeholder="142 823 696"
                            />
                         </label>
+                      </div>
+                    )}
+
+                    {channel.id === 'brevo' && (
+                      <div className="space-y-6 mt-6">
+                        <label className="space-y-2 block">
+                           <span className="text-[10px] font-black text-gray-400 uppercase tracking-widest ml-2">Brevo API Key (v3)</span>
+                           <input 
+                             type="password" 
+                             value={brevo.apiKey} 
+                             onChange={e => setBrevo(p => ({ ...p, apiKey: e.target.value }))} 
+                             className="w-full px-4 py-3 rounded-xl border border-gray-200 dark:border-slate-700 bg-white dark:bg-slate-900 focus:border-brand-teal outline-none font-mono text-sm dark:text-white" 
+                             placeholder="xkeysib-..."
+                           />
+                        </label>
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                          <label className="space-y-2">
+                             <span className="text-[10px] font-black text-gray-400 uppercase tracking-widest ml-2">Avsändarnamn</span>
+                             <input 
+                               type="text" 
+                               value={brevo.senderName} 
+                               onChange={e => setBrevo(p => ({ ...p, senderName: e.target.value }))} 
+                               className="w-full px-4 py-3 rounded-xl border border-gray-200 dark:border-slate-700 bg-white dark:bg-slate-900 focus:border-brand-teal outline-none font-bold text-sm dark:text-white" 
+                             />
+                          </label>
+                          <label className="space-y-2">
+                             <span className="text-[10px] font-black text-gray-400 uppercase tracking-widest ml-2">Avsändar-epost</span>
+                             <input 
+                               type="email" 
+                               value={brevo.senderEmail} 
+                               onChange={e => setBrevo(p => ({ ...p, senderEmail: e.target.value }))} 
+                               className="w-full px-4 py-3 rounded-xl border border-gray-200 dark:border-slate-700 bg-white dark:bg-slate-900 focus:border-brand-teal outline-none font-bold text-sm dark:text-white" 
+                             />
+                          </label>
+                        </div>
                       </div>
                     )}
                   </div>
