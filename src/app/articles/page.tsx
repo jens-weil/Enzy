@@ -48,7 +48,7 @@ export default async function ArticlesPage() {
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
       <div className="mb-6 pb-4 border-b border-gray-200 dark:border-gray-800">
         <h1 className="text-4xl md:text-5xl font-bold tracking-tight text-brand-dark dark:text-white mb-4">
-          Artiklar & Media
+          Nyheter & Artiklar
         </h1>
         <p className="text-xl text-gray-600 dark:text-gray-400">
           Håll dig uppdaterad med de senaste pressmeddelandena, nyheterna och insikterna från Enzymatica.
