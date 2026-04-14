@@ -162,7 +162,7 @@ export default function InvesterarePage() {
                 <div className="flex flex-wrap gap-4 pt-4">
                   <div
                     onClick={() => setShowChart(true)}
-                    className="px-8 py-5 rounded-3xl bg-brand-dark text-white shadow-2xl flex flex-col justify-center transform hover:scale-105 transition-all cursor-pointer group relative"
+                    className="px-8 py-5 rounded-3xl bg-slate-300 text-slate-900 shadow-2xl flex flex-col justify-center transform hover:scale-105 transition-all cursor-pointer group relative border border-slate-400"
                   >
                     <div className="absolute top-4 right-4 text-white/30 group-hover:text-brand-teal transition-colors">
                       <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -171,7 +171,7 @@ export default function InvesterarePage() {
                     </div>
                     <div className="flex justify-between items-start gap-8 mb-1">
                       <span className="text-[10px] font-black uppercase tracking-[0.2em] opacity-60">Ticker</span>
-                      <span className={`text-[10px] font-black uppercase ${liveStock?.change.startsWith('-') ? 'text-red-400' : 'text-green-400'}`}>
+                      <span className={`text-[14px] font-black uppercase relative right-[10px] bottom-[4px] ${liveStock?.change.startsWith('-') ? 'text-red-600' : 'text-green-700'}`}>
                         {liveStock ? liveStock.change : "..."}
                       </span>
                     </div>

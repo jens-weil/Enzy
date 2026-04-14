@@ -23,7 +23,7 @@ function AdminDashboard() {
     <div className="min-h-screen bg-gray-50 dark:bg-slate-950 pb-20">
       <Navbar />
       
-      <div className="max-w-5xl mx-auto px-4 pt-24 md:pt-32">
+      <div className="max-w-5xl mx-auto px-4 pt-[61px] md:pt-[93px]">
         <div className="flex justify-between items-center mb-16">
           <div>
             <h1 className="text-5xl font-black text-brand-dark dark:text-white mb-4 italic uppercase tracking-tight">

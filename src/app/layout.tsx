@@ -2,7 +2,8 @@ import type { Metadata } from "next";
 import { Inter } from "next/font/google";
 import "./globals.css";
 import Navbar from "@/components/Navbar";
-import Footer from "@/components/Footer";
+import ConditionalFooter from "@/components/ConditionalFooter";
+import MainContent from "@/components/MainContent";
 import { AuthProvider } from "@/components/AuthContext";
 import FacebookSDK from "@/components/FacebookSDK";
 
@@ -21,15 +22,15 @@ export default function RootLayout({
   return (
     <html lang="sv" className="scroll-smooth">
       <body
-        className={`${inter.className} antialiased min-h-screen flex flex-col pt-24`}
+        className={`${inter.className} antialiased min-h-screen flex flex-col pt-[61px]`}
       >
         <FacebookSDK />
         <AuthProvider>
           <Navbar />
-          <main className="flex-grow">
+          <MainContent>
             {children}
-          </main>
-          <Footer />
+          </MainContent>
+          <ConditionalFooter />
         </AuthProvider>
       </body>
     </html>

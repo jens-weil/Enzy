@@ -56,21 +56,21 @@ export default function StockTicker({ onOpenChart, ticker = 'ENZY.ST', className
   return (
     <button
       onClick={onOpenChart}
-      className={`${className || ""} flex-col items-center justify-center px-4 py-1.5 rounded-2xl bg-brand-dark text-white shadow-lg hover:scale-105 transition-all group border border-white/10 h-[54px] min-w-[100px]`}
+      className={`${className || ""} flex-col items-center justify-center px-4 py-1.5 rounded-2xl bg-slate-300 text-slate-900 shadow-lg hover:scale-105 transition-all group border border-slate-400 h-[54px] min-w-[100px]`}
     >
       <div className="flex items-center gap-1.5 mb-0.5">
-        <span className="italic text-brand-teal text-[10px] font-black uppercase tracking-widest">{displaySymbol}</span>
-        <svg className="w-2.5 h-2.5 text-white/20 group-hover:text-brand-teal transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <span className="italic text-brand-teal text-[13px] font-black uppercase tracking-widest">{displaySymbol}</span>
+        <svg className="w-2.5 h-2.5 text-gray-400 group-hover:text-brand-teal transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24">
           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M7 12l3-3 3 3 4-4M8 21l4-4 4 4M3 4h18" />
         </svg>
       </div>
       <div className="flex items-center gap-2 text-[11px] font-bold">
         {loading ? (
-          <div className="w-12 h-2 bg-white/20 animate-pulse rounded-full" />
+          <div className="w-12 h-2 bg-slate-400 animate-pulse rounded-full" />
         ) : (
           <>
             <span className="tabular-nums">{liveStock?.price.split(' ')[0]}</span>
-            <span className={liveStock?.isNegative ? "text-red-400" : "text-green-400"}>
+            <span className={liveStock?.isNegative ? "text-red-600" : "text-green-700"}>
               {liveStock?.change}
             </span>
           </>

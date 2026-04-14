@@ -1,6 +1,6 @@
 "use client";
 
-import { usePathname } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import Link from "next/link";
 import Image from "next/image";
 import { useState, useEffect } from "react";
@@ -63,11 +63,13 @@ export default function Navbar() {
     return () => window.removeEventListener('settingsUpdated', handleUpdate);
   }, []);
 
+  const router = useRouter();
+
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoginError("");
 
-    const { error } = await supabase.auth.signInWithPassword({
+    const { data, error } = await supabase.auth.signInWithPassword({
       email: loginEmail,
       password: loginPassword,
     });
@@ -80,6 +82,21 @@ export default function Navbar() {
       setLoginPassword("");
       setIsMobileMenuOpen(false);
       window.dispatchEvent(new Event("enzy_auth_change"));
+
+      // Role-based redirect
+      if (data.user) {
+        const { data: profile } = await supabase
+          .from('profiles')
+          .select('role')
+          .eq('id', data.user.id)
+          .single();
+
+        if (profile?.role === 'Partner') {
+          router.replace('/partner');
+        } else if (profile?.role === 'Admin' || profile?.role === 'Editor') {
+          router.replace('/admin');
+        }
+      }
     }
   };
 
@@ -157,11 +174,11 @@ export default function Navbar() {
     <>
       <nav className="fixed top-0 w-full z-50 glassmorphism border-b border-gray-200 dark:border-gray-800">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex justify-between items-center h-24">
+          <div className="flex justify-between items-center h-[61px]">
             <div className="flex items-center">
               <Link href="/" className="flex items-center gap-3">
-                <Image src="/logo.png" alt="Enzymatica" width={80} height={80} className="object-contain" />
-                <span className="text-2xl font-bold text-brand-dark dark:text-white tracking-tight">
+                <Image src="/logo.png" alt="Enzymatica" width={61} height={61} className="object-contain" />
+                <span className="text-xl font-bold text-brand-dark dark:text-white tracking-tight">
                   Enzymatica
                 </span>
               </Link>
@@ -431,15 +448,19 @@ export default function Navbar() {
             onClick={e => e.stopPropagation()}
           >
             {/* Header */}
-            <div className="bg-brand-dark px-10 py-10 text-center relative overflow-hidden">
-              <div className="absolute top-0 right-0 w-32 h-32 bg-brand-teal/20 rounded-full blur-3xl -mr-10 -mt-10" />
-              <div className="relative z-10">
-                <div className="w-16 h-16 bg-white/10 backdrop-blur-md rounded-2xl flex items-center justify-center mx-auto mb-5 border border-white/20">
-                  <Image src="/logo.png" alt="Enzymatica" width={32} height={32} className="opacity-80" />
-                </div>
-                <h2 className="text-2xl font-black text-white tracking-tight">Logga in</h2>
-                <p className="text-white/60 mt-1 text-sm font-medium">Enzymatica Admin</p>
+            <div className="bg-brand-dark px-8 py-5 flex items-center gap-4 relative overflow-hidden">
+              <div className="absolute top-0 right-0 w-24 h-24 bg-brand-teal/20 rounded-full blur-3xl -mr-8 -mt-8" />
+              <div className="w-[90px] h-[90px] bg-white/10 backdrop-blur-md rounded-full flex items-center justify-center border border-white/20 flex-shrink-0 relative z-10 overflow-hidden">
+                <Image src="/logo.png" alt="Enzymatica" width={90} height={90} className="opacity-80" />
               </div>
+              <div className="relative z-10">
+                <h2 className="text-2xl font-black text-white tracking-tight leading-none">Logga in</h2>
+              </div>
+              <button
+                type="button"
+                onClick={() => setShowLoginModal(false)}
+                className="ml-auto relative z-10 text-white/40 hover:text-white transition-colors text-xl leading-none"
+              >✕</button>
             </div>
 
             {/* Form */}

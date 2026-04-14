@@ -100,7 +100,7 @@ function AuthCallbackContent() {
       if (instantSession) {
         if (isMounted) {
           setStatusText("Inloggad! Dirigerar om...");
-          setTimeout(() => { if (isMounted) router.replace("/"); }, 500);
+          await navigateToPortal(instantSession.user.id);
         }
         return;
       }
@@ -112,7 +112,7 @@ function AuthCallbackContent() {
         if (session) {
           if (isMounted) {
             setStatusText("Välkommen tillbaka!");
-            setTimeout(() => { if (isMounted) router.replace("/"); }, 500);
+            await navigateToPortal(session.user.id);
           }
           return;
         }

@@ -95,7 +95,7 @@ export default function ShareVerificationPage({ params: paramsPromise }: { param
     <div className="min-h-screen bg-gray-50 dark:bg-slate-950 pb-20">
       <Navbar />
       
-      <div className="max-w-2xl mx-auto px-4 pt-24 md:pt-32">
+      <div className="max-w-2xl mx-auto px-4 pt-[61px] md:pt-[93px]">
         <div className="bg-white dark:bg-slate-900 rounded-[2.5rem] shadow-2xl overflow-hidden border border-gray-100 dark:border-slate-800 animate-in fade-in slide-in-from-bottom-4 duration-500 relative">
           <button 
             onClick={() => router.push('/articles')}
