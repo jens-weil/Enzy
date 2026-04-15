@@ -15,6 +15,7 @@ export default function SettingsPage() {
   const [x, setX] = useState({ isActive: false, accessToken: "" });
   const [stock, setStock] = useState({ isActive: true, ticker: "ENZY.ST", shares: "142 823 696", sector: "Hälsovård" });
   const [brevo, setBrevo] = useState({ isActive: false, apiKey: "", senderName: "Enzymatica", senderEmail: "news@enzymatica.se" });
+  const [security, setSecurity] = useState({ siteLockActive: true, onboardingActive: true });
   
   const [expandedSection, setExpandedSection] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(true);
@@ -49,6 +50,7 @@ export default function SettingsPage() {
           if (data.x) setX(prev => ({ ...prev, ...data.x }));
           if (data.stock) setStock(prev => ({ ...prev, ...data.stock }));
           if (data.brevo) setBrevo(prev => ({ ...prev, ...data.brevo }));
+          if (data.security) setSecurity(prev => ({ ...prev, ...data.security }));
         }
       } catch (err) {
         console.error("Failed to load settings:", err);
@@ -76,7 +78,7 @@ export default function SettingsPage() {
           "Content-Type": "application/json",
           "Authorization": `Bearer ${session.access_token}`
         },
-        body: JSON.stringify({ facebook, instagram, linkedin, tiktok, x, stock, brevo })
+        body: JSON.stringify({ facebook, instagram, linkedin, tiktok, x, stock, brevo, security })
       });
 
       if (res.ok) {
@@ -222,8 +224,21 @@ export default function SettingsPage() {
                   </svg>
                 ),
                 color: "text-indigo-600 bg-indigo-50 dark:bg-indigo-900/20"
+              },
+              {
+                id: "security",
+                title: "Säkerhet & Tillgänglighet",
+                subtitle: "Hantera sajt-lås och onboarding",
+                state: { isActive: true }, // Always consider the section "active" or just use it as a wrapper
+                setter: null,
+                icon: (
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} className="w-6 h-6">
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
+                  </svg>
+                ),
+                color: "text-brand-teal bg-brand-light dark:bg-brand-teal/20"
               }
-            ].filter(channel => profile?.role === "Admin" || channel.id !== "stock").map((channel) => (
+            ].filter(channel => profile?.role === "Admin" || (channel.id !== "stock" && channel.id !== "security")).map((channel) => (
               <section key={channel.id} className="border border-gray-100 dark:border-slate-800 rounded-[2.5rem] overflow-hidden bg-white dark:bg-slate-900 transition-all">
                 {/* Header / Accordion trigger */}
                 <div 
@@ -425,6 +440,42 @@ export default function SettingsPage() {
                                className="w-full px-4 py-3 rounded-xl border border-gray-200 dark:border-slate-700 bg-white dark:bg-slate-900 focus:border-brand-teal outline-none font-bold text-sm dark:text-white" 
                              />
                           </label>
+                        </div>
+                      </div>
+                    )}
+
+                    {channel.id === 'security' && (
+                      <div className="space-y-8 mt-6">
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                          <button
+                            onClick={() => setSecurity(prev => ({ ...prev, siteLockActive: !prev.siteLockActive }))}
+                            className={`p-8 rounded-3xl border-2 text-left transition-all ${security.siteLockActive ? "border-brand-teal bg-white dark:bg-slate-800 shadow-lg" : "border-transparent bg-gray-100 dark:bg-slate-800/50 opacity-60"}`}
+                          >
+                            <div className="flex justify-between items-start mb-4">
+                              <span className="text-2xl">{security.siteLockActive ? "🔒" : "🔓"}</span>
+                              <div className={`w-4 h-4 rounded-full ${security.siteLockActive ? "bg-brand-teal animate-pulse" : "bg-gray-300"}`} />
+                            </div>
+                            <h3 className="font-black text-brand-dark dark:text-white uppercase italic text-sm mb-1">Sajtlås Active</h3>
+                            <p className="text-[10px] text-gray-400 font-bold uppercase tracking-widest">Kräver 3-siffrig kod (304) för åtkomst</p>
+                          </button>
+
+                          <button
+                            onClick={() => setSecurity(prev => ({ ...prev, onboardingActive: !prev.onboardingActive }))}
+                            className={`p-8 rounded-3xl border-2 text-left transition-all ${security.onboardingActive ? "border-brand-teal bg-white dark:bg-slate-800 shadow-lg" : "border-transparent bg-gray-100 dark:bg-slate-800/50 opacity-60"}`}
+                          >
+                            <div className="flex justify-between items-start mb-4">
+                              <span className="text-2xl">{security.onboardingActive ? "✨" : "🚫"}</span>
+                              <div className={`w-4 h-4 rounded-full ${security.onboardingActive ? "bg-brand-teal animate-pulse" : "bg-gray-300"}`} />
+                            </div>
+                            <h3 className="font-black text-brand-dark dark:text-white uppercase italic text-sm mb-1">Onboarding Active</h3>
+                            <p className="text-[10px] text-gray-400 font-bold uppercase tracking-widest">Visa rollbeskrivning för anonyma</p>
+                          </button>
+                        </div>
+                        <div className="p-6 bg-amber-50 dark:bg-amber-900/10 border border-amber-100 dark:border-amber-900/20 rounded-2xl">
+                          <p className="text-[10px] text-amber-700 dark:text-amber-400 font-bold uppercase tracking-widest leading-relaxed">
+                            <span className="mr-2">💡</span>
+                            Notera: Om du stänger av och sätter på låset igen kommer alla aktiva sessioner att loggas ut från låset (tvingad re-lock).
+                          </p>
                         </div>
                       </div>
                     )}

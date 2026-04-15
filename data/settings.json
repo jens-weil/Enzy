@@ -37,6 +37,11 @@
     "senderName": "Enzymatica",
     "senderEmail": "jens@jenka.se"
   },
+  "security": {
+    "siteLockActive": false,
+    "onboardingActive": true,
+    "updatedAt": 1776201992825
+  },
   "translations": {
     "userStatuses": {
       "Approved": "Godkänd",

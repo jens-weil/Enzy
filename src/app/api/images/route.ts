@@ -10,7 +10,7 @@ export async function GET(request: NextRequest) {
   }
 
   try {
-    const uploadDir = path.join(process.cwd(), 'public', 'uploads');
+    const uploadDir = path.join(process.cwd(), 'public', 'Media');
     if (!fs.existsSync(uploadDir)) {
       fs.mkdirSync(uploadDir, { recursive: true });
     }
@@ -68,16 +68,23 @@ export async function POST(request: NextRequest) {
     const bytes = await file.arrayBuffer();
     const buffer = Buffer.from(bytes);
 
-    const uploadDir = path.join(process.cwd(), 'public', 'uploads');
+    const uploadDir = path.join(process.cwd(), 'public', 'Media');
     if (!fs.existsSync(uploadDir)) {
       fs.mkdirSync(uploadDir, { recursive: true });
     }
 
     const filename = `${Date.now()}-${file.name.replace(/\s+/g, '-')}`;
+    const extension = path.extname(filename).toLowerCase();
+    const allowedExtensions = ['.jpg', '.jpeg', '.png', '.webp', '.gif', '.svg', '.mp4', '.webm', '.mov', '.avi'];
+    
+    if (!allowedExtensions.includes(extension)) {
+      return NextResponse.json({ error: 'Filtypen stöds inte. Använd vanliga bild- eller videoformat.' }, { status: 400 });
+    }
+
     const filePath = path.join(uploadDir, filename);
     fs.writeFileSync(filePath, buffer);
 
-    return NextResponse.json({ url: `/uploads/${filename}` });
+    return NextResponse.json({ url: `/Media/${filename}` });
   } catch (error) {
     console.error("Error uploading file:", error);
     return NextResponse.json({ error: 'Upload failed' }, { status: 500 });

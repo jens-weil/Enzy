@@ -1,22 +1,27 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { supabase } from "@/lib/supabase";
 
 interface MembershipModalProps {
   isOpen: boolean;
   onClose: () => void;
+  initialRole?: string;
 }
 
-export default function MembershipModal({ isOpen, onClose }: MembershipModalProps) {
+export default function MembershipModal({ isOpen, onClose, initialRole }: MembershipModalProps) {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-  const [role, setRole] = useState("Medlem");
+  const [role, setRole] = useState(initialRole || "Medlem");
+
+  useEffect(() => {
+    if (initialRole) setRole(initialRole);
+  }, [initialRole]);
+
   const [fullName, setFullName] = useState("");
   const [phone, setPhone] = useState("");
   const [company, setCompany] = useState("");
   const [linkedin, setLinkedin] = useState("");
-  const [motivation, setMotivation] = useState("");
   
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -32,7 +37,6 @@ export default function MembershipModal({ isOpen, onClose }: MembershipModalProp
     try {
       const isStaff = role === "Admin" || role === "Editor" || role === "Redaktör";
 
-      // Skicka all data som metadata – triggern i databasen läser och skapar profilen
       const { data: authData, error: authErr } = await supabase.auth.signUp({
         email,
         password,
@@ -51,6 +55,19 @@ export default function MembershipModal({ isOpen, onClose }: MembershipModalProp
 
       if (authErr) throw authErr;
 
+      const setCookie = (name: string, value: string, minutes: number) => {
+        const date = new Date();
+        date.setTime(date.getTime() + (minutes * 60 * 1000));
+        document.cookie = `${name}=${value}; expires=${date.toUTCString()}; path=/; SameSite=Lax`;
+      };
+
+
+      setCookie("enzy_site_unlocked", "true", 60);
+      setCookie("enzy_last_unlocked_at", Date.now().toString(), 60);
+      setCookie("enzy_hide_role_info", "true", 60);
+
+
+
       setSuccess(true);
     } catch (err: any) {
       setError(err.message || "Ett fel uppstod vid ansökan.");
@@ -68,14 +85,23 @@ export default function MembershipModal({ isOpen, onClose }: MembershipModalProp
         className="bg-white dark:bg-slate-900 w-full max-w-lg rounded-[2.5rem] shadow-2xl overflow-hidden animate-in zoom-in-95 duration-300 my-auto"
         onClick={e => e.stopPropagation()}
       >
-        <div className="p-8 md:p-10 space-y-8">
-          <div className="flex justify-between items-start">
-            <div>
-              <h2 className="text-3xl font-black text-brand-dark dark:text-white tracking-tight">Ansök om medlemskap</h2>
-              <p className="text-gray-500 dark:text-gray-400 text-sm font-medium mt-1">Bli en del av Enzymaticas framtid</p>
-            </div>
-            <button onClick={onClose} className="w-10 h-10 rounded-full bg-gray-100 dark:bg-slate-800 flex items-center justify-center font-black">&times;</button>
-          </div>
+        {/* Header Section */}
+        <div className="p-5 pb-6 bg-gradient-to-br from-brand-teal/20 to-transparent relative border-b border-gray-50 dark:border-slate-800/50">
+          <button 
+            onClick={onClose} 
+            className="absolute top-4 right-5 w-8 h-8 rounded-full bg-black/5 dark:bg-white/10 flex items-center justify-center font-black hover:bg-brand-teal hover:text-white transition-all z-10 text-lg shadow-sm"
+          >
+            &times;
+          </button>
+          <h2 className="text-xl font-black text-brand-dark dark:text-white italic uppercase tracking-tighter mb-1">
+            Ansök om medlemskap
+          </h2>
+          <p className="text-gray-500 dark:text-gray-400 text-[10px] leading-relaxed max-w-sm font-medium uppercase tracking-widest">
+            Fyll i dina uppgifter nedan
+          </p>
+        </div>
+
+        <div className="px-8 pt-8 pb-10">
 
           {success ? (
             <div className="py-12 text-center space-y-6">
@@ -85,10 +111,10 @@ export default function MembershipModal({ isOpen, onClose }: MembershipModalProp
               <button onClick={onClose} className="w-full bg-brand-dark text-white py-4 rounded-2xl font-black uppercase tracking-widest transition-all">Stäng</button>
             </div>
           ) : (
-            <form onSubmit={handleSubmit} className="space-y-6">
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <div className="space-y-2">
-                  <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest">Önskad roll</label>
+            <form onSubmit={handleSubmit} className="space-y-4">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className="space-y-1.5">
+                  <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest ml-1">Önskad roll</label>
                   <select 
                     value={role} 
                     onChange={e => setRole(e.target.value)}
@@ -97,58 +123,55 @@ export default function MembershipModal({ isOpen, onClose }: MembershipModalProp
                     <option value="Medlem">Medlem</option>
                     <option value="Investerare">Investerare</option>
                     <option value="Partner">Partner</option>
-                    <option value="Säljare">Säljare</option>
                   </select>
                 </div>
-                <div className="space-y-2">
-                  <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest">E-post</label>
+                <div className="space-y-1.5">
+                  <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest ml-1">E-post</label>
                   <input required type="email" value={email} onChange={e => setEmail(e.target.value)} className="w-full px-5 py-3 rounded-2xl bg-gray-50 dark:bg-slate-800 border-none font-bold" />
                 </div>
               </div>
 
-              <div className="space-y-2">
-                <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest">Lösenord</label>
+              <div className="space-y-1.5">
+                <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest ml-1">Lösenord</label>
                 <input required type="password" value={password} onChange={e => setPassword(e.target.value)} className="w-full px-5 py-3 rounded-2xl bg-gray-50 dark:bg-slate-800 border-none font-bold" />
               </div>
 
               {role !== "Admin" && role !== "Editor" && (
-                <div className="space-y-6 animate-in slide-in-from-top-2 duration-300">
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                    <div className="space-y-2">
-                      <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest">Fullständigt namn</label>
+                <div className="space-y-4 animate-in slide-in-from-top-2 duration-300">
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div className="space-y-1.5">
+                      <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest ml-1">Fullständigt namn</label>
                       <input required value={fullName} onChange={e => setFullName(e.target.value)} className="w-full px-5 py-3 rounded-2xl bg-gray-50 dark:bg-slate-800 border-none font-bold" />
                     </div>
-                    <div className="space-y-2">
-                      <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest">Telefon</label>
+                    <div className="space-y-1.5">
+                      <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest ml-1">Telefon</label>
                       <input value={phone} onChange={e => setPhone(e.target.value)} className="w-full px-5 py-3 rounded-2xl bg-gray-50 dark:bg-slate-800 border-none font-bold" />
                     </div>
                   </div>
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                    <div className="space-y-2">
-                      <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest">Företag</label>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div className="space-y-1.5">
+                      <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest ml-1">Företag</label>
                       <input value={company} onChange={e => setCompany(e.target.value)} className="w-full px-5 py-3 rounded-2xl bg-gray-50 dark:bg-slate-800 border-none font-bold" />
                     </div>
-                    <div className="space-y-2">
-                      <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest">LinkedIn URL</label>
+                    <div className="space-y-1.5">
+                      <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest ml-1">LinkedIn URL</label>
                       <input value={linkedin} onChange={e => setLinkedin(e.target.value)} className="w-full px-5 py-3 rounded-2xl bg-gray-50 dark:bg-slate-800 border-none font-bold" placeholder="https://linkedin.com/in/..." />
                     </div>
-                  </div>
-                  <div className="space-y-2">
-                    <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest">Motivering</label>
-                    <textarea value={motivation} onChange={e => setMotivation(e.target.value)} className="w-full px-5 py-4 rounded-2xl bg-gray-50 dark:bg-slate-800 border-none font-medium h-32 resize-none" placeholder="Berätta kort varför du ansöker..." />
                   </div>
                 </div>
               )}
 
               {error && <p className="text-red-500 text-xs font-bold">{error}</p>}
 
-              <button 
-                type="submit" 
-                disabled={loading}
-                className="w-full bg-brand-teal text-white py-5 rounded-2xl font-black uppercase tracking-widest shadow-xl shadow-brand-teal/20 hover:bg-brand-dark transition-all disabled:opacity-50"
-              >
-                {loading ? "Skickar..." : "Skicka ansökan"}
-              </button>
+              <div className="pt-2">
+                <button 
+                  type="submit" 
+                  disabled={loading}
+                  className="w-full bg-brand-teal text-white py-5 rounded-2xl font-black uppercase tracking-widest shadow-xl shadow-brand-teal/20 hover:bg-brand-dark transition-all disabled:opacity-50"
+                >
+                  {loading ? "Skickar..." : "Skicka ansökan"}
+                </button>
+              </div>
             </form>
           )}
         </div>
@@ -156,3 +179,4 @@ export default function MembershipModal({ isOpen, onClose }: MembershipModalProp
     </div>
   );
 }
+

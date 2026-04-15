@@ -4,6 +4,7 @@ import "./globals.css";
 import Navbar from "@/components/Navbar";
 import ConditionalFooter from "@/components/ConditionalFooter";
 import MainContent from "@/components/MainContent";
+import SiteLock from "@/components/SiteLock";
 import { AuthProvider } from "@/components/AuthContext";
 import FacebookSDK from "@/components/FacebookSDK";
 
@@ -26,6 +27,7 @@ export default function RootLayout({
       >
         <FacebookSDK />
         <AuthProvider>
+          <SiteLock />
           <Navbar />
           <MainContent>
             {children}

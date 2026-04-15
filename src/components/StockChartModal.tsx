@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react';
 import { ComposedChart, Line, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, ReferenceLine } from 'recharts';
 import { format, fromUnixTime } from 'date-fns';
 import { sv } from 'date-fns/locale';
+import { motion, AnimatePresence } from 'framer-motion';
 
 interface StockChartModalProps {
   isOpen: boolean;
@@ -41,6 +42,9 @@ export default function StockChartModal({ isOpen, onClose, ticker = 'ENZY.ST' }:
   const [showVolume, setShowVolume] = useState(false);
   const [showMA30, setShowMA30] = useState(false);
   const [showMA100, setShowMA100] = useState(false);
+  const [showOHLC, setShowOHLC] = useState(false);
+  const [showTimeframeOpen, setShowTimeframeOpen] = useState(false);
+  const [showSettingsOpen, setShowSettingsOpen] = useState(false);
 
   const [hasInitialFetchStarted, setHasInitialFetchStarted] = useState(false);
 
@@ -50,7 +54,13 @@ export default function StockChartModal({ isOpen, onClose, ticker = 'ENZY.ST' }:
       if (isMounted) setLoading(true);
       setError('');
 
-      const res = await fetch(`/api/stock?symbol=${ticker}&range=${tf.range}&interval=${tf.interval}`);
+      // Determine interval: use 1d for 3mo+ views if MA is active for accuracy
+      let intervalToUse = tf.interval;
+      if ((showMA30 || showMA100) && ['3mo', '1y', '3y', '10y', 'max'].includes(tf.range)) {
+        intervalToUse = '1d';
+      }
+
+      const res = await fetch(`/api/stock?symbol=${ticker}&range=${tf.range}&interval=${intervalToUse}`);
       const json = await res.json();
       
       if (!isMounted) return;
@@ -63,8 +73,12 @@ export default function StockChartModal({ isOpen, onClose, ticker = 'ENZY.ST' }:
 
       const result = json.chart.result[0];
       const timestamps = result.timestamp || [];
-      const closes = result.indicators?.quote?.[0]?.close || [];
-      const volumes = result.indicators?.quote?.[0]?.volume || [];
+      const quote = result.indicators?.quote?.[0] || {};
+      const closes = quote.close || [];
+      const opens = quote.open || [];
+      const highs = quote.high || [];
+      const lows = quote.low || [];
+      const volumes = quote.volume || [];
       const meta = result.meta;
       const prevClose = meta.previousClose || meta.chartPreviousClose;
 
@@ -86,7 +100,15 @@ export default function StockChartModal({ isOpen, onClose, ticker = 'ENZY.ST' }:
           timestamp: ts,
           date: date,
           price: price,
+          open: opens[index] !== null ? Number(opens[index].toFixed(2)) : price,
+          high: highs[index] !== null ? Number(highs[index].toFixed(2)) : price,
+          low: lows[index] !== null ? Number(lows[index].toFixed(2)) : price,
+          close: price,
           volume: volumes[index] || 0,
+          ohl_range: [
+            lows[index] !== null ? Number(lows[index].toFixed(2)) : price,
+            highs[index] !== null ? Number(highs[index].toFixed(2)) : price
+          ],
         };
       }).filter((item: any) => item.price !== null);
 
@@ -141,11 +163,6 @@ export default function StockChartModal({ isOpen, onClose, ticker = 'ENZY.ST' }:
   useEffect(() => {
     if (!isOpen) return;
 
-    // Skip fetch if we already have up-to-date data for the current ticker and timeframe
-    if (data.length > 0 && selectedTimeframe.range === timeframes[2].range && !loading && lastFetchedTicker === ticker) {
-      return;
-    }
-
     // If ticker changed, clear old data first to avoid flickering
     if (lastFetchedTicker !== ticker) {
       setData([]);
@@ -155,7 +172,7 @@ export default function StockChartModal({ isOpen, onClose, ticker = 'ENZY.ST' }:
     fetchStockData(selectedTimeframe, isMounted);
 
     return () => { isMounted = false; };
-  }, [isOpen, selectedTimeframe, ticker]);
+  }, [isOpen, selectedTimeframe, ticker, showMA30, showMA100]);
 
   const formatXAxis = (tickItem: Date) => {
     if (!tickItem) return '';
@@ -186,6 +203,60 @@ export default function StockChartModal({ isOpen, onClose, ticker = 'ENZY.ST' }:
   const minPrice = data.length > 0 ? Math.min(...data.map(d => d.price || 999999)) : 0;
   const maxPrice = data.length > 0 ? Math.max(...data.map(d => d.price || 0)) : 100;
   const padding = (maxPrice - minPrice) * 0.1;
+
+  // Custom Candlestick Component for OHLC
+  const Candlestick = (props: any) => {
+    const { x, y, width, height, low, high, open, close } = props;
+    const isUp = close >= open;
+    const color = isUp ? '#10B981' : '#EF4444';
+    
+    // x is the center of the bar, we need to draw relative to it
+    const centerX = x + width / 2;
+    const candleWidth = Math.max(width * 0.6, 2);
+
+    return (
+      <g>
+        {/* Wick */}
+        <line
+          x1={centerX}
+          y1={y + height * (1 - (high - low) / (high - low))} // This logic is handled by Bar's coordinate system
+          x2={centerX}
+          y2={y + height}
+          stroke={color}
+          strokeWidth={1}
+        />
+        {/* Simplified high-low line using the mapped props from Recharts */}
+        {/* Recharts Bar actually maps the 'price' to height, but for OHLC we use it differently */}
+      </g>
+    );
+  };
+
+  // Improved Candlestick using a more reliable approach for Recharts
+  const renderCandlestick = (props: any) => {
+    const { x, y, width, index, data } = props;
+    const item = data[index];
+    if (!item) return null;
+
+    const { open, close, high, low } = item;
+    const isUp = close >= open;
+    const color = isUp ? '#10B981' : '#EF4444';
+
+    // We need to map the price values to Y coordinates
+    // Recharts doesn't pass the Y scale directly to shapes easily, 
+    // but we can use the 'y' and 'height' from the Bar since we pass [low, high] as data
+    const centerX = x + width / 2;
+    const candleWidth = Math.max(width - 2, 1);
+    
+    // The 'y' and 'height' here represent the High and Low because we pass [low, high] to the Bar
+    const entryTop = Math.min(open, close);
+    const entryBottom = Math.max(open, close);
+    
+    // We'll use a simpler rendering: a thin line for high/low and a box for open/close
+    // To get the exact Y, we rely on Recharts projection
+    // But since this is tricky in a raw functional component without the scale, 
+    // let's use a simpler "OHLC" bar styling using standard Recharts logic.
+    return null;
+  };
 
   if (!isOpen) return null;
 
@@ -229,70 +300,125 @@ export default function StockChartModal({ isOpen, onClose, ticker = 'ENZY.ST' }:
 
         {/* Content */}
         <div className="px-4 md:px-8 py-6 md:py-8 space-y-6">
-          {/* Timeframe Selectors */}
-          <div className="flex flex-row justify-between items-center gap-1 md:gap-2">
-            {timeframes.map((tf) => (
+          {/* Controls Row */}
+          <div className="flex flex-wrap gap-4 items-center">
+            {/* Timeframe Dropdown */}
+            <div className="relative">
               <button
-                key={tf.label}
-                onClick={() => setSelectedTimeframe(tf)}
-                className={`flex-1 px-1 md:px-4 py-2 rounded-lg md:rounded-xl text-[10px] md:text-xs font-black uppercase tracking-tighter md:tracking-widest transition-all ${
-                  selectedTimeframe.label === tf.label
-                    ? 'bg-brand-teal text-white shadow-md'
-                    : 'bg-gray-50 dark:bg-slate-800 text-gray-500 hover:bg-gray-100 dark:hover:bg-slate-700'
-                } ${['1 vecka', '3 månader', '10 år'].includes(tf.label) ? 'hidden sm:block' : 'block'}`}
+                onClick={() => { setShowTimeframeOpen(!showTimeframeOpen); setShowSettingsOpen(false); }}
+                className="px-6 py-3 rounded-2xl bg-gray-50 dark:bg-slate-800 border border-gray-100 dark:border-slate-800 flex items-center gap-3 hover:bg-gray-100 dark:hover:bg-slate-700 transition-all min-w-[160px] group"
               >
-                <span className="hidden md:inline">{tf.label}</span>
-                <span className="md:hidden">
-                  {tf.label.includes(' ') ? `${tf.label.split(' ')[0]}${tf.label.split(' ')[1].charAt(0)}` : tf.label}
-                </span>
+                <span className="text-gray-400 text-[10px] font-black uppercase tracking-widest">Period:</span>
+                <span className="text-brand-dark dark:text-white text-xs font-black uppercase tracking-widest italic">{selectedTimeframe.label}</span>
+                <span className={`ml-auto text-brand-teal transition-transform duration-300 ${showTimeframeOpen ? 'rotate-180' : ''}`}>▼</span>
               </button>
-            ))}
+
+              <AnimatePresence>
+                {showTimeframeOpen && (
+                  <>
+                    <div className="fixed inset-0 z-10" onClick={() => setShowTimeframeOpen(false)} />
+                    <motion.div
+                      initial={{ opacity: 0, y: 10, scale: 0.95 }}
+                      animate={{ opacity: 1, y: 0, scale: 1 }}
+                      exit={{ opacity: 0, y: 10, scale: 0.95 }}
+                      className="absolute left-0 mt-3 w-48 bg-white dark:bg-slate-900 rounded-2xl shadow-2xl border border-gray-100 dark:border-slate-800 py-2 z-20 overflow-hidden"
+                    >
+                      {timeframes.map((tf) => (
+                        <button
+                          key={tf.label}
+                          onClick={() => { setSelectedTimeframe(tf); setShowTimeframeOpen(false); }}
+                          className={`w-full px-5 py-3 text-left text-[10px] font-black uppercase tracking-widest transition-colors ${
+                            selectedTimeframe.label === tf.label
+                              ? 'bg-brand-teal text-white'
+                              : 'text-gray-500 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-slate-800 hover:text-brand-teal'
+                          }`}
+                        >
+                          {tf.label}
+                        </button>
+                      ))}
+                    </motion.div>
+                  </>
+                )}
+              </AnimatePresence>
+            </div>
+
+            {/* Indicators/Settings Dropdown */}
+            <div className="relative ml-0 md:ml-2">
+              <button
+                onClick={() => { setShowSettingsOpen(!showSettingsOpen); setShowTimeframeOpen(false); }}
+                className="px-6 py-3 rounded-2xl bg-gray-50 dark:bg-slate-800 border border-gray-100 dark:border-slate-800 flex items-center gap-3 hover:bg-gray-100 dark:hover:bg-slate-700 transition-all min-w-[160px] group"
+              >
+                <span className="text-gray-400 text-[10px] font-black uppercase tracking-widest">Visa:</span>
+                <span className="text-brand-dark dark:text-white text-xs font-black uppercase tracking-widest italic">
+                  {[showLog, showVolume, showMA30, showMA100].filter(Boolean).length || 'Inga'} aktiva
+                </span>
+                <span className={`ml-auto text-brand-teal transition-transform duration-300 ${showSettingsOpen ? 'rotate-180' : ''}`}>▼</span>
+              </button>
+
+              <AnimatePresence>
+                {showSettingsOpen && (
+                  <>
+                    <div className="fixed inset-0 z-10" onClick={() => setShowSettingsOpen(false)} />
+                    <motion.div
+                      initial={{ opacity: 0, y: 10, scale: 0.95 }}
+                      animate={{ opacity: 1, y: 0, scale: 1 }}
+                      exit={{ opacity: 0, y: 10, scale: 0.95 }}
+                      className="absolute left-0 mt-3 w-56 bg-white dark:bg-slate-900 rounded-[1.5rem] shadow-2xl border border-gray-100 dark:border-slate-800 p-4 z-20 space-y-4"
+                    >
+                      <label className="flex items-center justify-between cursor-pointer group">
+                        <span className="text-[10px] font-black text-gray-500 uppercase tracking-widest group-hover:text-brand-teal">OHLC (Staplar)</span>
+                        <div className="relative">
+                          <input type="checkbox" checked={showOHLC} onChange={(e) => setShowOHLC(e.target.checked)} className="sr-only" />
+                          <div className={`w-8 h-4 rounded-full transition-colors ${showOHLC ? 'bg-brand-teal' : 'bg-gray-200 dark:bg-slate-700'}`}></div>
+                          <div className={`absolute top-0.5 left-0.5 w-3 h-3 rounded-full bg-white transition-transform ${showOHLC ? 'translate-x-4' : ''}`}></div>
+                        </div>
+                      </label>
+
+                      <label className="flex items-center justify-between cursor-pointer group">
+                        <span className="text-[10px] font-black text-gray-500 uppercase tracking-widest group-hover:text-brand-teal">Logaritmisk</span>
+                        <div className="relative">
+                          <input type="checkbox" checked={showLog} onChange={(e) => setShowLog(e.target.checked)} className="sr-only" />
+                          <div className={`w-8 h-4 rounded-full transition-colors ${showLog ? 'bg-brand-teal' : 'bg-gray-200 dark:bg-slate-700'}`}></div>
+                          <div className={`absolute top-0.5 left-0.5 w-3 h-3 rounded-full bg-white transition-transform ${showLog ? 'translate-x-4' : ''}`}></div>
+                        </div>
+                      </label>
+
+                      <label className="flex items-center justify-between cursor-pointer group">
+                        <span className="text-[10px] font-black text-gray-500 uppercase tracking-widest group-hover:text-brand-teal">Volym</span>
+                        <div className="relative">
+                          <input type="checkbox" checked={showVolume} onChange={(e) => setShowVolume(e.target.checked)} className="sr-only" />
+                          <div className={`w-8 h-4 rounded-full transition-colors ${showVolume ? 'bg-brand-teal' : 'bg-gray-200 dark:bg-slate-700'}`}></div>
+                          <div className={`absolute top-0.5 left-0.5 w-3 h-3 rounded-full bg-white transition-transform ${showVolume ? 'translate-x-4' : ''}`}></div>
+                        </div>
+                      </label>
+
+                      <label className="flex items-center justify-between cursor-pointer group">
+                        <span className="text-[10px] font-black text-gray-500 uppercase tracking-widest group-hover:text-orange-500">MA30</span>
+                        <div className="relative">
+                          <input type="checkbox" checked={showMA30} onChange={(e) => setShowMA30(e.target.checked)} className="sr-only" />
+                          <div className={`w-8 h-4 rounded-full transition-colors ${showMA30 ? 'bg-orange-500' : 'bg-gray-200 dark:bg-slate-700'}`}></div>
+                          <div className={`absolute top-0.5 left-0.5 w-3 h-3 rounded-full bg-white transition-transform ${showMA30 ? 'translate-x-4' : ''}`}></div>
+                        </div>
+                      </label>
+
+                      <label className="flex items-center justify-between cursor-pointer group">
+                        <span className="text-[10px] font-black text-gray-500 uppercase tracking-widest group-hover:text-purple-500">MA100</span>
+                        <div className="relative">
+                          <input type="checkbox" checked={showMA100} onChange={(e) => setShowMA100(e.target.checked)} className="sr-only" />
+                          <div className={`w-8 h-4 rounded-full transition-colors ${showMA100 ? 'bg-purple-500' : 'bg-gray-200 dark:bg-slate-700'}`}></div>
+                          <div className={`absolute top-0.5 left-0.5 w-3 h-3 rounded-full bg-white transition-transform ${showMA100 ? 'translate-x-4' : ''}`}></div>
+                        </div>
+                      </label>
+                    </motion.div>
+                  </>
+                )}
+              </AnimatePresence>
+            </div>
           </div>
 
-          {/* Indicator Toggles */}
-          <div className="flex flex-wrap gap-4 items-center bg-gray-50/50 dark:bg-slate-800/20 p-3 rounded-2xl border border-gray-100/50 dark:border-slate-800/50">
-             <span className="text-[10px] font-black text-gray-400 uppercase tracking-widest px-2">Visa</span>
-             <div className="flex flex-wrap gap-6">
-                <label className="flex items-center gap-2 cursor-pointer group">
-                  <div className="relative">
-                    <input type="checkbox" checked={showLog} onChange={(e) => setShowLog(e.target.checked)} className="sr-only" />
-                    <div className={`w-8 h-4 rounded-full transition-colors ${showLog ? 'bg-brand-teal' : 'bg-gray-200 dark:bg-slate-700'}`}></div>
-                    <div className={`absolute top-0.5 left-0.5 w-3 h-3 rounded-full bg-white transition-transform ${showLog ? 'translate-x-4' : ''}`}></div>
-                  </div>
-                  <span className="text-[10px] font-black text-gray-500 uppercase tracking-widest group-hover:text-brand-teal transition-colors">Logaritmisk</span>
-                </label>
-
-                <label className="flex items-center gap-2 cursor-pointer group">
-                  <div className="relative">
-                    <input type="checkbox" checked={showVolume} onChange={(e) => setShowVolume(e.target.checked)} className="sr-only" />
-                    <div className={`w-8 h-4 rounded-full transition-colors ${showVolume ? 'bg-brand-teal' : 'bg-gray-200 dark:bg-slate-700'}`}></div>
-                    <div className={`absolute top-0.5 left-0.5 w-3 h-3 rounded-full bg-white transition-transform ${showVolume ? 'translate-x-4' : ''}`}></div>
-                  </div>
-                  <span className="text-[10px] font-black text-gray-500 uppercase tracking-widest group-hover:text-brand-teal transition-colors">Volym</span>
-                </label>
-
-                <label className="flex items-center gap-2 cursor-pointer group">
-                  <div className="relative">
-                    <input type="checkbox" checked={showMA30} onChange={(e) => setShowMA30(e.target.checked)} className="sr-only" />
-                    <div className={`w-8 h-4 rounded-full transition-colors ${showMA30 ? 'bg-orange-500' : 'bg-gray-200 dark:bg-slate-700'}`}></div>
-                    <div className={`absolute top-0.5 left-0.5 w-3 h-3 rounded-full bg-white transition-transform ${showMA30 ? 'translate-x-4' : ''}`}></div>
-                  </div>
-                  <span className="text-[10px] font-black text-gray-500 uppercase tracking-widest group-hover:text-orange-500 transition-colors">MA30</span>
-                </label>
-
-                <label className="flex items-center gap-2 cursor-pointer group">
-                  <div className="relative">
-                    <input type="checkbox" checked={showMA100} onChange={(e) => setShowMA100(e.target.checked)} className="sr-only" />
-                    <div className={`w-8 h-4 rounded-full transition-colors ${showMA100 ? 'bg-purple-500' : 'bg-gray-200 dark:bg-slate-700'}`}></div>
-                    <div className={`absolute top-0.5 left-0.5 w-3 h-3 rounded-full bg-white transition-transform ${showMA100 ? 'translate-x-4' : ''}`}></div>
-                  </div>
-                  <span className="text-[10px] font-black text-gray-500 uppercase tracking-widest group-hover:text-purple-500 transition-colors">MA100</span>
-                </label>
-             </div>
-          </div>
 
           {/* Chart Area */}
-          <div className="h-[400px] w-full relative">
+          <div className="h-[450px] w-full relative">
             {loading ? (
               <div className="absolute inset-0 flex items-center justify-center">
                 <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-brand-teal"></div>
@@ -382,7 +508,7 @@ export default function StockChartModal({ isOpen, onClose, ticker = 'ENZY.ST' }:
                     />
                   )}
 
-                  {showMA100 && (
+                   {showMA100 && (
                     <Line 
                       yAxisId="price"
                       type="monotone" 
@@ -394,16 +520,55 @@ export default function StockChartModal({ isOpen, onClose, ticker = 'ENZY.ST' }:
                     />
                   )}
 
-                  <Line 
-                    yAxisId="price"
-                    type="monotone" 
-                    dataKey="price" 
-                    stroke={lineColor} 
-                    strokeWidth={3}
-                    dot={false}
-                    activeDot={{ r: 6, fill: lineColor, strokeWidth: 0 }}
-                    animationDuration={300}
-                  />
+                  {showOHLC ? (
+                    <Bar
+                      yAxisId="price"
+                      dataKey="ohl_range" // We'll compute this below
+                      shape={(props: any) => {
+                        const { x, y, width, height, index } = props;
+                        const item = data[index];
+                        if (!item) return null;
+                        
+                        const isUp = item.close >= item.open;
+                        const color = isUp ? '#10B981' : '#EF4444';
+                        const centerX = x + width / 2;
+                        
+                        // We need to calculate body Y and height relative to the total bar Y/height (high/low)
+                        const range = item.high - item.low;
+                        if (range <= 0) return <line x1={centerX} y1={y} x2={centerX} y2={y+height} stroke={color} />;
+                        
+                        const bodyTop = (Math.max(item.open, item.close) - item.low) / range;
+                        const bodyBottom = (Math.min(item.open, item.close) - item.low) / range;
+                        
+                        const bodyY = y + height * (1 - bodyTop);
+                        const bodyH = Math.max(height * (bodyTop - bodyBottom), 1);
+                        
+                        return (
+                          <g>
+                            <line x1={centerX} y1={y} x2={centerX} y2={y + height} stroke={color} strokeWidth={1} />
+                            <rect 
+                              x={centerX - Math.max(width/3, 1)} 
+                              y={bodyY} 
+                              width={Math.max(width/1.5, 2)} 
+                              height={bodyH} 
+                              fill={color} 
+                            />
+                          </g>
+                        );
+                      }}
+                    />
+                  ) : (
+                    <Line 
+                      yAxisId="price"
+                      type="monotone" 
+                      dataKey="price" 
+                      stroke={lineColor} 
+                      strokeWidth={3}
+                      dot={false}
+                      activeDot={{ r: 6, fill: lineColor, strokeWidth: 0 }}
+                      animationDuration={300}
+                    />
+                  )}
                 </ComposedChart>
               </ResponsiveContainer>
             ) : null}

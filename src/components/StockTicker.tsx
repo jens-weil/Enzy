@@ -56,7 +56,7 @@ export default function StockTicker({ onOpenChart, ticker = 'ENZY.ST', className
   return (
     <button
       onClick={onOpenChart}
-      className={`${className || ""} flex-col items-center justify-center px-4 py-1.5 rounded-2xl bg-slate-300 text-slate-900 shadow-lg hover:scale-105 transition-all group border border-slate-400 h-[54px] min-w-[100px]`}
+      className={`${className || ""} flex-col items-center justify-center px-4 py-1.5 rounded-2xl bg-slate-300 text-slate-900 shadow-lg hover:scale-105 transition-all group border border-slate-400 h-[45px] min-w-[100px]`}
     >
       <div className="flex items-center gap-1.5 mb-0.5">
         <span className="italic text-brand-teal text-[13px] font-black uppercase tracking-widest">{displaySymbol}</span>

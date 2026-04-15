@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { useAuth } from "./AuthContext";
+import { fetchSettingsOnce } from "@/lib/settingsCache";
 
 declare global {
   interface Window {
@@ -95,10 +96,7 @@ export default function SocialShare({
 
   useEffect(() => {
     if (!propChannelSettings) {
-      fetch("/api/settings")
-        .then(res => res.ok ? res.json() : null)
-        .then(data => data && setChannelSettings(data))
-        .catch(console.error);
+      fetchSettingsOnce().then(data => data && setChannelSettings(data));
     }
   }, [propChannelSettings]);
 

@@ -258,7 +258,9 @@ function ArticleEditModal({ editingArticle, accessToken, onClose, onSaved }: Art
       .then(data => data && setChannelSettings(data))
       .catch(console.error);
 
-    fetch("/api/images")
+    fetch("/api/images", { 
+      headers: accessToken ? { 'Authorization': `Bearer ${accessToken}` } : {} 
+    })
       .then(r => r.ok ? r.json() : { images: [] })
       .then(d => setAvailableImages(d.images || []))
       .catch(() => {});
@@ -292,15 +294,22 @@ function ArticleEditModal({ editingArticle, accessToken, onClose, onSaved }: Art
     const body = new FormData();
     body.append("file", file);
     try {
-      const res = await fetch("/api/images", { method: "POST", body });
+      const res = await fetch("/api/images", { 
+        method: "POST", 
+        headers: accessToken ? { 'Authorization': `Bearer ${accessToken}` } : {},
+        body 
+      });
       if (res.ok) {
         const data = await res.json();
         setFormData(prev => ({ ...prev, imageUrl: data.url }));
         setAvailableImages(prev => [...prev, data.url]);
         setShowMediaPicker(false);
+      } else {
+        const err = await res.json();
+        setMessage({ type: "error", text: err.error || "Kunde inte ladda upp fil." });
       }
     } catch {
-      setMessage({ type: "error", text: "Kunde inte ladda upp bild." });
+      setMessage({ type: "error", text: "Kunde inte ladda upp fil." });
     } finally {
       setUploading(false);
     }
@@ -685,7 +694,7 @@ function ArticleEditModal({ editingArticle, accessToken, onClose, onSaved }: Art
             <div className="flex-1 overflow-y-auto p-7">
               <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4">
                 <label className="relative aspect-square rounded-2xl border-2 border-dashed border-brand-teal/30 flex flex-col items-center justify-center cursor-pointer hover:bg-brand-teal/5 hover:border-brand-teal transition-all group">
-                  <input type="file" className="hidden" onChange={handleImageUpload} accept="image/*" />
+                  <input type="file" className="hidden" onChange={handleImageUpload} accept="image/*,video/*" />
                   {uploading ? (
                     <div className="text-center animate-pulse">
                       <div className="w-7 h-7 rounded-full border-4 border-brand-teal border-t-transparent animate-spin mx-auto mb-2" />
@@ -698,7 +707,7 @@ function ArticleEditModal({ editingArticle, accessToken, onClose, onSaved }: Art
                     </>
                   )}
                 </label>
-                {["/logo.png", ...availableImages].map((img, i) => (
+                {availableImages.map((img, i) => (
                   <div
                     key={i}
                     onClick={() => { setFormData(p => ({ ...p, imageUrl: img })); setShowMediaPicker(false); }}

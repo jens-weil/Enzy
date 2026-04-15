@@ -10,6 +10,7 @@ import StockChartModal from "./StockChartModal";
 import { useAuth } from "./AuthContext";
 import { supabase } from "@/lib/supabase";
 import MembershipModal from "./MembershipModal";
+import { fetchSettingsOnce, invalidateSettingsCache } from "@/lib/settingsCache";
 
 export default function Navbar() {
   const { user, profile, loading, signOut, refreshProfile } = useAuth();
@@ -42,23 +43,28 @@ export default function Navbar() {
   const [tickerSymbol, setTickerSymbol] = useState("ENZY.ST");
   const [isTickerActive, setIsTickerActive] = useState(true);
 
-  const fetchSettings = () => {
-    fetch("/api/settings")
-      .then(res => res.ok ? res.json() : null)
-      .then(data => {
+  const loadSettings = () => {
+    fetchSettingsOnce().then(data => {
+      if (data?.stock?.ticker) {
+        setTickerSymbol(data.stock.ticker);
+        setIsTickerActive(data.stock.isActive ?? true);
+      }
+    }).catch(console.error);
+  };
+
+  useEffect(() => {
+    loadSettings();
+
+    // When admin saves settings, invalidate the shared cache and re-load
+    const handleUpdate = () => {
+      invalidateSettingsCache();
+      fetchSettingsOnce().then(data => {
         if (data?.stock?.ticker) {
           setTickerSymbol(data.stock.ticker);
           setIsTickerActive(data.stock.isActive ?? true);
         }
-      })
-      .catch(console.error);
-  };
-
-  useEffect(() => {
-    fetchSettings();
-
-    // Listen for settings updates from Admin
-    const handleUpdate = () => fetchSettings();
+      });
+    };
     window.addEventListener('settingsUpdated', handleUpdate);
     return () => window.removeEventListener('settingsUpdated', handleUpdate);
   }, []);

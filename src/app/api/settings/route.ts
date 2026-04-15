@@ -3,7 +3,11 @@ import fs from 'fs';
 import path from 'path';
 import { requireRole } from '@/lib/auth';
 
-const settingsPath = path.join(process.cwd(), 'data', 'settings.json');
+// Store settings OUTSIDE the project directory to prevent Turbopack's
+// file watcher from triggering a dev-server rebuild on every settings save.
+const settingsPath = process.env.SETTINGS_PATH
+  ? path.resolve(process.env.SETTINGS_PATH)
+  : path.join(process.cwd(), 'data', 'settings.json');
 
 function getSettings() {
   const defaultSettings = {
@@ -52,6 +56,11 @@ function getSettings() {
       apiKey: "",
       senderName: "Enzymatica",
       senderEmail: "news@enzymatica.se"
+    },
+    security: {
+      siteLockActive: true,
+      onboardingActive: true,
+      updatedAt: 1713123456789
     }
   };
 
@@ -77,6 +86,7 @@ function getSettings() {
       x: { ...defaultSettings.x, ...parsed.x },
       stock: { ...defaultSettings.stock, ...parsed.stock },
       brevo: { ...defaultSettings.brevo, ...(parsed.brevo || {}) },
+      security: { ...defaultSettings.security, ...(parsed.security || {}) },
       translations: { ...defaultSettings.translations, ...(parsed.translations || {}) }
     };
   } catch (e) {
@@ -84,17 +94,20 @@ function getSettings() {
   }
 }
 
-
-
 export async function GET(request: NextRequest) {
   const settings = getSettings();
   
-  // check for Admin/Editor role
-  const auth = await requireRole(request, ['Admin', 'Editor', 'Redaktör']);
-  if (auth.authorized) {
-    // If authorized, return everything (sensitive tokens included)
-    return NextResponse.json(settings);
+  const authHeader = request.headers.get("authorization");
+  
+  if (authHeader?.startsWith("Bearer ")) {
+    // check for Admin/Editor role
+    const auth = await requireRole(request, ['Admin', 'Editor', 'Redaktör']);
+    if (auth.authorized) {
+      // If authorized, return everything (sensitive tokens included)
+      return NextResponse.json(settings);
+    }
   }
+
 
   // If not authorized, return a public-safe subset (only isActive flag for each channel)
   const publicSettings = {
@@ -108,6 +121,11 @@ export async function GET(request: NextRequest) {
       ticker: settings.stock?.ticker || "ENZY.ST",
       shares: settings.stock?.shares || "",
       sector: settings.stock?.sector || ""
+    },
+    security: {
+      siteLockActive: settings.security?.siteLockActive ?? true,
+      onboardingActive: settings.security?.onboardingActive ?? true,
+      updatedAt: settings.security?.updatedAt ?? 0
     },
     translations: settings.translations
   };
@@ -161,6 +179,14 @@ export async function POST(request: NextRequest) {
       brevo: {
         ...currentSettings.brevo,
         ...(body.brevo || {})
+      },
+      security: {
+        ...currentSettings.security,
+        ...(body.security || {}),
+        // Force update timestamp if lock or onboarding toggles are changed
+        updatedAt: (body.security?.siteLockActive !== undefined || body.security?.onboardingActive !== undefined) 
+          ? Date.now() 
+          : (currentSettings.security?.updatedAt || Date.now())
       }
     };
 
