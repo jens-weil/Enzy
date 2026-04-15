@@ -93,6 +93,8 @@ export default function SocialShare({
   const [copied, setCopied] = useState(false);
   const [shareStatus, setShareStatus] = useState<{ type: 'success' | 'info'; message: string } | null>(null);
   const [channelSettings, setChannelSettings] = useState<any>(propChannelSettings || null);
+  const [showInstructions, setShowInstructions] = useState(false);
+  const [activePlatform, setActivePlatform] = useState<string | null>(null);
   const isAdmin = profile?.role === "Admin" || profile?.role === "Editor" || profile?.role === "Redaktör";
 
   useEffect(() => {
@@ -119,7 +121,7 @@ export default function SocialShare({
       })
     : [];
 
-  const handleShare = async (platform: string) => {
+  const executeShare = async (platform: string) => {
     // 1. Record the share if user is logged in
     if (profile?.id) {
       try {
@@ -144,59 +146,64 @@ export default function SocialShare({
     if (platform === "facebook") {
       const postUrl = `https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(articleUrl)}`;
       window.open(postUrl, "_blank", "noopener,noreferrer,width=600,height=400");
-      return;
-    }
-
-    if (platform === "linkedin") {
+    } else if (platform === "linkedin") {
       const postUrl = `https://www.linkedin.com/sharing/share-offsite/?url=${encodeURIComponent(articleUrl)}`;
       window.open(postUrl, "_blank", "noopener,noreferrer,width=600,height=550");
-      return;
-    }
-
-    if (platform === "x") {
+    } else if (platform === "x") {
       const postUrl = `https://x.com/intent/post?url=${encodeURIComponent(articleUrl)}&text=${encodeURIComponent(articleTitle)}`;
       window.open(postUrl, "_blank", "noopener,noreferrer,width=600,height=450");
-      return;
-    }
+    } else {
+      // Generic Share (Global Dialog) or Fallback for IG/TikTok
+      if (typeof navigator !== "undefined" && navigator.share) {
+        try {
+          await navigator.share({
+            title: articleTitle,
+            text: "Kollade precis på den här artikeln från Enzymatica!",
+            url: articleUrl,
+          });
+        } catch (err) {
+          if ((err as Error).name === 'AbortError') return;
+          console.error("Native share failed:", err);
+        }
+      } else {
+        // Fallback: Copy to clipboard
+        try {
+          await navigator.clipboard.writeText(articleUrl);
+          setCopied(true);
+          
+          if (platform === "instagram" || platform === "tiktok") {
+            setShareStatus({ 
+              type: 'info', 
+              message: `${platform === "instagram" ? "Instagram" : "TikTok"} stödjer inte direkt delning. Länken är kopierad – klistra in den i appen!` 
+            });
+            window.open(platform === "instagram" ? "https://www.instagram.com" : "https://www.tiktok.com", "_blank", "noopener,noreferrer");
+          } else {
+            setShareStatus({ type: 'success', message: "Länk kopierad till urklipp!" });
+          }
 
-    // Generic Share (Global Dialog) or Fallback for IG/TikTok
-    // We prioritize navigator.share (the native OS share sheet) if available
-    if (typeof navigator !== "undefined" && navigator.share) {
-      try {
-        await navigator.share({
-          title: articleTitle,
-          text: "Kollade precis på den här artikeln från Enzymatica!",
-          url: articleUrl,
-        });
-        return;
-      } catch (err) {
-        // If user cancelled, don't fall back to clipboard
-        if ((err as Error).name === 'AbortError') return;
-        console.error("Native share failed:", err);
+          setTimeout(() => {
+            setCopied(false);
+            setShareStatus(null);
+          }, 4000);
+        } catch (err) {
+          console.error("Clipboard failed:", err);
+        }
       }
     }
     
-    // Fallback: Copy to clipboard
-    try {
-      await navigator.clipboard.writeText(articleUrl);
-      setCopied(true);
-      
-      if (platform === "instagram" || platform === "tiktok") {
-        setShareStatus({ 
-          type: 'info', 
-          message: `${platform === "instagram" ? "Instagram" : "TikTok"} stödjer inte direkt delning. Länken är kopierad – klistra in den i appen!` 
-        });
-        window.open(platform === "instagram" ? "https://www.instagram.com" : "https://www.tiktok.com", "_blank", "noopener,noreferrer");
-      } else {
-        setShareStatus({ type: 'success', message: "Länk kopierad till urklipp!" });
-      }
+    setShowInstructions(false);
+    setActivePlatform(null);
+  };
 
-      setTimeout(() => {
-        setCopied(false);
-        setShareStatus(null);
-      }, 4000);
-    } catch (err) {
-      console.error("Clipboard failed:", err);
+  const handleShare = (platform: string) => {
+    const platformsRequiringInstructions = ["facebook", "linkedin", "x"];
+    const isMember = profile?.role === "Medlem";
+
+    if (platformsRequiringInstructions.includes(platform) && isMember) {
+      setActivePlatform(platform);
+      setShowInstructions(true);
+    } else {
+      executeShare(platform);
     }
   };
 
@@ -299,6 +306,83 @@ export default function SocialShare({
               )}
             </div>
             <p className="text-xs font-black uppercase tracking-widest leading-tight">{shareStatus.message}</p>
+          </div>
+        </div>
+      )}
+
+      {/* Instructions Modal */}
+      {showInstructions && activePlatform && (
+        <div className="fixed inset-0 z-[200] flex items-center justify-center p-4 md:p-6 backdrop-blur-md bg-black/40 animate-in fade-in duration-300">
+          <div className="bg-white dark:bg-slate-900 w-full max-w-lg rounded-[2.5rem] shadow-2xl overflow-hidden border border-gray-100 dark:border-slate-800 animate-in zoom-in-95 slide-in-from-bottom-5 duration-500">
+            <div className={`p-10 text-center relative overflow-hidden ${colors[activePlatform] || colors.share}`}>
+              <div className="absolute top-0 right-0 w-32 h-32 bg-white/10 rounded-full -mr-16 -mt-16" />
+              <div className="w-16 h-16 mx-auto mb-6 bg-white/20 backdrop-blur-md rounded-2xl flex items-center justify-center p-3 text-white">
+                {SOCIAL_ICONS[activePlatform] || SOCIAL_ICONS.share}
+              </div>
+              <h2 className="text-2xl font-black text-white uppercase italic tracking-tight mb-2">Instruktioner för {activePlatform}</h2>
+              <p className="text-white/80 text-[10px] font-black uppercase tracking-[0.2em]">Verifiering krävs för poäng</p>
+            </div>
+
+            <div className="p-10 space-y-8">
+              <div className="space-y-4">
+                <p className="text-sm font-bold text-gray-900 dark:text-white leading-relaxed">
+                  Tack för att du delar! För att vi ska kunna verifiera din delning behöver du registrera länken till ditt inlägg.
+                </p>
+
+                <div className="bg-gray-50 dark:bg-slate-800/50 p-6 rounded-2xl border border-gray-100 dark:border-slate-800 space-y-4">
+                  <p className="text-[10px] font-black text-brand-teal uppercase tracking-widest">Så här gör du:</p>
+                  
+                  {activePlatform === 'facebook' ? (
+                    <ul className="list-decimal pl-5 space-y-2 text-xs text-gray-600 dark:text-gray-400 font-medium">
+                      <li>Gå till din profil och leta fram inlägget.</li>
+                      <li>Klicka på <strong>tidsstämpeln</strong> (t.ex. "Just nu" eller "2 tim") under ditt namn.</li>
+                      <li>Inlägget öppnas på en egen sida. <strong>Kopiera webbadressen (URL:en)</strong> högst upp.</li>
+                      <li className="text-[9px] italic opacity-70">(Mobil: Tryck på "Dela" och välj "Kopiera länk")</li>
+                    </ul>
+                  ) : activePlatform === 'linkedin' ? (
+                    <ul className="list-decimal pl-5 space-y-2 text-xs text-gray-600 dark:text-gray-400 font-medium">
+                      <li>Hitta inlägget under <em>Aktivitet &gt; Inlägg</em> på din profil.</li>
+                      <li>Klicka på de tre prickarna <strong>(...)</strong> uppe till höger.</li>
+                      <li>Välj <strong>"Kopiera länk till inlägg"</strong>.</li>
+                    </ul>
+                  ) : activePlatform === 'x' ? (
+                    <ul className="list-decimal pl-5 space-y-2 text-xs text-gray-600 dark:text-gray-400 font-medium">
+                      <li>Leta fram inlägget på din tidslinje.</li>
+                      <li>Klicka på <strong>Dela-ikonen</strong> under inlägget.</li>
+                      <li>Välj <strong>"Kopiera länk till Tweet"</strong>.</li>
+                    </ul>
+                  ) : (
+                    <ul className="list-decimal pl-5 space-y-2 text-xs text-gray-600 dark:text-gray-400 font-medium">
+                      <li>Öppna inlägget på vald plattform.</li>
+                      <li>Leta efter <strong>Dela</strong> eller prickarna <strong>(...)</strong> vid inlägget.</li>
+                      <li>Välj <strong>"Kopiera länk"</strong>.</li>
+                    </ul>
+                  )}
+
+                  <div className="pt-4 border-t border-gray-100 dark:border-slate-800 flex gap-3">
+                    <span className="text-sm">📧</span>
+                    <p className="text-[10px] leading-relaxed font-bold text-gray-500 uppercase tracking-widest">
+                      Håll sedan koll i brevlådan där det kommer ett mail med en länk för att registrera länken till din delning.
+                    </p>
+                  </div>
+                </div>
+              </div>
+
+              <div className="flex flex-col sm:flex-row gap-4 pt-2">
+                <button
+                  onClick={() => { setShowInstructions(false); setActivePlatform(null); }}
+                  className="flex-1 py-5 rounded-2xl bg-gray-100 dark:bg-slate-800 text-gray-700 dark:text-gray-300 font-black text-[10px] uppercase tracking-widest hover:bg-gray-200 dark:hover:bg-slate-700 transition-all"
+                >
+                  Avbryt
+                </button>
+                <button
+                  onClick={() => executeShare(activePlatform)}
+                  className="flex-1 py-5 rounded-2xl bg-brand-teal text-white font-black text-[10px] uppercase tracking-widest shadow-xl shadow-brand-teal/20 hover:bg-brand-dark transition-all hover:-translate-y-1 active:translate-y-0"
+                >
+                  Fullfölj delning →
+                </button>
+              </div>
+            </div>
           </div>
         </div>
       )}
