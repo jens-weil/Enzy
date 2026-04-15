@@ -62,7 +62,7 @@ export default function ShareVerificationPage({ params: paramsPromise }: { param
     try {
       const res = await fetch("/api/shares", {
         method: "PATCH",
-        headers: { 
+        headers: {
           "Content-Type": "application/json",
           "Authorization": `Bearer ${session?.access_token}`
         },
@@ -94,21 +94,21 @@ export default function ShareVerificationPage({ params: paramsPromise }: { param
   return (
     <div className="min-h-screen bg-gray-50 dark:bg-slate-950 pb-20">
       <Navbar />
-      
+
       <div className="max-w-2xl mx-auto px-4 pt-[61px] md:pt-[93px]">
         <div className="bg-white dark:bg-slate-900 rounded-[2.5rem] shadow-2xl overflow-hidden border border-gray-100 dark:border-slate-800 animate-in fade-in slide-in-from-bottom-4 duration-500 relative">
-          <button 
+          <button
             onClick={() => router.push('/articles')}
             className="absolute top-6 right-6 w-10 h-10 bg-black/10 hover:bg-white/20 text-white rounded-full flex items-center justify-center transition-colors z-20 backdrop-blur-sm"
             title="Stäng och gå till nyhetsflödet"
           >
             <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" className="w-5 h-5"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M6 18L18 6M6 6l12 12" /></svg>
           </button>
-          
+
           <div className="bg-brand-teal p-12 text-center relative overflow-hidden">
-             <div className="absolute top-0 right-0 w-32 h-32 bg-white/10 rounded-full -mr-16 -mt-16" />
-             <h1 className="text-3xl font-black text-white uppercase italic tracking-tight mb-2">Registrera din delning</h1>
-             <p className="text-white/80 text-sm font-medium uppercase tracking-widest">Verifiering av socialt engagemang</p>
+            <div className="absolute top-0 right-0 w-32 h-32 bg-white/10 rounded-full -mr-16 -mt-16" />
+            <h1 className="text-3xl font-black text-white uppercase italic tracking-tight mb-2">Registrera din delning</h1>
+            <p className="text-white/80 text-sm font-medium uppercase tracking-widest">Verifiering av socialt engagemang</p>
           </div>
 
           <div className="p-10 md:p-14 space-y-8">
@@ -133,7 +133,7 @@ export default function ShareVerificationPage({ params: paramsPromise }: { param
               <div className="space-y-3">
                 <div className="flex items-center justify-between ml-2">
                   <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest">Länk till inlägget</label>
-                  <button 
+                  <button
                     type="button"
                     onClick={() => setShowHelp(!showHelp)}
                     className="text-[10px] font-black text-brand-teal uppercase tracking-widest flex items-center gap-1 hover:underline focus:outline-none"
@@ -146,7 +146,7 @@ export default function ShareVerificationPage({ params: paramsPromise }: { param
                 {showHelp && share && (
                   <div className="mx-2 p-5 rounded-2xl bg-brand-light/30 border border-brand-teal/20 text-xs text-gray-700 dark:text-gray-300 font-medium animate-in fade-in slide-in-from-top-2">
                     <p className="font-bold mb-3">Så här kopierar du länken från <span className="capitalize">{share.platform}</span>:</p>
-                    
+
                     {share.platform.toLowerCase() === 'facebook' ? (
                       <ul className="list-decimal pl-5 space-y-1.5 mb-4">
                         <li>Gå till din profil och leta fram inlägget.</li>
@@ -173,7 +173,7 @@ export default function ShareVerificationPage({ params: paramsPromise }: { param
                         <li>Välj <strong>&quot;Kopiera länk&quot;</strong>.</li>
                       </ul>
                     )}
-                    
+
                     <div className="flex gap-3 p-4 bg-white dark:bg-slate-800 rounded-xl mt-4 text-brand-dark dark:text-white font-bold shadow-sm border border-red-500/20">
                       <span className="text-sm">⚠️</span>
                       <p className="text-[10px] leading-relaxed uppercase tracking-widest text-red-600 dark:text-red-400">
@@ -187,7 +187,7 @@ export default function ShareVerificationPage({ params: paramsPromise }: { param
                   required
                   type="url"
                   placeholder="https://www.social.com/share/..."
-                  value={url}
+                  //value={url}
                   onChange={(e) => setUrl(e.target.value)}
                   className="w-full px-6 py-4 rounded-2xl bg-gray-50 dark:bg-slate-800 border border-transparent focus:border-brand-teal outline-none transition-all font-bold text-gray-900 dark:text-white"
                 />
@@ -196,23 +196,23 @@ export default function ShareVerificationPage({ params: paramsPromise }: { param
               {message && (
                 <div className={`p-5 rounded-2xl font-black text-xs uppercase tracking-widest flex flex-col items-start gap-4 ${message.type === "success" ? "bg-green-50 text-green-700 border border-green-200" : "bg-red-50 text-red-700 border border-red-200"}`}>
                   <span className="leading-relaxed">{message.text}</span>
-                  
+
                   {authErrorType === "not_logged_in" && (
-                    <button 
-                      onClick={(e) => { e.preventDefault(); router.push(`/login?redirect=/shares/${id}`); }} 
+                    <button
+                      onClick={(e) => { e.preventDefault(); router.push(`/login?redirect=/shares/${id}`); }}
                       className="px-5 py-2.5 bg-red-700 text-white rounded-xl shadow-md hover:bg-red-800 transition-colors"
                     >
                       Logga in
                     </button>
                   )}
                   {authErrorType === "wrong_account" && (
-                    <button 
-                      onClick={async (e) => { 
-                        e.preventDefault(); 
+                    <button
+                      onClick={async (e) => {
+                        e.preventDefault();
                         setLoading(true);
                         await signOut();
-                        router.push(`/login?redirect=/shares/${id}`); 
-                      }} 
+                        router.push(`/login?redirect=/shares/${id}`);
+                      }}
                       className="px-5 py-2.5 bg-red-700 text-white rounded-xl shadow-md hover:bg-red-800 transition-colors"
                     >
                       Logga in som en annan användare

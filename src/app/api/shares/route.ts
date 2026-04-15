@@ -18,9 +18,9 @@ export async function POST(request: NextRequest) {
     const { data: share, error: dbError } = await supabaseAdmin
       .from('shares')
       .insert([
-        { 
-          user_id: userId, 
-          article_id: articleId, 
+        {
+          user_id: userId,
+          article_id: articleId,
           platform: platform,
           is_approved: null,
           share_url: platformLink || null // Pre-fill if we have an automated link
@@ -37,7 +37,7 @@ export async function POST(request: NextRequest) {
     // 2. Trigger email via Brevo if userEmail is provided
     let emailSent = false;
     let emailError = null;
-    
+
     if (userEmail) {
       const siteUrl = getSiteUrl();
       const verificationUrl = `${siteUrl}/shares/${share.id}`;
@@ -49,16 +49,16 @@ export async function POST(request: NextRequest) {
         let cleanPath = articleImage.toString().trim()
           .replace(/^[\/\\]+/, '') // Remove leading slashes
           .replace(/^(public|publik)[\/\\]+/, ''); // Remove public/publik if present
-        
+
         fullImageUrl = `${siteUrl}/${cleanPath}`;
       } else {
         // Fallback to logo
         fullImageUrl = `${siteUrl}/media/logo.png`;
       }
-      
+
       // Double check that we don't have double slashes after the domain (except for protocol)
       fullImageUrl = fullImageUrl.replace(/([^:])\/\//g, '$1/');
-      
+
       console.log("DEBUG: Final Mail Image URL:", fullImageUrl);
       console.log("DEBUG: Verification URL:", verificationUrl);
 
@@ -80,7 +80,7 @@ export async function POST(request: NextRequest) {
                 <!-- Header -->
                 <tr>
                   <td align="center" style="background-color: #008080; padding: 40px 20px;">
-                    <h1 style="color: #ffffff; margin: 0; font-size: 24px; text-transform: uppercase; font-style: italic; letter-spacing: 1px;">Tack för din delning!</h1>
+                    <h1 style="color: #ffffff; margin: 0; font-size: 24px; text-transform: uppercase; font-style: italic; letter-spacing: 1px;">Tack för din delning på ${platform}!</h1>
                   </td>
                 </tr>
                 
@@ -98,13 +98,12 @@ export async function POST(request: NextRequest) {
                     
                     ${platformLink ? `
                       <div style="background-color: #f9fbfb; padding: 20px; border-radius: 12px; border: 1px dashed #008080; margin: 25px 0; text-align: center;">
-                        <p style="margin: 0 0 12px 0; font-weight: bold; color: #333; font-size: 14px; text-transform: uppercase; letter-spacing: 0.5px;">Länk till din skapade post på ${platform}:</p>
+                        <p style="margin: 0 0 12px 0; font-weight: bold; color: #333; font-size: 14px; text-transform: uppercase; letter-spacing: 0.5px;">Vår artikel är även publicerad på ${platform}:</p>
                         <a href="${platformLink}" style="color: #008080; text-decoration: underline; word-break: break-all; font-size: 14px; font-weight: bold;">${platformLink}</a>
                       </div>
                     ` : `
-                      <p style="color: #666; line-height: 1.6; font-size: 15px;">För att vi ska kunna verifiera och räkna din delning på <strong>${platform}</strong> behöver du registrera länken till ditt inlägg för att få din poäng.</p>
                     `}
-                    
+                    <p style="color: #666; line-height: 1.6; font-size: 15px;">För att vi ska kunna verifiera och räkna din delning på <strong>${platform}</strong> behöver du registrera länken till ditt inlägg för att få din poäng.</p>                
                     <div style="margin: 40px 0; text-align: center;">
                       <a href="${verificationUrl}" style="background-color: #008080; color: #ffffff; padding: 18px 32px; border-radius: 12px; text-decoration: none; font-weight: bold; display: inline-block; text-transform: uppercase; font-size: 14px; letter-spacing: 1px; box-shadow: 0 4px 12px rgba(0,128,128,0.25);">
                         ${platformLink ? 'Verifiera min delning →' : 'Registrera länk nu →'}
@@ -138,8 +137,8 @@ export async function POST(request: NextRequest) {
       emailError = emailResult.error;
     }
 
-    return NextResponse.json({ 
-      success: true, 
+    return NextResponse.json({
+      success: true,
       shareId: share.id,
       emailSent,
       emailError
@@ -166,9 +165,9 @@ export async function GET(request: NextRequest) {
       .select('*')
       .eq('id', id)
       .single();
-    
+
     if (error) return NextResponse.json({ error: error.message }, { status: 404 });
-    
+
     if (data.user_id !== auth.userId) {
       return NextResponse.json({ error: "Åtkomst nekad: Du äger inte denna post." }, { status: 403 });
     }
@@ -186,7 +185,7 @@ export async function GET(request: NextRequest) {
       .select('*')
       .eq('user_id', userId)
       .order('created_at', { ascending: false });
-    
+
     if (error) return NextResponse.json({ error: error.message }, { status: 500 });
     return NextResponse.json(data);
   }
