@@ -89,7 +89,7 @@ export default function SocialShare({
   showLabel = true,
   hideAdminLinks = false,
 }: SocialShareProps) {
-  const { profile, user } = useAuth();
+  const { profile, user, session } = useAuth();
   const [copied, setCopied] = useState(false);
   const [shareStatus, setShareStatus] = useState<{ type: 'success' | 'info'; message: string } | null>(null);
   const [channelSettings, setChannelSettings] = useState<any>(propChannelSettings || null);
@@ -122,25 +122,36 @@ export default function SocialShare({
     : [];
 
   const executeShare = async (platform: string) => {
+    const userEmail = user?.email || session?.user?.email;
+    
+    console.log("DEBUG: executeShare starting for", platform, { 
+      articleId, 
+      userId: profile?.id, 
+      userEmail: userEmail,
+      role: profile?.role
+    });
+
     // 1. Record the share if user is logged in
     if (profile?.id) {
-      try {
-        await fetch("/api/shares", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            articleId,
-            articleTitle,
-            platform,
-            userId: profile.id,
-            userEmail: user?.email,
-            articleImage: articleImage,
-            platformLink: socialLinks[platform as keyof SocialLinks]
-          })
-        });
-      } catch (error) {
-        console.error("Failed to record share event:", error);
-      }
+      // Trigger the API call but don't 'await' it yet if we want to open the window fast
+      const sharePromise = fetch("/api/shares", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          articleId,
+          articleTitle,
+          platform,
+          userId: profile.id,
+          userEmail: userEmail,
+          articleImage: articleImage,
+          platformLink: socialLinks[platform as keyof SocialLinks]
+        })
+      }).then(res => res.json())
+        .then(data => console.log("DEBUG: Share API Response:", data))
+        .catch(err => console.error("DEBUG: Share API Failed:", err));
+      
+      // If you want to wait for the API before opening the window (more reliable for data, but slower for UI)
+      // await sharePromise; 
     }
 
     if (platform === "facebook") {

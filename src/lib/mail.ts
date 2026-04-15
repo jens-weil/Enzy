@@ -39,11 +39,21 @@ async function getEmailSettings() {
 export async function sendEmail({ to, subject, htmlContent, sender: customSender }: SendEmailParams) {
   const settings = await getEmailSettings();
   
-  const activeAPIKey = settings?.apiKey || process.env.BREVO_API_KEY;
+  const apiKeyFromSettings = settings?.apiKey;
+  const apiKeyFromEnv = process.env.BREVO_API_KEY;
+  const activeAPIKey = apiKeyFromSettings || apiKeyFromEnv;
+
+  console.log("DEBUG: sendEmail config:", { 
+    hasSettings: !!settings, 
+    isActive: settings?.isActive, 
+    hasSettingsKey: !!apiKeyFromSettings, 
+    hasEnvKey: !!apiKeyFromEnv,
+    activeKeySource: apiKeyFromSettings ? "settings" : "env"
+  });
 
   if (!settings?.isActive || !activeAPIKey) {
     console.warn("Email sending skipped: Brevo is not active or API key is missing.");
-    return { success: false, message: "Email settings not configured" };
+    return { success: false, error: "Brevo is not active or API key is missing" };
   }
 
   const sender = customSender || {
@@ -71,12 +81,14 @@ export async function sendEmail({ to, subject, htmlContent, sender: customSender
       const result = await response.json();
       return { success: true, data: result };
     } else {
-      const error = await response.json();
-      console.error("Brevo API error:", error);
-      return { success: false, error };
+      const errorText = await response.text();
+      let errorJson;
+      try { errorJson = JSON.parse(errorText); } catch(e) { errorJson = { message: errorText }; }
+      console.error("Brevo API error:", errorJson);
+      return { success: false, error: errorJson };
     }
   } catch (error) {
     console.error("Failed to send email via Brevo:", error);
-    return { success: false, error };
+    return { success: false, error: (error as Error).message };
   }
 }
