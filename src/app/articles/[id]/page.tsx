@@ -60,7 +60,7 @@ export async function generateMetadata({ params }: { params: Promise<{ id: strin
       siteName: 'Enzymatica',
       images: [
         {
-          url: article.imageUrl?.startsWith('http') ? article.imageUrl : `${siteUrl}${article.imageUrl || '/logo.png'}`,
+          url: article.imageUrl?.startsWith('http') ? article.imageUrl : `${siteUrl}${article.imageUrl || '/media/logo.png'}`,
           width: 1200,
           height: 630,
         },
@@ -121,7 +121,7 @@ export default async function ArticlePage({ params }: { params: Promise<{ id: st
 
             {article.imageUrl && (
               <div className="relative w-full aspect-video rounded-[2.5rem] overflow-hidden shadow-2xl">
-                <Image src={article.imageUrl} alt={article.title} fill className="object-cover" priority />
+                <Image src={article.imageUrl} alt={article.title} fill sizes="(max-width: 896px) 100vw, 896px" className="object-cover" priority />
               </div>
             )}
           </header>

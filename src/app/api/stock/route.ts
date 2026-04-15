@@ -7,20 +7,43 @@ export async function GET(request: Request) {
   const symbol = searchParams.get('symbol') || 'ENZY.ST';
 
   try {
-    const response = await fetch(`https://query2.finance.yahoo.com/v8/finance/chart/${symbol}?range=${range}&interval=${interval}`, {
+    // query2 is often more reliable for newer chart data
+    const apiUrl = `https://query2.finance.yahoo.com/v8/finance/chart/${symbol}?range=${range}&interval=${interval}`;
+    console.log(`Fetching stock data from: ${apiUrl}`);
+
+    const response = await fetch(apiUrl, {
+      next: { revalidate: 300 }, // Cache for 5 minutes
       headers: {
-        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36'
+        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36'
       }
     });
 
     if (!response.ok) {
-      throw new Error(`Yahoo Finance API returned ${response.status}`);
+      const errorText = await response.text();
+      console.warn(`Yahoo Finance API returned non-ok status (${response.status}): ${errorText.substring(0, 100)}`);
+      
+      // If Yahoo is failing, return a graceful error object instead of HTTP 500 
+      // This allows the client-side fallback to take over without triggering console errors
+      return NextResponse.json({ 
+        error: 'External API Error',
+        status: response.status,
+        chart: { result: null, error: { code: "NOT_FOUND", description: "Symbol not found or API blocked" } } 
+      });
     }
 
     const data = await response.json();
+    
+    if (data.chart?.error) {
+      console.error("Yahoo Finance returned internal error in JSON:", data.chart.error);
+    }
+
     return NextResponse.json(data);
   } catch (error) {
-    console.error("Error fetching stock data:", error);
-    return NextResponse.json({ error: 'Failed to fetch stock data' }, { status: 500 });
+    console.error("Unexpected error in stock API route:", error);
+    // Return a 200 with error info so the client doesn't throw on the network request
+    return NextResponse.json({ 
+      error: 'Unexpected Server Error', 
+      details: error instanceof Error ? error.message : String(error) 
+    });
   }
 }

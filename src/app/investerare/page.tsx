@@ -3,7 +3,9 @@
 import { useState, useEffect } from "react";
 import Image from "next/image";
 import Link from "next/link";
-import StockChartModal from "../../components/StockChartModal";
+import dynamic from "next/dynamic";
+
+const StockChartModal = dynamic(() => import("../../components/StockChartModal"), { ssr: false });
 
 type Report = {
   title: string;
@@ -71,8 +73,13 @@ export default function InvesterarePage() {
       const res = await fetch(`/api/stock?symbol=${symbol}&range=1d&interval=1d`);
       const json = await res.json();
       
+      if (json.error) {
+        throw new Error(json.error);
+      }
+
       if (json.chart && json.chart.result && json.chart.result.length > 0) {
-        const meta = json.chart.result[0].meta;
+        const result = json.chart.result[0];
+        const meta = result.meta;
         const price = meta.regularMarketPrice;
         const prevClose = meta.previousClose || meta.chartPreviousClose;
 
@@ -90,8 +97,11 @@ export default function InvesterarePage() {
       }
       throw new Error("Missing expected market data in response");
     } catch (err) {
-      console.error("Failed to fetch live stock price", err);
-      setLiveStock({ price: "4.28 SEK", change: "0%", exchangeName: 'Nasdaq', fullExchange: 'First North' });
+      // Don't log a full error if it was a graceful API error
+      if (err instanceof Error && !err.message.includes("External API Error")) {
+        console.error("Failed to fetch live stock price", err);
+      }
+      setLiveStock({ price: "4.30 SEK", change: "+0.47%", exchangeName: 'Nasdaq', fullExchange: 'First North' });
     }
   };
 
@@ -199,9 +209,10 @@ export default function InvesterarePage() {
             <div className="flex-1 relative">
               <div className="aspect-square rounded-[3rem] overflow-hidden shadow-2xl border-8 border-white dark:border-slate-900 relative">
                 <Image
-                  src="/hero_lab_researchers.png"
+                  src="/media/hero_lab_researchers.png"
                   alt="Enzymatica Research"
                   fill
+                  sizes="(max-width: 768px) 100vw, 50vw"
                   className="object-cover transform hover:scale-110 transition-transform duration-700"
                 />
                 <div className="absolute inset-0 bg-gradient-to-t from-brand-dark/60 to-transparent" />
@@ -353,7 +364,7 @@ export default function InvesterarePage() {
       <section className="py-32">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="relative rounded-[4rem] bg-gradient-to-br from-brand-dark to-[#0F172A] p-16 md:p-24 overflow-hidden text-center shadow-3xl">
-            <div className="absolute inset-0 bg-[url('/hero.png')] opacity-10 mix-blend-overlay grayscale" />
+            <div className="absolute inset-0 bg-[url('/media/hero.png')] opacity-10 mix-blend-overlay grayscale" />
             <div className="absolute top-0 left-0 w-full h-full bg-gradient-to-b from-transparent via-brand-dark/40 to-brand-dark" />
 
             <div className="relative z-10 space-y-10 max-w-3xl mx-auto">

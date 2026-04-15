@@ -1,5 +1,7 @@
 import fs from 'fs';
 import path from 'path';
+import { getSettingsPath } from './settingsPath';
+import { getSiteUrl } from './siteConfig';
 
 /**
  * Instagram Graph API Utility
@@ -7,7 +9,7 @@ import path from 'path';
  */
 
 const API_VERSION = "v22.0";
-const settingsPath = path.join(process.cwd(), 'data', 'settings.json');
+const settingsPath = getSettingsPath();
 const errorLogPath = path.join(process.cwd(), 'data', 'instagram_errors.log');
 
 function getInstagramSettings() {
@@ -84,11 +86,11 @@ export async function postToInstagram(data: {
   
   if (!targetImageUrl) {
       // Default logo URL if no image provided
-      const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://enzymatica.se';
-      targetImageUrl = `${siteUrl}/logo.png`; 
+      const siteUrl = getSiteUrl();
+      targetImageUrl = `${siteUrl}/media/logo.png`; 
   } else if (!targetImageUrl.startsWith('http')) {
-      const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://enzymatica.se';
-      targetImageUrl = `${siteUrl}${targetImageUrl}`;
+      const siteUrl = getSiteUrl();
+      targetImageUrl = `${siteUrl}${targetImageUrl.startsWith('/') ? '' : '/'}${targetImageUrl}`;
   }
 
   // Formatting caption (Instagram prefers hashtags and doesn't natively hyperlink in captions)

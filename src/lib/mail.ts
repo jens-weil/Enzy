@@ -1,3 +1,6 @@
+import fs from 'fs';
+import { getSettingsPath } from './settingsPath';
+
 /**
  * Utility for sending transactional emails via Brevo HTTP API
  */
@@ -20,9 +23,7 @@ interface SendEmailParams {
 }
 
 async function getEmailSettings() {
-  const fs = require('fs');
-  const path = require('path');
-  const settingsPath = path.join(process.cwd(), 'data', 'settings.json');
+  const settingsPath = getSettingsPath();
   
   if (fs.existsSync(settingsPath)) {
     try {

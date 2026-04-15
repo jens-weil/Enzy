@@ -3,8 +3,9 @@
 import { useState, useEffect, useRef, Suspense } from "react";
 import { usePathname, useSearchParams } from "next/navigation";
 import { motion, AnimatePresence } from "framer-motion";
-import RolesInfoModal from "./RolesInfoModal";
-import MembershipModal from "./MembershipModal";
+import dynamic from "next/dynamic";
+const RolesInfoModal = dynamic(() => import("./RolesInfoModal"), { ssr: false });
+const MembershipModal = dynamic(() => import("./MembershipModal"), { ssr: false });
 import { useAuth } from "./AuthContext";
 import { fetchSettingsOnce } from "@/lib/settingsCache";
 

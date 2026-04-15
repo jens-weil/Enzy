@@ -10,7 +10,7 @@ export async function GET(request: NextRequest) {
   }
 
   try {
-    const uploadDir = path.join(process.cwd(), 'public', 'Media');
+    const uploadDir = path.join(process.cwd(), 'public', 'media');
     if (!fs.existsSync(uploadDir)) {
       fs.mkdirSync(uploadDir, { recursive: true });
     }
@@ -38,7 +38,7 @@ export async function GET(request: NextRequest) {
     });
     
     // Add default images if they exist
-    ['/logo.png', '/hero.png', '/hero_authentic.webp'].forEach(img => {
+    ['/media/logo.png', '/media/hero.png', '/media/hero_authentic.webp'].forEach(img => {
       if (fs.existsSync(path.join(process.cwd(), 'public', img))) {
         if (!images.includes(img)) images.push(img);
       }
@@ -68,7 +68,7 @@ export async function POST(request: NextRequest) {
     const bytes = await file.arrayBuffer();
     const buffer = Buffer.from(bytes);
 
-    const uploadDir = path.join(process.cwd(), 'public', 'Media');
+    const uploadDir = path.join(process.cwd(), 'public', 'media');
     if (!fs.existsSync(uploadDir)) {
       fs.mkdirSync(uploadDir, { recursive: true });
     }
@@ -84,7 +84,7 @@ export async function POST(request: NextRequest) {
     const filePath = path.join(uploadDir, filename);
     fs.writeFileSync(filePath, buffer);
 
-    return NextResponse.json({ url: `/Media/${filename}` });
+    return NextResponse.json({ url: `/media/${filename}` });
   } catch (error) {
     console.error("Error uploading file:", error);
     return NextResponse.json({ error: 'Upload failed' }, { status: 500 });

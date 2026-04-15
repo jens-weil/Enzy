@@ -50,7 +50,7 @@ function LoginForm() {
           <div className="absolute top-0 right-0 w-24 h-24 bg-brand-teal/20 rounded-full blur-3xl -mr-8 -mt-8"></div>
           <div className="relative z-10 flex items-center justify-center gap-4">
             <div className="w-10 h-10 bg-white/10 backdrop-blur-md rounded-xl flex items-center justify-center border border-white/20 shrink-0">
-              <Image src="/logo.png" alt="Enzymatica" width={20} height={20} className="opacity-80" />
+              <Image src="/media/logo.png" alt="Enzymatica" width={20} height={20} className="opacity-80" />
             </div>
             <div className="text-left">
               <h1 className="text-xl font-black text-white tracking-tight">Logga in</h1>

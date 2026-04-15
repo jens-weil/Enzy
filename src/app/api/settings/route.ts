@@ -2,12 +2,11 @@ import { NextRequest, NextResponse } from 'next/server';
 import fs from 'fs';
 import path from 'path';
 import { requireRole } from '@/lib/auth';
+import { getSettingsPath } from '@/lib/settingsPath';
 
 // Store settings OUTSIDE the project directory to prevent Turbopack's
 // file watcher from triggering a dev-server rebuild on every settings save.
-const settingsPath = process.env.SETTINGS_PATH
-  ? path.resolve(process.env.SETTINGS_PATH)
-  : path.join(process.cwd(), 'data', 'settings.json');
+const settingsPath = getSettingsPath();
 
 function getSettings() {
   const defaultSettings = {

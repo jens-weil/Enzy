@@ -5,6 +5,7 @@ import path from 'path';
 import { postToFacebook, deleteFromFacebook } from '@/lib/facebook';
 import { postToInstagram } from '@/lib/instagram';
 import { requireRole } from '@/lib/auth';
+import { getSiteUrl } from '@/lib/siteConfig';
 
 // GET — public, no auth required
 export async function GET() {
@@ -57,7 +58,7 @@ export async function POST(request: NextRequest) {
       instagramPostId: undefined
     };
 
-    const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://enzymatica.se';
+    const siteUrl = getSiteUrl();
     const articleUrl = `${siteUrl}/articles/${newArticle.id}`;
 
     console.log(`Creating article with siteUrl: ${siteUrl}`);
@@ -165,7 +166,7 @@ export async function PATCH(request: NextRequest) {
       return NextResponse.json({ error: 'Artikeln hittades inte' }, { status: 404 });
     }
 
-    const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://enzymatica.se';
+    const siteUrl = getSiteUrl();
     const articleUrl = `${siteUrl}/articles/${id}`;
 
     const oldFB = articles[articleIndex].socialMedia.facebook;

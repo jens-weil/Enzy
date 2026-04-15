@@ -6,27 +6,29 @@ import { useState, useEffect } from "react";
 
 const heroImages = [
   {
-    src: "/hero_lab_researchers.png",
+    src: "/media/hero_lab_researchers.png",
     alt: "Enzymatica virusforskning laboratorium med forskare",
     headline: "Forskning mot",
     highlight: "infektioner"
   },
   {
-    src: "/sick_person_hero.png",
+    src: "/media/sick_person_hero.png",
     alt: "Person med förkylning och röd näsa",
     headline: "Undvik att bli",
     highlight: "förkyld"
   },
   {
-    src: "/hero_authentic.webp",
+    src: "/media/hero_authentic.webp",
     alt: "Kvinna strålande frisk och fri från sin förkylning",
     headline: "Höj din",
     highlight: "livskvalitet"
   }
 ];
 
-import MembershipModal from "@/components/MembershipModal";
+import dynamic from "next/dynamic";
 import { useAuth } from "@/components/AuthContext";
+
+const MembershipModal = dynamic(() => import("@/components/MembershipModal"), { ssr: false });
 
 export default function Home() {
   const { user } = useAuth();
@@ -56,6 +58,7 @@ export default function Home() {
                 alt={img.alt}
                 fill
                 priority={idx === 0}
+                sizes="100vw"
                 className="object-cover"
               />
             </div>
@@ -121,9 +124,10 @@ export default function Home() {
           <div className="grid md:grid-cols-2 gap-16 items-center">
             <div className="relative h-[600px] w-full rounded-[3rem] overflow-hidden shadow-2xl border border-white/10 group-hover:shadow-brand-teal/20 transition-all duration-700">
               <Image
-                src="/coldzyme_family.png"
+                src="/media/coldzyme_family.png"
                 alt="ColdZyme Produkt Detaljer"
                 fill
+                sizes="(max-width: 768px) 100vw, 50vw"
                 className="object-cover transform group-hover:scale-105 transition-transform duration-1000"
               />
               <div className="absolute inset-0 bg-gradient-to-t from-brand-dark via-brand-dark/50 to-transparent" />
@@ -214,9 +218,10 @@ export default function Home() {
             </div>
             <div className="relative h-[600px] w-full bg-slate-100 dark:bg-slate-900 rounded-[3rem] overflow-hidden shadow-2xl border border-gray-100 dark:border-slate-800 transform hover:scale-[1.02] transition-all duration-500">
               <Image
-                src="/product_presentation.png"
+                src="/media/product_presentation.png"
                 alt="ColdZyme Produktpresentation"
                 fill
+                sizes="(max-width: 768px) 100vw, 50vw"
                 className="object-cover"
               />
               <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/60 to-transparent p-12 text-white">

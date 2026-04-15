@@ -16,11 +16,17 @@ export default function StockTicker({ onOpenChart, ticker = 'ENZY.ST', className
   useEffect(() => {
     const fetchStock = () => {
       setLoading(true);
-      fetch(`/api/stock?symbol=${ticker}&range=1d&interval=1d`)
+      fetch(`/api/stock?symbol=${ticker}&range=1d&interval=5m`)
         .then(res => res.json())
         .then(json => {
+          // Check if the backend returned an error object (even with status 200)
+          if (json.error) {
+            throw new Error(`API Error: ${json.error}`);
+          }
+
           if (json.chart && json.chart.result && json.chart.result.length > 0) {
-            const meta = json.chart.result[0].meta;
+            const result = json.chart.result[0];
+            const meta = result.meta;
             const price = meta.regularMarketPrice;
             const prevClose = meta.previousClose || meta.chartPreviousClose;
 
@@ -36,11 +42,15 @@ export default function StockTicker({ onOpenChart, ticker = 'ENZY.ST', className
               return;
             }
           }
-          throw new Error("Missing data");
+          throw new Error("Stock data missing or malformed");
         })
         .catch(err => {
-          console.error("Failed to fetch stock", err);
-          setLiveStock({ price: "4.28 SEK", change: "0%", isNegative: false });
+          // Log only if it's a real unexpected error, not just the service being down
+          if (!err.message.includes("API Error")) {
+             console.error("Stock fetch error:", err.message);
+          }
+          // Fallback to static data if API fails
+          setLiveStock({ price: "4.30 SEK", change: "+0.47%", isNegative: false });
           setLoading(false);
         });
     };

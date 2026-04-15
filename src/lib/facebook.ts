@@ -1,5 +1,6 @@
 import fs from 'fs';
 import path from 'path';
+import { getSettingsPath } from './settingsPath';
 
 /**
  * Facebook Graph API Utility
@@ -25,7 +26,7 @@ async function fetchWithTimeout(url: string, options: any = {}, timeout = 10000)
 }
 
 const API_VERSION = "v22.0";
-const settingsPath = path.join(process.cwd(), 'data', 'settings.json');
+const settingsPath = getSettingsPath();
 
 function getFacebookSettings() {
   let settings = {

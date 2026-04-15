@@ -3,6 +3,7 @@
 import { useState, useEffect } from "react";
 import { useAuth } from "./AuthContext";
 import { fetchSettingsOnce } from "@/lib/settingsCache";
+import { getSiteUrl } from "@/lib/siteConfig";
 
 declare global {
   interface Window {
@@ -100,8 +101,8 @@ export default function SocialShare({
     }
   }, [propChannelSettings]);
 
-  const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || (typeof window !== "undefined" ? window.location.origin : "https://enzymatica.se");
-  const articleUrl = `${siteUrl}/articles/${articleId}`;
+    const siteUrl = getSiteUrl();
+    const articleUrl = `${siteUrl}/articles/${articleId}`;
 
   // 1. Determine which platforms to show "Share" buttons for (FB, LinkedIn, X - if active)
   const shareablePlatforms = ["facebook", "linkedin", "x"]
@@ -131,7 +132,8 @@ export default function SocialShare({
             platform,
             userId: profile.id,
             userEmail: user?.email,
-            articleImage: articleImage
+            articleImage: articleImage,
+            platformLink: socialLinks[platform as keyof SocialLinks]
           })
         });
       } catch (error) {

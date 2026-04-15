@@ -11,7 +11,7 @@ async function testShare() {
         platform: "facebook",
         userId: "d8612572-3256-4039-9eae-fb06250155ff", // Real user ID found in profiles
         userEmail: "jens@jenka.se",
-        articleImage: "/articles/test.jpg"
+        articleImage: "/media/test.jpg"
       })
     });
     
