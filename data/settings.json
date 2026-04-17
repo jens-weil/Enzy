@@ -1,0 +1,84 @@
+{
+  "facebook": {
+    "isActive": true,
+    "postStrategy": "comment",
+    "pageId": "116337051521934",
+    "accessToken": "EAASQ3xroMxoBREhtvUlHQICPDTLInsvZCSX1WfcFByDcKiw5C4WUJyuZAQEZAJHW6WZB8LphaMYWdu8dbcCnaiCpZBNUVgaNFfNnsEQyIZAhAta02XJ5tuy3HS8DzldXZA2TfGwItuZA19aKmpx8Lz3Di39vSJbbO83FYYA6nOLHNsKQRtJfw64ZCtLyZBKAorR1KSyYphxEhPZAPbau5mqR6aXwIVx",
+    "appId": "1285187810374426"
+  },
+  "instagram": {
+    "isActive": true,
+    "accountId": "jens@jenka.se",
+    "accessToken": "Test12"
+  },
+  "linkedin": {
+    "isActive": true,
+    "authorUrn": "jens@jenka.se",
+    "accessToken": "Test12"
+  },
+  "tiktok": {
+    "isActive": true,
+    "openId": "jens@jenka.se",
+    "accessToken": "Test12"
+  },
+  "x": {
+    "isActive": true,
+    "accessToken": ""
+  },
+  "stock": {
+    "isActive": true,
+    "ticker": "ENZY.ST",
+    "shares": "142 823 696",
+    "sector": "Hälsovård"
+  },
+  "brevo": {
+    "isActive": true,
+    "apiKey": "",
+    "senderName": "Enzymatica",
+    "senderEmail": "jens@jenka.se"
+  },
+  "security": {
+    "siteLockActive": false,
+    "onboardingActive": true,
+    "updatedAt": 1776201992825
+  },
+    "hero": {
+      "mode": "slideshow",
+      "interval": 8,
+      "useIndividualText": true,
+      "globalHeadline": "Forskning mot",
+      "globalHighlight": "infektioner",
+      "description": "Enzymatica utvecklar och säljer hälsoprodukter som behandlar och lindrar infektionssjukdomar i öron-näsa-hals-regionen.",
+      "slides": [
+        {
+          "id": "1",
+          "src": "/media/hero_lab_researchers.png",
+          "alt": "Enzymatica virusforskning laboratorium med forskare",
+          "headline": "Forskning mot",
+          "highlight": "infektioner"
+        },
+        {
+          "id": "2",
+          "src": "/media/sick_person_hero.png",
+          "alt": "Person med förkylning och röd näsa",
+          "headline": "Undvik att bli",
+          "highlight": "förkyld"
+        },
+        {
+          "id": "3",
+          "src": "/media/hero_authentic.webp",
+          "alt": "Kvinna strålande frisk och fri från sin förkylning",
+          "headline": "Höj din",
+          "highlight": "livskvalitet"
+        }
+      ]
+    },
+    "translations": {
+    "userStatuses": {
+      "Approved": "Godkänd",
+      "Pending": "Väntar",
+      "Rejected": "Nekad",
+      "Banned": "Deaktiverad"
+    }
+  }
+}

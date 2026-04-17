@@ -224,10 +224,10 @@ export async function POST(request: NextRequest) {
       }
     };
 
-    // Ensure directory exists
-    const dir = path.dirname(settingsPath);
-    if (!fs.existsSync(dir)) {
-      fs.mkdirSync(dir, { recursive: true });
+    // Ensure the data directory exists
+    const settingsDir = path.dirname(settingsPath);
+    if (!fs.existsSync(settingsDir)) {
+      fs.mkdirSync(settingsDir, { recursive: true });
     }
 
     fs.writeFileSync(settingsPath, JSON.stringify(newSettings, null, 2), 'utf8');
