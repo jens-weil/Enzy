@@ -28,19 +28,59 @@ const heroImages = [
 import dynamic from "next/dynamic";
 import { useAuth } from "@/components/AuthContext";
 
+interface HeroSlide {
+  id: string;
+  src: string;
+  alt: string;
+  headline: string;
+  highlight: string;
+}
+
+interface HeroSettings {
+  mode: "single" | "slideshow";
+  interval: number;
+  useIndividualText: boolean;
+  globalHeadline: string;
+  globalHighlight: string;
+  description: string;
+  slides: HeroSlide[];
+}
+
 const MembershipModal = dynamic(() => import("@/components/MembershipModal"), { ssr: false });
 
 export default function Home() {
   const { user } = useAuth();
   const [activeImage, setActiveImage] = useState(0);
   const [showMembershipModal, setShowMembershipModal] = useState(false);
+  const [heroSettings, setHeroSettings] = useState<HeroSettings | null>(null);
 
   useEffect(() => {
-    const timer = setInterval(() => {
-      setActiveImage((prev) => (prev + 1) % heroImages.length);
-    }, 8000); // Rotate every 8 seconds
-    return () => clearInterval(timer);
+    // Fetch settings on mount
+    fetch("/api/settings")
+      .then(res => res.ok ? res.json() : null)
+      .then(data => data && setHeroSettings(data.hero))
+      .catch(console.error);
   }, []);
+
+  useEffect(() => {
+    if (!heroSettings || heroSettings.mode !== "slideshow" || heroSettings.slides.length <= 1) return;
+
+    const intervalMs = (heroSettings.interval || 8) * 1000;
+    const timer = setInterval(() => {
+      setActiveImage((prev) => (prev + 1) % heroSettings.slides.length);
+    }, intervalMs);
+    return () => clearInterval(timer);
+  }, [heroSettings]);
+
+  if (!heroSettings || heroSettings.slides.length === 0) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-white dark:bg-slate-950">
+        <div className="w-16 h-16 border-4 border-brand-teal/20 border-t-brand-teal rounded-full animate-spin" />
+      </div>
+    );
+  }
+
+  const slidesToRender = heroSettings.mode === "single" ? [heroSettings.slides[0]] : heroSettings.slides;
 
   return (
     <div className="flex flex-col w-full">
@@ -48,9 +88,9 @@ export default function Home() {
       <section className="relative w-full h-[90vh] min-h-[700px] flex items-center justify-center overflow-hidden">
         {/* Background Images with Cross-Fade */}
         <div className="absolute inset-0 z-0">
-          {heroImages.map((img, idx) => (
+          {slidesToRender.map((img, idx) => (
             <div
-              key={img.src}
+              key={img.id}
               className={`absolute inset-0 transition-opacity duration-[2000ms] ease-in-out ${activeImage === idx ? "opacity-100" : "opacity-0"}`}
             >
               <Image
@@ -73,22 +113,36 @@ export default function Home() {
         <div className="relative z-10 text-center px-4 sm:px-6 lg:px-8 max-w-7xl mx-auto">
           <h1 className="font-black tracking-tight leading-[1.05] text-white drop-shadow-2xl mt-2 mb-2 relative"
             style={{ fontSize: "clamp(2.5rem, 8vw, 7rem)" }}>
-            {heroImages.map((img, idx) => (
-              <span
-                key={idx}
-                className={`block transition-all duration-700 ease-in-out ${activeImage === idx
-                  ? "opacity-100 translate-y-0"
-                  : "opacity-0 -translate-y-6 absolute inset-x-0"
-                  }`}
-              >
-                <span className="whitespace-nowrap">{img.headline}</span>
+            {!heroSettings.useIndividualText ? (
+              <span className="block">
+                <span className="whitespace-nowrap">{heroSettings.globalHeadline}</span>
                 <br />
-                <span className="text-brand-cyan whitespace-nowrap">{img.highlight}</span>
+                <span className="text-brand-cyan whitespace-nowrap">{heroSettings.globalHighlight}</span>
               </span>
-            ))}
+            ) : (
+              heroSettings.slides.map((img, idx) => {
+                const prevIdx = (idx - 1 + heroSettings.slides.length) % heroSettings.slides.length;
+                const prevImg = heroSettings.slides[prevIdx];
+                const hasChanged = img.headline !== prevImg.headline || img.highlight !== prevImg.highlight;
+
+                return (
+                  <span
+                    key={img.id}
+                    className={`block transition-all duration-700 ease-in-out ${activeImage === idx
+                      ? "opacity-100 translate-y-0"
+                      : "opacity-0 -translate-y-6 absolute inset-x-0"
+                      } ${!hasChanged ? "duration-0" : ""}`}
+                  >
+                    <span className="whitespace-nowrap">{img.headline}</span>
+                    <br />
+                    <span className="text-brand-cyan whitespace-nowrap">{img.highlight}</span>
+                  </span>
+                )
+              })
+            )}
           </h1>
           <p className="text-xl md:text-2xl text-white/90 max-w-2xl mx-auto mt-0 mb-10 leading-relaxed drop-shadow-lg font-medium">
-            ColdZyme® munspray skapar en skyddande barriär som verkar omedelbart mot förkylningsvirus.
+            {heroSettings.description}
           </p>
           <div className="flex flex-col sm:flex-row justify-center gap-6 pt-4">
             {!user && (

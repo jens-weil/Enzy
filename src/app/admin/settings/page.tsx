@@ -3,6 +3,7 @@
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
+import Image from "next/image";
 import { useAuth } from "@/components/AuthContext";
 import { supabase } from "@/lib/supabase";
 
@@ -16,6 +17,21 @@ export default function SettingsPage() {
   const [stock, setStock] = useState({ isActive: true, ticker: "ENZY.ST", shares: "142 823 696", sector: "Hälsovård" });
   const [brevo, setBrevo] = useState({ isActive: false, apiKey: "", senderName: "Enzymatica", senderEmail: "news@enzymatica.se" });
   const [security, setSecurity] = useState({ siteLockActive: true, onboardingActive: true });
+  const [hero, setHero] = useState<any>({ 
+    mode: "slideshow", 
+    interval: 8, 
+    useIndividualText: true, 
+    globalHeadline: "", 
+    globalHighlight: "", 
+    description: "", 
+    slides: [] 
+  });
+  
+  // Media Picker state
+  const [showMediaPicker, setShowMediaPicker] = useState(false);
+  const [availableImages, setAvailableImages] = useState<string[]>([]);
+  const [uploading, setUploading] = useState(false);
+  const [activeSlideIndex, setActiveSlideIndex] = useState<number | null>(null);
   
   const [expandedSection, setExpandedSection] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(true);
@@ -51,6 +67,16 @@ export default function SettingsPage() {
           if (data.stock) setStock(prev => ({ ...prev, ...data.stock }));
           if (data.brevo) setBrevo(prev => ({ ...prev, ...data.brevo }));
           if (data.security) setSecurity(prev => ({ ...prev, ...data.security }));
+          if (data.hero) setHero((prev: any) => ({ ...prev, ...data.hero }));
+        }
+
+        // Fetch images for the picker
+        const imgRes = await fetch("/api/images", {
+          headers: { 'Authorization': `Bearer ${session?.access_token}` }
+        });
+        if (imgRes.ok) {
+          const imgData = await imgRes.json();
+          setAvailableImages(imgData.images || []);
         }
       } catch (err) {
         console.error("Failed to load settings:", err);
@@ -78,7 +104,7 @@ export default function SettingsPage() {
           "Content-Type": "application/json",
           "Authorization": `Bearer ${session.access_token}`
         },
-        body: JSON.stringify({ facebook, instagram, linkedin, tiktok, x, stock, brevo, security })
+        body: JSON.stringify({ facebook, instagram, linkedin, tiktok, x, stock, brevo, security, hero })
       });
 
       if (res.ok) {
@@ -90,11 +116,61 @@ export default function SettingsPage() {
         const errData = await res.json();
         setMessage({ type: "error", text: errData.error || "Kunde inte spara inställningarna." });
       }
-    } catch {
-      setMessage({ type: "error", text: "Kunde inte spara inställningarna." });
     } finally {
       setIsSaving(false);
     }
+  };
+
+  const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    setUploading(true);
+    const body = new FormData();
+    body.append("file", file);
+    try {
+      const { data: { session } } = await supabase.auth.getSession();
+      const res = await fetch("/api/images", { 
+        method: "POST", 
+        headers: { 'Authorization': `Bearer ${session?.access_token}` },
+        body 
+      });
+      if (res.ok) {
+        const data = await res.json();
+        setAvailableImages(prev => [...prev, data.url]);
+        if (activeSlideIndex !== null) {
+          const newSlides = [...hero.slides];
+          newSlides[activeSlideIndex].src = data.url;
+          setHero({ ...hero, slides: newSlides });
+          setShowMediaPicker(false);
+        }
+      }
+    } catch (err) {
+      console.error("Upload failed", err);
+    } finally {
+      setUploading(false);
+    }
+  };
+
+  const addSlide = () => {
+    const newSlide = {
+      id: Math.random().toString(36).substr(2, 9),
+      src: "/media/logo.png",
+      alt: "Ny bild",
+      headline: "Ny rubrik",
+      highlight: "Framhävd text"
+    };
+    setHero({ ...hero, slides: [...hero.slides, newSlide] });
+  };
+
+  const removeSlide = (index: number) => {
+    const newSlides = hero.slides.filter((_: any, i: number) => i !== index);
+    setHero({ ...hero, slides: newSlides });
+  };
+
+  const updateSlide = (index: number, field: string, value: string) => {
+    const newSlides = [...hero.slides];
+    newSlides[index] = { ...newSlides[index], [field]: value };
+    setHero({ ...hero, slides: newSlides });
   };
 
   if (authLoading || isLoading) {
@@ -208,6 +284,19 @@ export default function SettingsPage() {
                 icon: (
                   <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} className="w-6 h-6">
                     <path strokeLinecap="round" strokeLinejoin="round" d="M7 12l3-3 3 3 4-4M8 21l4-4 4 4M3 4h18" />
+                  </svg>
+                ),
+                color: "text-brand-teal bg-brand-light dark:bg-brand-teal/20"
+              },
+              {
+                id: "hero",
+                title: "Hero & Bakgrund",
+                subtitle: "Styr sajtens huvudbild, bildspel och texter",
+                state: { isActive: true },
+                setter: null,
+                icon: (
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} className="w-6 h-6">
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
                   </svg>
                 ),
                 color: "text-brand-teal bg-brand-light dark:bg-brand-teal/20"
@@ -406,6 +495,197 @@ export default function SettingsPage() {
                              placeholder="142 823 696"
                            />
                         </label>
+                      </div>
+                    )}
+
+                    {channel.id === 'hero' && (
+                      <div className="space-y-10 mt-6">
+                        {/* Mode & Interval */}
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-8 p-6 bg-white dark:bg-slate-800 rounded-3xl border border-gray-100 dark:border-slate-700 shadow-sm">
+                          <div className="space-y-4">
+                            <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest block ml-2">Visningsläge</label>
+                            <div className="flex bg-gray-100 dark:bg-slate-900 rounded-2xl p-1">
+                              <button
+                                onClick={() => setHero({ ...hero, mode: "single" })}
+                                className={`flex-1 py-3 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all ${hero.mode === "single" ? "bg-white dark:bg-slate-700 text-brand-teal shadow-md" : "text-gray-400"}`}
+                              >
+                                Enstaka bild
+                              </button>
+                              <button
+                                onClick={() => setHero({ ...hero, mode: "slideshow" })}
+                                className={`flex-1 py-3 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all ${hero.mode === "slideshow" ? "bg-white dark:bg-slate-700 text-brand-teal shadow-md" : "text-gray-400"}`}
+                              >
+                                Bildspel
+                              </button>
+                            </div>
+                          </div>
+
+                          <div className="space-y-4">
+                             <div className="flex justify-between items-center ml-2">
+                               <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest">Tidsintervall</label>
+                               <span className="text-[10px] font-black text-brand-teal uppercase">{hero.interval} sekunder</span>
+                             </div>
+                             <input 
+                               type="range" 
+                               min="3" 
+                               max="12" 
+                               value={hero.interval} 
+                               onChange={(e) => setHero({ ...hero, interval: parseInt(e.target.value) })}
+                               className="w-full h-2 bg-gray-100 dark:bg-slate-900 rounded-lg appearance-none cursor-pointer accent-brand-teal"
+                             />
+                             <div className="flex justify-between text-[8px] text-gray-400 font-bold uppercase tracking-tighter px-1">
+                               <span>Snabbt (3s)</span>
+                               <span>Långsamt (12s)</span>
+                             </div>
+                          </div>
+                        </div>
+
+                        {/* Text Settings */}
+                        <div className="space-y-6">
+                          <div className="flex items-center justify-between p-6 bg-brand-light/20 dark:bg-brand-teal/5 rounded-3xl border border-brand-teal/10">
+                            <div>
+                               <h3 className="font-black text-brand-dark dark:text-white uppercase italic text-sm mb-1">Textinställningar</h3>
+                               <p className="text-[10px] text-gray-500 font-bold uppercase tracking-widest">Samma text för alla eller unik per bild</p>
+                            </div>
+                            <label className="relative inline-flex items-center cursor-pointer">
+                              <input 
+                                type="checkbox" 
+                                className="sr-only peer" 
+                                checked={hero.useIndividualText}
+                                onChange={(e) => setHero({ ...hero, useIndividualText: e.target.checked })}
+                              />
+                              <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none rounded-full peer dark:bg-slate-700 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all dark:border-gray-600 peer-checked:bg-brand-teal"></div>
+                              <span className={`ml-3 text-[10px] font-black uppercase tracking-widest ${hero.useIndividualText ? 'text-brand-teal' : 'text-gray-400'}`}>
+                                {hero.useIndividualText ? "Individuell" : "Gemensam"}
+                              </span>
+                            </label>
+                          </div>
+
+                          {!hero.useIndividualText && (
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 p-6 bg-white dark:bg-slate-800 rounded-3xl border border-gray-100 dark:border-slate-700 animate-in slide-in-from-top-2">
+                               <label className="space-y-2">
+                                 <span className="text-[10px] font-black text-gray-400 uppercase tracking-widest ml-2">Gemensam rubrik</span>
+                                 <input type="text" value={hero.globalHeadline} onChange={e => setHero({ ...hero, globalHeadline: e.target.value })} className="w-full px-4 py-3 rounded-xl border border-gray-200 dark:border-slate-700 bg-white dark:bg-slate-900 focus:border-brand-teal outline-none text-sm dark:text-white" />
+                               </label>
+                               <label className="space-y-2">
+                                 <span className="text-[10px] font-black text-gray-400 uppercase tracking-widest ml-2">Gemensam highlight</span>
+                                 <input type="text" value={hero.globalHighlight} onChange={e => setHero({ ...hero, globalHighlight: e.target.value })} className="w-full px-4 py-3 rounded-xl border border-gray-200 dark:border-slate-700 bg-white dark:bg-slate-900 focus:border-brand-teal outline-none text-sm dark:text-white color-brand-teal" />
+                               </label>
+                            </div>
+                          )}
+
+                          <label className="space-y-2 block">
+                            <span className="text-[10px] font-black text-gray-400 uppercase tracking-widest ml-2">Beskrivningstext (Under rubrik)</span>
+                            <textarea
+                              rows={3}
+                              value={hero.description}
+                              onChange={e => setHero({ ...hero, description: e.target.value })}
+                              className="w-full px-5 py-4 rounded-2xl bg-white dark:bg-slate-800 border border-gray-100 dark:border-slate-700 focus:border-brand-teal outline-none transition-all font-medium text-gray-600 dark:text-gray-300 text-sm leading-relaxed"
+                              placeholder="Text som visas under rubriken..."
+                            />
+                          </label>
+                        </div>
+
+                        {/* Slide Management */}
+                        <div className="space-y-6">
+                           <div className="flex justify-between items-center ml-2">
+                             <h3 className="text-[10px] font-black text-gray-400 uppercase tracking-widest">Hantering av bilder</h3>
+                             <button 
+                               onClick={addSlide}
+                               className="px-4 py-2 rounded-xl bg-brand-teal/10 text-brand-teal text-[10px] font-black uppercase tracking-widest hover:bg-brand-teal hover:text-white transition-all"
+                             >
+                               + Lägg till bild
+                             </button>
+                           </div>
+
+                           <div className="space-y-4">
+                             {hero.slides.map((slide: any, idx: number) => (
+                               <div key={slide.id} className="relative group bg-white dark:bg-slate-800 p-6 rounded-3xl border border-gray-100 dark:border-slate-700 flex flex-col md:flex-row gap-8 shadow-sm hover:shadow-md transition-all">
+                                 <div 
+                                   onClick={() => { setActiveSlideIndex(idx); setShowMediaPicker(true); }}
+                                   className="relative w-32 h-32 md:w-48 md:h-28 rounded-2xl overflow-hidden cursor-pointer flex-shrink-0 group-hover:ring-2 ring-brand-teal ring-offset-4 dark:ring-offset-slate-800 transition-all"
+                                  >
+                                   <Image src={slide.src} alt={slide.alt} fill className="object-cover" />
+                                   <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 flex items-center justify-center transition-opacity">
+                                      <span className="text-[8px] font-black text-white uppercase tracking-widest">Byt bild</span>
+                                   </div>
+                                 </div>
+
+                                 <div className="flex-1 grid grid-cols-1 md:grid-cols-2 gap-4">
+                                   <label className="space-y-1">
+                                      <span className="text-[8px] font-black text-gray-400 uppercase tracking-widest ml-1">Alt-text (SEO)</span>
+                                      <input type="text" value={slide.alt} onChange={e => updateSlide(idx, 'alt', e.target.value)} className="w-full px-3 py-2 rounded-lg border border-gray-50 dark:border-slate-700 bg-gray-50 dark:bg-slate-900 focus:border-brand-teal outline-none text-[10px] font-bold dark:text-white" />
+                                   </label>
+                                   <div className="flex justify-end pt-4 md:pt-0">
+                                      <button 
+                                        onClick={() => removeSlide(idx)}
+                                        className="w-10 h-10 rounded-full bg-red-50 dark:bg-red-900/10 text-red-500 flex items-center justify-center hover:bg-red-500 hover:text-white transition-all"
+                                        title="Ta bort slide"
+                                      >
+                                        &times;
+                                      </button>
+                                   </div>
+                                   
+                                   {hero.useIndividualText && (
+                                     <>
+                                       <label className="space-y-1">
+                                          <span className="text-[8px] font-black text-gray-400 uppercase tracking-widest ml-1">Rubrik</span>
+                                          <input type="text" value={slide.headline} onChange={e => updateSlide(idx, 'headline', e.target.value)} className="w-full px-3 py-2 rounded-lg border border-gray-50 dark:border-slate-700 bg-gray-50 dark:bg-slate-900 focus:border-brand-teal outline-none text-[10px] font-bold dark:text-white" />
+                                       </label>
+                                       <label className="space-y-1">
+                                          <span className="text-[8px] font-black text-gray-400 uppercase tracking-widest ml-1">Highlight</span>
+                                          <input type="text" value={slide.highlight} onChange={e => updateSlide(idx, 'highlight', e.target.value)} className="w-full px-3 py-2 rounded-lg border border-gray-50 dark:border-slate-700 bg-gray-50 dark:bg-slate-900 focus:border-brand-teal outline-none text-[10px] font-bold text-brand-teal" />
+                                       </label>
+                                     </>
+                                   )}
+                                 </div>
+                               </div>
+                             ))}
+                             
+                             {hero.slides.length === 0 && (
+                               <div className="p-12 text-center bg-gray-50 dark:bg-slate-800/50 rounded-3xl border-2 border-dashed border-gray-200 dark:border-slate-700">
+                                 <p className="text-gray-400 text-xs font-bold uppercase tracking-widest">Inga bilder tillagda än.</p>
+                                 <button onClick={addSlide} className="mt-4 px-6 py-2 rounded-xl bg-brand-teal text-white text-[10px] font-black uppercase tracking-widest">Lägg till första</button>
+                               </div>
+                             )}
+                           </div>
+                        </div>
+
+                        {/* Media Picker Modal integration */}
+                        {showMediaPicker && (
+                          <div className="fixed inset-0 z-[200] bg-black/60 backdrop-blur-md flex items-center justify-center p-4" onClick={() => setShowMediaPicker(false)}>
+                            <div className="bg-white dark:bg-slate-900 w-full max-w-4xl max-h-[90vh] rounded-[2rem] shadow-2xl flex flex-col overflow-hidden" onClick={e => e.stopPropagation()}>
+                              <div className="p-7 border-b border-gray-100 dark:border-slate-800 flex justify-between items-center bg-gray-50/50 dark:bg-slate-800/50">
+                                <div>
+                                  <h3 className="text-xl font-black text-brand-dark dark:text-white uppercase italic">Välj Bakgrundsbild</h3>
+                                  <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest mt-1">Välj från mediebiblioteket eller ladda upp ny</p>
+                                </div>
+                                <button onClick={() => setShowMediaPicker(false)} className="w-10 h-10 rounded-full bg-white dark:bg-slate-900 shadow-md flex items-center justify-center text-2xl font-black">&times;</button>
+                              </div>
+                              <div className="flex-1 overflow-y-auto p-7">
+                                <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4">
+                                  <label className="relative aspect-square rounded-2xl border-2 border-dashed border-brand-teal/30 flex flex-col items-center justify-center cursor-pointer hover:bg-brand-teal/5 transition-all">
+                                    <input type="file" className="hidden" onChange={handleImageUpload} accept="image/*" />
+                                    {uploading ? <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-brand-teal" /> : <span className="text-2xl text-brand-teal">+</span>}
+                                  </label>
+                                  {availableImages.map((img, i) => (
+                                    <div key={i} onClick={() => {
+                                      if (activeSlideIndex !== null) {
+                                        const newSlides = [...hero.slides];
+                                        newSlides[activeSlideIndex].src = img;
+                                        setHero({ ...hero, slides: newSlides });
+                                        setShowMediaPicker(false);
+                                      }
+                                    }} className="relative aspect-square rounded-2xl overflow-hidden cursor-pointer group">
+                                      <Image src={img} alt="Media" fill className="object-cover" />
+                                      <div className="absolute inset-0 bg-brand-teal/20 opacity-0 group-hover:opacity-100 transition-opacity" />
+                                    </div>
+                                  ))}
+                                </div>
+                              </div>
+                            </div>
+                          </div>
+                        )}
                       </div>
                     )}
 

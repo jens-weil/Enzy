@@ -57,9 +57,38 @@ function getSettings() {
       senderEmail: "news@enzymatica.se"
     },
     security: {
-      siteLockActive: true,
-      onboardingActive: true,
       updatedAt: 1713123456789
+    },
+    hero: {
+      mode: "slideshow",
+      interval: 8,
+      useIndividualText: true,
+      globalHeadline: "Forskning mot",
+      globalHighlight: "infektioner",
+      description: "ColdZyme® munspray skapar en skyddande barriär som verkar omedelbart mot förkylningsvirus.",
+      slides: [
+        {
+          id: "1",
+          src: "/media/hero_lab_researchers.png",
+          alt: "Enzymatica virusforskning laboratorium med forskare",
+          headline: "Forskning mot",
+          highlight: "infektioner"
+        },
+        {
+          id: "2",
+          src: "/media/sick_person_hero.png",
+          alt: "Person med förkylning och röd näsa",
+          headline: "Undvik att bli",
+          highlight: "förkyld"
+        },
+        {
+          id: "3",
+          src: "/media/hero_authentic.webp",
+          alt: "Kvinna strålande frisk och fri från sin förkylning",
+          headline: "Höj din",
+          highlight: "livskvalitet"
+        }
+      ]
     }
   };
 
@@ -86,6 +115,7 @@ function getSettings() {
       stock: { ...defaultSettings.stock, ...parsed.stock },
       brevo: { ...defaultSettings.brevo, ...(parsed.brevo || {}) },
       security: { ...defaultSettings.security, ...(parsed.security || {}) },
+      hero: { ...defaultSettings.hero, ...(parsed.hero || {}) },
       translations: { ...defaultSettings.translations, ...(parsed.translations || {}) }
     };
   } catch (e) {
@@ -126,6 +156,7 @@ export async function GET(request: NextRequest) {
       onboardingActive: settings.security?.onboardingActive ?? true,
       updatedAt: settings.security?.updatedAt ?? 0
     },
+    hero: settings.hero,
     translations: settings.translations
   };
 
@@ -186,6 +217,10 @@ export async function POST(request: NextRequest) {
         updatedAt: (body.security?.siteLockActive !== undefined || body.security?.onboardingActive !== undefined) 
           ? Date.now() 
           : (currentSettings.security?.updatedAt || Date.now())
+      },
+      hero: {
+        ...currentSettings.hero,
+        ...(body.hero || {})
       }
     };
 
