@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { supabaseAdmin, requireRole } from "@/lib/auth";
+import { getSiteUrl } from "@/lib/siteConfig";
 
 export async function GET(req: NextRequest) {
   const auth = await requireRole(req, ["Admin"]);
@@ -128,10 +129,12 @@ export async function POST(req: NextRequest) {
         return NextResponse.json({ error: "Email and role are required" }, { status: 400 });
       }
 
+      const siteUrl = getSiteUrl();
+
       // 1. Invite the user
       const { data: inviteData, error: inviteError } = await supabaseAdmin.auth.admin.inviteUserByEmail(email, {
         data: { full_name, role },
-        redirectTo: `${process.env.NEXT_PUBLIC_SITE_URL}/auth/callback`,
+        redirectTo: `${siteUrl}/auth/callback`,
       });
 
       if (inviteError) throw inviteError;
@@ -159,11 +162,13 @@ export async function POST(req: NextRequest) {
         return NextResponse.json({ error: "Email is required" }, { status: 400 });
       }
 
+      const siteUrl = getSiteUrl();
+
       // Send magic link (signInWithOtp automatically sends email if configured)
       const { error: otpError } = await supabaseAdmin.auth.signInWithOtp({
         email,
         options: {
-          emailRedirectTo: `${process.env.NEXT_PUBLIC_SITE_URL}/auth/callback`,
+          emailRedirectTo: `${siteUrl}/auth/callback`,
         },
       });
 
@@ -177,8 +182,10 @@ export async function POST(req: NextRequest) {
         return NextResponse.json({ error: "Email is required" }, { status: 400 });
       }
 
+      const siteUrl = getSiteUrl();
+
       const { error: resetError } = await supabaseAdmin.auth.resetPasswordForEmail(email, {
-        redirectTo: `${process.env.NEXT_PUBLIC_SITE_URL}/auth/callback?next=/auth/update-password`,
+        redirectTo: `${siteUrl}/auth/callback?next=/auth/update-password`,
       });
 
       if (resetError) throw resetError;

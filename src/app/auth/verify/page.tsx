@@ -36,6 +36,11 @@ function VerifyContent() {
     }
   ));
 
+  // Auto-focus first field on mount
+  useEffect(() => {
+    inputRefs[0].current?.focus();
+  }, []);
+
   const handleOtpChange = (index: number, value: string) => {
     if (value.length > 1) value = value.slice(-1);
     if (!/^\d*$/.test(value)) return;
@@ -54,6 +59,24 @@ function VerifyContent() {
     if (e.key === "Backspace" && !otp[index] && index > 0) {
       inputRefs[index - 1].current?.focus();
     }
+  };
+
+  const handlePaste = (e: React.ClipboardEvent) => {
+    const pastedData = e.clipboardData.getData("text").trim();
+    if (!/^\d+$/.test(pastedData)) return; // Only allow digits
+    
+    const digits = pastedData.slice(0, 6).split("");
+    const newOtp = [...otp];
+    
+    digits.forEach((digit, i) => {
+      if (i < 6) newOtp[i] = digit;
+    });
+    
+    setOtp(newOtp);
+    
+    // Focus the last filled input or the 6th input
+    const nextIndex = Math.min(digits.length, 5);
+    inputRefs[nextIndex].current?.focus();
   };
 
   const handleVerify = async (e?: React.FormEvent) => {
@@ -165,7 +188,8 @@ function VerifyContent() {
                 value={digit}
                 onChange={(e) => handleOtpChange(idx, e.target.value)}
                 onKeyDown={(e) => handleKeyDown(idx, e)}
-                className="w-12 h-16 text-center text-2xl font-black bg-gray-50 dark:bg-slate-800 border-2 border-transparent focus:border-brand-teal focus:bg-white dark:focus:bg-slate-900 rounded-xl outline-none transition-all text-brand-dark dark:text-white shadow-sm"
+                onPaste={idx === 0 ? handlePaste : undefined}
+                className="w-12 h-16 text-center text-2xl font-black bg-gray-50 dark:bg-slate-900 border-2 border-transparent focus:border-brand-teal focus:bg-white dark:focus:bg-slate-900 rounded-xl outline-none transition-all text-brand-dark dark:text-white shadow-sm"
               />
             ))}
           </div>
