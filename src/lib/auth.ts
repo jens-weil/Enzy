@@ -3,14 +3,14 @@ import { NextRequest } from "next/server";
 
 // Admin client — bypasses RLS, only used server-side
 export const supabaseAdmin = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  process.env.SUPABASE_SERVICE_ROLE_KEY!
+  process.env.NEXT_PUBLIC_SUPABASE_URL || "https://your-project.supabase.co",
+  process.env.SUPABASE_SERVICE_ROLE_KEY || "dummy-key"
 );
 
 // Anon client — used only to verify caller JWTs
 const supabaseAnon = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
+  process.env.NEXT_PUBLIC_SUPABASE_URL || "https://your-project.supabase.co",
+  process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || "dummy-key"
 );
 
 export type AuthResult =
