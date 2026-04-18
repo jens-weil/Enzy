@@ -57,6 +57,10 @@ function getSettings() {
       senderEmail: "news@enzymatica.se"
     },
     security: {
+      siteLockActive: true,
+      onboardingActive: true,
+      siteCode: "0000",
+      lockTimeoutMinutes: 60,
       updatedAt: 1713123456789
     },
     hero: {
@@ -154,6 +158,8 @@ export async function GET(request: NextRequest) {
     security: {
       siteLockActive: settings.security?.siteLockActive ?? true,
       onboardingActive: settings.security?.onboardingActive ?? true,
+      siteCode: settings.security?.siteCode || "0000",
+      lockTimeoutMinutes: settings.security?.lockTimeoutMinutes || 60,
       updatedAt: settings.security?.updatedAt ?? 0
     },
     hero: settings.hero,

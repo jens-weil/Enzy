@@ -13,6 +13,8 @@ export type PublicSettings = {
   security: {
     siteLockActive: boolean;
     onboardingActive: boolean;
+    siteCode: string;
+    lockTimeoutMinutes: number;
     updatedAt: number;
   };
   stock: {

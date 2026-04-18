@@ -16,7 +16,7 @@ export default function SettingsPage() {
   const [x, setX] = useState({ isActive: false, accessToken: "" });
   const [stock, setStock] = useState({ isActive: true, ticker: "ENZY.ST", shares: "142 823 696", sector: "Hälsovård" });
   const [brevo, setBrevo] = useState({ isActive: false, apiKey: "", senderName: "Enzymatica", senderEmail: "news@enzymatica.se" });
-  const [security, setSecurity] = useState({ siteLockActive: true, onboardingActive: true });
+  const [security, setSecurity] = useState({ siteLockActive: true, onboardingActive: true, siteCode: "0000", lockTimeoutMinutes: 60 });
   const [hero, setHero] = useState<any>({ 
     mode: "slideshow", 
     interval: 8, 
@@ -563,7 +563,7 @@ export default function SettingsPage() {
                                   <div className={`w-4 h-4 rounded-full ${security.siteLockActive ? "bg-brand-teal animate-pulse" : "bg-gray-300"}`} />
                                 </div>
                                 <h3 className="font-black text-brand-dark dark:text-white uppercase italic text-lg mb-2">Sajtlås Active</h3>
-                                <p className="text-[10px] text-gray-400 font-bold uppercase tracking-[0.2em] leading-relaxed">Kräver 3-siffrig kod (304) för åtkomst till portalen</p>
+                                <p className="text-[10px] text-gray-400 font-bold uppercase tracking-[0.2em] leading-relaxed">Systemet blockerar åtkomst för obehöriga</p>
                               </button>
                               <button
                                 onClick={() => setSecurity(prev => ({ ...prev, onboardingActive: !prev.onboardingActive }))}
@@ -579,6 +579,60 @@ export default function SettingsPage() {
                                 <p className="text-[10px] text-gray-400 font-bold uppercase tracking-[0.2em] leading-relaxed">Visa välkomst-guide och rollbeskrivningar</p>
                               </button>
                             </div>
+
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                              <div className="p-10 bg-white dark:bg-slate-900 rounded-[2.5rem] border border-gray-100 dark:border-slate-800 shadow-xl space-y-6">
+                                <label className="space-y-4 block">
+                                  <div className="flex justify-between items-center">
+                                    <span className="text-[10px] font-black text-gray-400 uppercase tracking-widest ml-2">Säkerhetskod (3-8 siffror)</span>
+                                    <span className={`text-[9px] font-black uppercase tracking-widest px-3 py-1 rounded-full ${security.siteCode?.length >= 3 && security.siteCode?.length <= 8 ? 'bg-green-50 text-green-500' : 'bg-red-50 text-red-500'}`}>
+                                      {security.siteCode?.length || 0} tecken
+                                    </span>
+                                  </div>
+                                  <input 
+                                    type="text" 
+                                    value={security.siteCode || ""} 
+                                    onChange={e => {
+                                      const val = e.target.value.replace(/\D/g, '').slice(0, 8);
+                                      setSecurity(p => ({ ...p, siteCode: val }));
+                                    }} 
+                                    className="w-full px-6 py-5 rounded-2xl border border-gray-100 dark:border-slate-800 bg-gray-50 dark:bg-slate-950 focus:border-brand-teal outline-none font-black text-2xl tracking-[0.5em] text-center dark:text-white transition-all shadow-inner" 
+                                    placeholder="0000"
+                                  />
+                                  <p className="text-[9px] text-gray-400 font-bold uppercase tracking-widest text-center italic">
+                                    Krävs för att låsa upp portalen.
+                                  </p>
+                                </label>
+                              </div>
+
+                              <div className="p-10 bg-white dark:bg-slate-900 rounded-[2.5rem] border border-gray-100 dark:border-slate-800 shadow-xl space-y-6">
+                                <label className="space-y-4 block">
+                                  <div className="flex justify-between items-center">
+                                    <span className="text-[10px] font-black text-gray-400 uppercase tracking-widest ml-2">Inaktivitetstimer (minuter)</span>
+                                    <span className="text-[9px] font-black uppercase tracking-widest px-3 py-1 rounded-full bg-brand-teal/10 text-brand-teal">
+                                      Auto-lås
+                                    </span>
+                                  </div>
+                                  <div className="relative">
+                                    <input 
+                                      type="number" 
+                                      min="1"
+                                      value={security.lockTimeoutMinutes || 60} 
+                                      onChange={e => {
+                                        const val = parseInt(e.target.value) || 1;
+                                        setSecurity(p => ({ ...p, lockTimeoutMinutes: val }));
+                                      }} 
+                                      className="w-full px-6 py-5 rounded-2xl border border-gray-100 dark:border-slate-800 bg-gray-50 dark:bg-slate-950 focus:border-brand-teal outline-none font-black text-2xl text-center dark:text-white transition-all shadow-inner" 
+                                    />
+                                    <div className="absolute right-6 top-1/2 -translate-y-1/2 text-[10px] font-black text-gray-400 uppercase tracking-widest pointer-events-none">MIN</div>
+                                  </div>
+                                  <p className="text-[9px] text-gray-400 font-bold uppercase tracking-widest text-center italic">
+                                    Sajten låses vid inaktivitet efter denna tid.
+                                  </p>
+                                </label>
+                              </div>
+                            </div>
+
                             <div className="p-8 bg-amber-50/50 dark:bg-amber-900/10 border border-amber-100/50 dark:border-amber-900/20 rounded-3xl">
                               <p className="text-[10px] text-amber-700 dark:text-amber-500 font-bold uppercase tracking-widest leading-loose flex items-start gap-3">
                                 <span className="text-xl">💡</span>

@@ -65,7 +65,7 @@ export default function RolesInfoModal({ onClose, onApply, isLockActive }: Roles
     }
 
 
-    
+
     if (selectedRole !== "Anonym Besökare") {
       onApply(selectedRole);
     } else {
@@ -74,51 +74,49 @@ export default function RolesInfoModal({ onClose, onApply, isLockActive }: Roles
   };
 
   return (
-    <motion.div 
+    <motion.div
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
       exit={{ opacity: 0 }}
       className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/80 backdrop-blur-md"
     >
-      <motion.div 
+      <motion.div
         initial={{ scale: 0.9, y: 20 }}
         animate={{ scale: 1, y: 0 }}
-        className="bg-[#0f1218] border border-white/10 w-full max-w-2xl rounded-[2.5rem] shadow-2xl overflow-hidden flex flex-col max-h-[90vh]"
+        className="bg-[#0f1218] border border-white/10 w-full max-w-md rounded-[2.5rem] shadow-2xl overflow-hidden flex flex-col max-h-[90vh]"
       >
         {/* Header */}
-        <div className="p-8 pb-10 bg-gradient-to-br from-brand-teal/20 to-transparent">
-          <h2 className="text-3xl font-black text-white italic uppercase tracking-tighter mb-4">
+        <div className="p-6 pb-5 bg-gradient-to-br from-brand-teal/20 to-transparent">
+          <h2 className="text-2xl font-black text-white italic uppercase tracking-tighter mb-1">
             Välkommen till Enzymatica
           </h2>
-          <p className="text-gray-400 text-sm leading-relaxed max-w-lg">
-            Här är en översikt av de olika användarrollerna. Välj den roll som passar dig bäst genom att klicka i rutan vid respektive rollbeskrivning.
+          <p className="text-gray-400 text-xs">
+            Välj den roll som passar dig bäst.
           </p>
         </div>
 
         {/* Content (Scrollable) */}
-        <div className="flex-grow overflow-y-auto px-8 pb-8 space-y-3">
+        <div className="flex-grow overflow-y-auto px-6 pb-3 pt-4 space-y-2">
           {ROLES.map((role) => (
-            <div 
-              key={role.id} 
-              className={`border rounded-2xl overflow-hidden transition-all duration-300 ${
-                selectedRole === role.id 
-                ? "border-brand-teal bg-brand-teal/5 shadow-lg shadow-brand-teal/5" 
-                : "border-white/5 bg-white/2"
-              }`}
+            <div
+              key={role.id}
+              className={`border rounded-2xl overflow-hidden transition-all duration-300 ${selectedRole === role.id
+                  ? "border-brand-teal bg-brand-teal/5 shadow-lg shadow-brand-teal/5"
+                  : "border-white/5 bg-white/2"
+                }`}
             >
               <div className="flex items-center">
                 {/* Custom Checkbox/Radio Area */}
-                <div 
+                <div
                   onClick={() => setSelectedRole(role.id)}
-                  className="pl-5 cursor-pointer group"
+                  className="pl-4 cursor-pointer group"
                 >
-                  <div className={`w-8 h-8 rounded-full border-2 flex items-center justify-center transition-all ${
-                    selectedRole === role.id 
-                    ? "border-brand-teal bg-brand-teal" 
-                    : "border-white/20 group-hover:border-brand-teal/50"
-                  }`}>
+                  <div className={`w-6 h-6 rounded-full border-2 flex items-center justify-center transition-all ${selectedRole === role.id
+                      ? "border-brand-teal bg-brand-teal"
+                      : "border-white/20 group-hover:border-brand-teal/50"
+                    }`}>
                     {selectedRole === role.id && (
-                      <svg className="w-5 h-5 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={4}>
+                      <svg className="w-4 h-4 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3}>
                         <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
                       </svg>
                     )}
@@ -127,10 +125,10 @@ export default function RolesInfoModal({ onClose, onApply, isLockActive }: Roles
 
                 <button
                   onClick={() => handleToggle(role.id)}
-                  className="flex-grow flex items-center justify-between p-5 hover:bg-white/5 transition-colors group"
+                  className="flex-grow flex items-center justify-between p-4 hover:bg-white/5 transition-colors group"
                 >
-                  <div className="flex items-center gap-4">
-                    <span className="text-2xl">{role.icon}</span>
+                  <div className="flex items-center gap-3">
+                    <span className="text-xl">{role.icon}</span>
                     <span className="font-black text-white uppercase italic tracking-tight group-hover:text-brand-teal transition-colors text-left">
                       {role.title}
                     </span>
@@ -140,7 +138,7 @@ export default function RolesInfoModal({ onClose, onApply, isLockActive }: Roles
                   </span>
                 </button>
               </div>
-              
+
               <AnimatePresence>
                 {expandedRole === role.id && (
                   <motion.div
@@ -160,35 +158,12 @@ export default function RolesInfoModal({ onClose, onApply, isLockActive }: Roles
         </div>
 
         {/* Action Section */}
-        <div className="p-8 border-t border-white/5 bg-[#0a0c10]/50">
-          <div className="flex flex-col md:flex-row items-center justify-between gap-6">
-            <div className="flex flex-col gap-1">
-               {/* Conditional "Don't show again" checkbox */}
-               {!isLockActive ? (
-                <label className="flex items-center gap-3 cursor-pointer group">
-                  <input 
-                    type="checkbox" 
-                    checked={dontShow}
-                    onChange={(e) => setDontShow(e.target.checked)}
-                    className="w-5 h-5 rounded border-2 border-white/10 bg-transparent text-brand-teal focus:ring-brand-teal transition-all cursor-pointer"
-                  />
-                  <span className="text-[10px] font-black uppercase tracking-widest text-gray-500 group-hover:text-white transition-colors">
-                    Visa inte denna info igen
-                  </span>
-                </label>
-               ) : (
-                 <p className="text-[10px] font-black uppercase tracking-widest text-brand-teal/40">
-                    Säkerhetsportal aktiv
-                 </p>
-               )}
-               <p className="text-[10px] font-black uppercase tracking-[0.2em] text-gray-400 mt-2">
-                 Vald roll: <span className="text-white italic">{selectedRole}</span>
-               </p>
-            </div>
-            
+        <div className="p-4 border-t border-white/5 bg-[#0a0c10]/50">
+          <div className="flex justify-center">
+
             <button
               onClick={handleFinish}
-              className="w-full md:w-auto px-12 py-5 bg-brand-teal text-white rounded-2xl font-black uppercase text-[10px] tracking-widest hover:scale-105 active:scale-95 transition-all shadow-xl shadow-brand-teal/20"
+              className="w-full md:w-auto px-8 py-3 bg-brand-teal text-white rounded-2xl font-black uppercase text-[10px] tracking-widest hover:scale-105 active:scale-95 transition-all shadow-xl shadow-brand-teal/20"
             >
               Fortsätt som {selectedRole}
             </button>

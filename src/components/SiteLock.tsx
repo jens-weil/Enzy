@@ -34,6 +34,8 @@ function SiteLockContent() {
   const [settings, setSettings] = useState<{
     siteLockActive: boolean;
     onboardingActive: boolean;
+    siteCode: string;
+    lockTimeoutMinutes: number;
     updatedAt: number;
   } | null>(null);
 
@@ -51,9 +53,12 @@ function SiteLockContent() {
   const [showMembershipModal, setShowMembershipModal] = useState(false);
   const [selectedRoleForMembership, setSelectedRoleForMembership] =
     useState("Medlem");
+  const [lastActivity, setLastActivity] = useState<number>(Date.now());
+  const [showTimeoutWarning, setShowTimeoutWarning] = useState(false);
+  const [countdown, setCountdown] = useState(30);
 
   const inputs = useRef<HTMLInputElement[]>([]);
-  const CORRECT_CODE = "304";
+  const CORRECT_CODE = settings?.siteCode || "0000";
 
   // ── Fetch settings IMMEDIATELY — do NOT wait for auth ────────────────────
   // Auth state is only needed to decide the bypass, not to fetch settings.
@@ -65,11 +70,63 @@ function SiteLockContent() {
       const s = data?.security ?? {
         siteLockActive: true,
         onboardingActive: true,
+        siteCode: "0000",
+        lockTimeoutMinutes: 60,
         updatedAt: 0,
       };
       setSettings(s);
+      // Reset digits to match the code length
+      setDigits(new Array(s.siteCode.length).fill(""));
     });
   }, []); // ← runs exactly ONCE on mount
+
+  // ── Inactivity Tracking ──────────────────────────────────────────────────
+  useEffect(() => {
+    if (!unlocked || !settings?.siteLockActive) return;
+
+    const resetTimer = () => {
+      if (showTimeoutWarning) return; // Kräv explicit knapptryckning, ignorera bakgrundsaktivitet
+      setLastActivity(Date.now());
+    };
+
+    const events = ["mousedown", "mousemove", "keydown", "scroll", "touchstart"];
+    events.forEach((name) => document.addEventListener(name, resetTimer));
+
+    return () => {
+      events.forEach((name) => document.removeEventListener(name, resetTimer));
+    };
+  }, [unlocked, settings, showTimeoutWarning]);
+
+  // ── Timeout Logic Loop ─────────────────────────────────────────────────────
+  useEffect(() => {
+    if (!unlocked || !settings?.siteLockActive || !settings?.lockTimeoutMinutes) return;
+
+    const interval = setInterval(() => {
+      const now = Date.now();
+      const timeoutMs = settings.lockTimeoutMinutes * 60 * 1000;
+      const elapsed = now - lastActivity;
+      
+      const remainingMs = timeoutMs - elapsed;
+      const remainingSec = Math.ceil(remainingMs / 1000);
+
+      if (remainingSec <= 0) {
+        // LOCK SITE
+        setUnlocked(false);
+        // Clear cookies to prevent simple bypass
+        setCookie("enzy_site_unlocked", "false", -1);
+        setCookie("enzy_last_unlocked_at", "0", -1);
+        setShowTimeoutWarning(false);
+        setDigits(new Array(settings.siteCode.length).fill(""));
+      } else if (remainingSec <= 30) {
+        setShowTimeoutWarning(true);
+        setCountdown(remainingSec);
+      } else if (showTimeoutWarning) {
+        setShowTimeoutWarning(false);
+      }
+    }, 1000);
+
+    return () => clearInterval(interval);
+  }, [unlocked, lastActivity, settings, showTimeoutWarning]);
 
   // ── Re-evaluate unlock whenever settings, user, or route change ───────────
   useEffect(() => {
@@ -147,6 +204,7 @@ function SiteLockContent() {
     setCookie("enzy_site_unlocked", "true", 90);
     setCookie("enzy_last_unlocked_at", Date.now().toString(), 90);
     setUnlocked(true);
+    setLastActivity(Date.now());
   };
 
   const handleDigitChange = (index: number, value: string) => {
@@ -155,7 +213,7 @@ function SiteLockContent() {
     newDigits[index] = value.slice(-1);
     setDigits(newDigits);
     setError(false);
-    if (value && index < 2) inputs.current[index + 1].focus();
+    if (value && index < CORRECT_CODE.length - 1) inputs.current[index + 1].focus();
     if (newDigits.every((d) => d !== "")) {
       if (newDigits.join("") === CORRECT_CODE) handleUnlock();
       else setError(true);
@@ -211,10 +269,76 @@ function SiteLockContent() {
         onClose={() => setShowMembershipModal(false)}
         initialRole={selectedRoleForMembership}
       />
+
+      {/* Inactivity Warning Modal */}
+      <AnimatePresence>
+        {showTimeoutWarning && unlocked && (
+          <motion.div 
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 z-[1000] flex items-center justify-center p-4 bg-brand-dark/95 backdrop-blur-2xl"
+          >
+            <motion.div 
+              initial={{ scale: 0.9, y: 20 }}
+              animate={{ scale: 1, y: 0 }}
+              exit={{ scale: 0.9, y: 20 }}
+              className="bg-white dark:bg-slate-900 w-full max-w-md rounded-[2.5rem] p-10 shadow-2xl border border-white/10 text-center space-y-8"
+            >
+              <div className="mx-auto w-24 h-24 rounded-full bg-amber-500/10 flex items-center justify-center border border-amber-500/20 relative">
+                <span className="text-4xl animate-bounce">⏳</span>
+                <div className="absolute inset-0 rounded-full border-2 border-amber-500/30 animate-ping" />
+              </div>
+
+              <div className="space-y-2">
+                <h3 className="text-2xl font-black text-brand-dark dark:text-white uppercase italic tracking-tighter">
+                  Ditt besök löper ut snart
+                </h3>
+                <p className="text-[10px] text-gray-400 font-bold uppercase tracking-[0.2em] leading-relaxed">
+                  På grund av inaktivitet kommer sajten att låsas om:
+                </p>
+              </div>
+
+              <div className="text-6xl font-black text-brand-teal italic tabular-nums">
+                {countdown}s
+              </div>
+
+              <div className="flex flex-col gap-4 mt-2">
+                <button
+                  onClick={() => {
+                    setLastActivity(Date.now());
+                    setShowTimeoutWarning(false);
+                    setCountdown(30);
+                  }}
+                  className="w-full py-5 rounded-2xl bg-brand-teal text-white font-black text-sm uppercase tracking-widest hover:bg-brand-dark transition-all active:scale-95 shadow-xl shadow-brand-teal/20"
+                >
+                  Jag är kvar!
+                </button>
+                <button
+                  onClick={() => {
+                    setUnlocked(false);
+                    setCookie("enzy_site_unlocked", "false", -1);
+                    setCookie("enzy_last_unlocked_at", "0", -1);
+                    setShowTimeoutWarning(false);
+                    setDigits(new Array(settings?.siteCode.length || 0).fill(""));
+                  }}
+                  className="w-full py-5 rounded-2xl bg-gray-100 dark:bg-slate-800 text-gray-500 font-black text-sm uppercase tracking-widest hover:bg-gray-200 dark:hover:bg-slate-700 transition-all active:scale-95"
+                >
+                  Lämna sidan
+                </button>
+              </div>
+
+              <div className="text-[9px] text-gray-400 font-bold uppercase tracking-widest italic pt-2">
+                Inställt på {settings?.lockTimeoutMinutes} {settings?.lockTimeoutMinutes === 1 ? 'minut' : 'minuter'} av administratören
+              </div>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
     </>
   );
 
-  if (unlocked && !showInfoModal && !showMembershipModal) return null;
+  if (unlocked && !showInfoModal && !showMembershipModal && !showTimeoutWarning) return null;
   if (unlocked) return modalsOnly;
 
   // ── Lock screen ───────────────────────────────────────────────────────────
@@ -250,14 +374,14 @@ function SiteLockContent() {
                   <span className="text-4xl">🔐</span>
                 </div>
                 <h1 className="text-4xl md:text-5xl font-black text-white italic uppercase tracking-tighter">
-                  Säkerhetsportal
+                  Säkerhetskod
                 </h1>
                 <p className="text-gray-500 font-bold uppercase tracking-[0.2em] text-[10px]">
-                  Vänligen ange den 3-siffriga koden för tillträde
+                  Vänligen ange den {CORRECT_CODE.length}-siffriga koden för tillträde
                 </p>
               </div>
 
-              <div className="flex justify-center gap-4">
+              <div className="flex flex-wrap justify-center gap-2 md:gap-4 max-w-full px-4">
                 {digits.map((digit, i) => (
                   <motion.input
                     key={i}
@@ -266,12 +390,13 @@ function SiteLockContent() {
                     }}
                     type="text"
                     inputMode="numeric"
+                    autoComplete="new-password"
                     value={digit}
                     animate={error ? { x: [0, -10, 10, -10, 10, 0] } : {}}
                     transition={{ duration: 0.4 }}
                     onChange={(e) => handleDigitChange(i, e.target.value)}
                     onKeyDown={(e) => handleKeyDown(i, e)}
-                    className={`w-16 h-20 md:w-20 md:h-24 bg-[#1a2030] rounded-3xl border-2 text-center text-4xl font-black transition-all outline-none ${
+                    className={`w-10 h-14 sm:w-14 sm:h-20 md:w-20 md:h-24 bg-[#1a2030] rounded-2xl md:rounded-3xl border-2 text-center text-xl sm:text-2xl md:text-4xl font-black transition-all outline-none ${
                       error
                         ? "border-red-500 text-red-500"
                         : "border-white/5 text-brand-teal focus:border-brand-teal focus:ring-4 focus:ring-brand-teal/10"
