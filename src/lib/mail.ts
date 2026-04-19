@@ -56,8 +56,19 @@ export async function sendEmail({ to, subject, htmlContent, sender: customSender
     return { success: false, error: "Brevo is not active or API key is missing" };
   }
 
+  const companyName = (() => {
+    try {
+      const sPath = getSettingsPath();
+      if (fs.existsSync(sPath)) {
+        const data = JSON.parse(fs.readFileSync(sPath, 'utf8'));
+        return data.company?.name || "COMPANY";
+      }
+    } catch (e) {}
+    return "COMPANY";
+  })();
+
   const sender = customSender || {
-    name: settings.senderName || "Enzymatica",
+    name: settings.senderName || companyName,
     email: settings.senderEmail || "news@enzymatica.se"
   };
 

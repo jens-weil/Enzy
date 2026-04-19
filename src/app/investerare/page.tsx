@@ -4,6 +4,7 @@ import { useState, useEffect } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import dynamic from "next/dynamic";
+import { fetchSettingsOnce } from "@/lib/settingsCache";
 
 const StockChartModal = dynamic(() => import("../../components/StockChartModal"), { ssr: false });
 
@@ -52,6 +53,7 @@ export default function InvesterarePage() {
   const [sharesCount, setSharesCount] = useState("142 823 696");
   const [sectorName, setSectorName] = useState("Hälsovård");
   const [liveStock, setLiveStock] = useState<{ price: string; change: string; exchangeName: string; fullExchange: string } | null>(null);
+  const [company, setCompany] = useState({ name: "Enzymatica" });
 
   const fetchTickerSettings = async () => {
     try {
@@ -62,6 +64,9 @@ export default function InvesterarePage() {
         setIsStockActive(settings.stock.isActive ?? true);
         setSharesCount(settings.stock.shares || "142 823 696");
         setSectorName(settings.stock.sector || "Hälsovård");
+      }
+      if (settings?.company?.name) {
+        setCompany({ name: settings.company.name });
       }
     } catch (err) {
       console.error("Failed to fetch ticker settings:", err);
@@ -165,7 +170,7 @@ export default function InvesterarePage() {
                 Vi bygger framtiden för <span className="text-brand-teal">hälsa</span>
               </h1>
               <p className="text-xl text-gray-600 dark:text-gray-400 max-w-2xl font-medium leading-relaxed">
-                Enzymatica är ett Life Science-bolag som utvecklar och säljer hälsoprodukter baserade på en barriärteknologi med marina enzymer.
+                {company.name} är ett Life Science-bolag som utvecklar och säljer hälsoprodukter baserade på en barriärteknologi med marina enzymer.
               </p>
 
               {isStockActive && (
@@ -210,7 +215,7 @@ export default function InvesterarePage() {
               <div className="aspect-square rounded-[3rem] overflow-hidden shadow-2xl border-8 border-white dark:border-slate-900 relative">
                 <Image
                   src="/media/hero_lab_researchers.png"
-                  alt="Enzymatica Research"
+                  alt={`${company.name} Research`}
                   fill
                   sizes="(max-width: 768px) 100vw, 50vw"
                   className="object-cover transform hover:scale-110 transition-transform duration-700"

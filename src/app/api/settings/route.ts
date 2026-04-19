@@ -71,7 +71,10 @@ function getSettings() {
     company: {
       name: "Enzymatica",
       logoUrl: "/media/logo.png",
-      description: "Enzymatica utvecklar och säljer hälsoprodukter mot infektionsrelaterade sjukdomar, baserade på en barriärteknik som skyddar och förebygger."
+      description: "Enzymatica utvecklar och säljer hälsoprodukter mot infektionsrelaterade sjukdomar, baserade på en barriärteknik som skyddar och förebygger.",
+      address: "Ideon Science Park, 223 70 Lund, Sverige",
+      email: "info@enzymatica.com",
+      phone: "+46 (0)46 286 31 00"
     },
     theme: {
       mode: "preset",

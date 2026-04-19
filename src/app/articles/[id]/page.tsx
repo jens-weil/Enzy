@@ -5,6 +5,7 @@ import Link from 'next/link';
 import { Metadata } from 'next';
 import { notFound } from 'next/navigation';
 import SocialShare from '@/components/SocialShare';
+import { getSettingsPath } from '@/lib/settingsPath';
 
 type Article = {
   id: string;
@@ -48,16 +49,25 @@ export async function generateMetadata({ params }: { params: Promise<{ id: strin
   
   if (!article) return { title: 'Artikel hittades inte' };
 
+  const settingsPath = getSettingsPath();
+  let companyName = "Enzymatica";
+  if (fs.existsSync(settingsPath)) {
+    try {
+      const settings = JSON.parse(fs.readFileSync(settingsPath, 'utf8'));
+      if (settings.company?.name) companyName = settings.company.name;
+    } catch (e) {}
+  }
+
   const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://enzymatica.se';
 
   return {
-    title: `${article.title} | Enzymatica`,
+    title: `${article.title} | ${companyName}`,
     description: article.ingress,
     openGraph: {
       title: article.title,
       description: article.ingress,
       url: `${siteUrl}/articles/${id}`,
-      siteName: 'Enzymatica',
+      siteName: companyName,
       images: [
         {
           url: article.imageUrl?.startsWith('http') ? article.imageUrl : `${siteUrl}${article.imageUrl || '/media/logo.png'}`,

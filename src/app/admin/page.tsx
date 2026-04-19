@@ -1,15 +1,23 @@
 "use client";
 
-import { Suspense, useEffect } from 'react';
+import { Suspense, useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Navbar from '@/components/Navbar';
 import Link from 'next/link';
 import { useAuth } from '@/components/AuthContext';
 import { supabase } from '@/lib/supabase';
+import { fetchSettingsOnce } from '@/lib/settingsCache';
 
 function AdminDashboard() {
   const router = useRouter();
   const { user, profile, loading: authLoading } = useAuth();
+  const [company, setCompany] = useState({ name: "Enzymatica" });
+  
+  useEffect(() => {
+    fetchSettingsOnce().then(data => {
+      if (data?.company?.name) setCompany({ name: data.company.name });
+    });
+  }, []);
   
   // Redirect if not Admin, Editor or Redaktör
   useEffect(() => {
@@ -33,7 +41,7 @@ function AdminDashboard() {
               Administration
             </h1>
             <p className="text-gray-500 font-bold uppercase tracking-[0.2em] text-[10px]">
-                Enzymatica Portal Central Control
+                {company.name} Portal Central Control
             </p>
           </div>
           <button 

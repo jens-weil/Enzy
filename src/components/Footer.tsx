@@ -6,7 +6,10 @@ import { fetchSettingsOnce, invalidateSettingsCache } from "@/lib/settingsCache"
 export default function Footer() {
   const [company, setCompany] = useState({ 
     name: "Enzymatica", 
-    description: "Enzymatica utvecklar och säljer hälsoprodukter mot infektionsrelaterade sjukdomar, baserade på en barriärteknik som skyddar och förebygger." 
+    description: "Enzymatica utvecklar och säljer hälsoprodukter mot infektionsrelaterade sjukdomar, baserade på en barriärteknik som skyddar och förebygger.",
+    address: "",
+    email: "",
+    phone: ""
   });
 
   const loadSettings = () => {
@@ -14,7 +17,10 @@ export default function Footer() {
       if (data?.company) {
         setCompany({
           name: data.company.name || "Enzymatica",
-          description: data.company.description || "Enzymatica utvecklar och säljer hälsoprodukter mot infektionsrelaterade sjukdomar, baserade på en barriärteknik som skyddar och förebygger."
+          description: data.company.description || "Enzymatica utvecklar och säljer hälsoprodukter mot infektionsrelaterade sjukdomar, baserade på en barriärteknik som skyddar och förebygger.",
+          address: data.company.address || "",
+          email: data.company.email || "",
+          phone: data.company.phone || ""
         });
       }
     }).catch(console.error);
@@ -52,10 +58,9 @@ export default function Footer() {
           <div>
             <h3 className="font-semibold text-lg mb-6 text-brand-cyan">Kontakt</h3>
             <ul className="space-y-4 text-sm text-brand-light/80">
-              <li>Ideon Science Park</li>
-              <li>223 70 Lund, Sverige</li>
-              <li>info@enzymatica.com</li>
-              <li>+46 (0)46 286 31 00</li>
+              {company.address && <li>{company.address}</li>}
+              {company.email && <li><a href={`mailto:${company.email}`} className="hover:text-white transition-colors">{company.email}</a></li>}
+              {company.phone && <li><a href={`tel:${company.phone}`} className="hover:text-white transition-colors">{company.phone}</a></li>}
             </ul>
           </div>
         </div>

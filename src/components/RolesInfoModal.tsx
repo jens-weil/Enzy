@@ -49,7 +49,7 @@ export default function RolesInfoModal({ onClose, onApply, isLockActive, company
   const [expandedRole, setExpandedRole] = useState<string | null>(null);
   const [selectedRole, setSelectedRole] = useState("Anonym Besökare");
   const [dontShow, setDontShow] = useState(false);
-  const [internalCompany, setInternalCompany] = useState(providedCompany || { name: "Enzymatica", logoUrl: "/media/logo.png" });
+  const [internalCompany, setInternalCompany] = useState(providedCompany || { name: "COMPANY", logoUrl: "/media/logo.png" });
 
   useEffect(() => {
     if (!providedCompany) {

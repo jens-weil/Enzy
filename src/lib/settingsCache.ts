@@ -27,6 +27,9 @@ export type PublicSettings = {
     name: string;
     logoUrl: string;
     description: string;
+    address?: string;
+    email?: string;
+    phone?: string;
   };
   theme: {
     mode: "preset" | "custom";
@@ -84,7 +87,10 @@ export function getSecurityDefaults() {
     updatedAt: 0,
     company: {
       name: "Enzymatica",
-      logoUrl: "/media/logo.png"
+      logoUrl: "/media/logo.png",
+      address: "Ideon Science Park, 223 70 Lund, Sverige",
+      email: "info@enzymatica.com",
+      phone: "+46 (0)46 286 31 00"
     },
     theme: {
       mode: "preset",

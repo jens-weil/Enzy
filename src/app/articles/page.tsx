@@ -1,6 +1,7 @@
 import fs from 'fs';
 import path from 'path';
 import Image from 'next/image';
+import { getSettingsPath } from '@/lib/settingsPath';
 
 type Article = {
   id: string;
@@ -44,6 +45,16 @@ export default async function ArticlesPage() {
   // Sort articles by date (newest first)
   articles.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
 
+  // Get dynamic company name
+  const settingsPath = getSettingsPath();
+  let companyName = "Enzymatica";
+  if (fs.existsSync(settingsPath)) {
+    try {
+      const settings = JSON.parse(fs.readFileSync(settingsPath, 'utf8'));
+      if (settings.company?.name) companyName = settings.company.name;
+    } catch (e) {}
+  }
+
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
       <div className="mb-6 pb-4 border-b border-gray-200 dark:border-gray-800">
@@ -51,7 +62,7 @@ export default async function ArticlesPage() {
           Nyheter & Artiklar
         </h1>
         <p className="text-xl text-gray-600 dark:text-gray-400">
-          Håll dig uppdaterad med de senaste pressmeddelandena, nyheterna och insikterna från Enzymatica.
+          Håll dig uppdaterad med de senaste pressmeddelandena, nyheterna och insikterna från {companyName}.
         </p>
       </div>
 

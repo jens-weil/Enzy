@@ -4,6 +4,7 @@ import { useState, useEffect, use } from "react";
 import { useRouter } from "next/navigation";
 import Navbar from "@/components/Navbar";
 import { useAuth } from "@/components/AuthContext";
+import { fetchSettingsOnce } from "@/lib/settingsCache";
 
 export default function ShareVerificationPage({ params: paramsPromise }: { params: Promise<{ id: string }> }) {
   const params = use(paramsPromise);
@@ -17,6 +18,13 @@ export default function ShareVerificationPage({ params: paramsPromise }: { param
   const [message, setMessage] = useState<{ type: "success" | "error"; text: string } | null>(null);
   const [authErrorType, setAuthErrorType] = useState<"not_logged_in" | "wrong_account" | null>(null);
   const [showHelp, setShowHelp] = useState(false);
+  const [company, setCompany] = useState({ name: "portalen" });
+
+  useEffect(() => {
+    fetchSettingsOnce().then(data => {
+      if (data?.company?.name) setCompany({ name: data.company.name });
+    });
+  }, []);
 
   useEffect(() => {
     if (authLoading) return;
@@ -124,7 +132,7 @@ export default function ShareVerificationPage({ params: paramsPromise }: { param
                   </div>
                 </div>
                 <p className="text-xs text-gray-500 font-medium leading-relaxed">
-                  Tack för att du delat enzymatica-portalen! Klistra in den publika länken till ditt inlägg nedan så att vi kan verifiera din delning.
+                  Tack för att du delat {company.name}-portalen! Klistra in den publika länken till ditt inlägg nedan så att vi kan verifiera din delning.
                 </p>
               </div>
             )}

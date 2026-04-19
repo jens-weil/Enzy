@@ -3,6 +3,8 @@ import { supabaseAdmin } from '@/lib/supabase-admin';
 import { sendEmail } from '@/lib/mail';
 import { requireAuth } from '@/lib/auth';
 import { getSiteUrl } from '@/lib/siteConfig';
+import fs from 'fs';
+import { getSettingsPath } from '@/lib/settingsPath';
 
 export async function POST(request: NextRequest) {
   try {
@@ -132,7 +134,16 @@ export async function POST(request: NextRequest) {
                   <!-- Footer -->
                   <tr>
                     <td align="center" style="background-color: #fafafa; padding: 20px; color: #bbbbbb; font-size: 11px; text-transform: uppercase; letter-spacing: 1px;">
-                      © ${new Date().getFullYear()} Enzymatica Portalen
+                      © ${new Date().getFullYear()} ${(() => {
+                        try {
+                          const sPath = getSettingsPath();
+                          if (fs.existsSync(sPath)) {
+                            const settings = JSON.parse(fs.readFileSync(sPath, 'utf8'));
+                            return settings.company?.name || "Enzymatica";
+                          }
+                        } catch (e) {}
+                        return "Enzymatica";
+                      })()} Portalen
                     </td>
                   </tr>
                 </table>

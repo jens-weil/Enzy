@@ -49,12 +49,15 @@ export default function Navbar() {
 
   const loadSettings = () => {
     fetchSettingsOnce().then(data => {
+      if (data?.company) {
+        setCompany({
+          name: data.company.name || "Enzymatica",
+          logoUrl: data.company.logoUrl || "/media/logo.png"
+        });
+      }
       if (data?.stock?.ticker) {
         setTickerSymbol(data.stock.ticker);
         setIsTickerActive(data.stock.isActive ?? true);
-      }
-      if (data?.company) {
-        setCompany(data.company);
       }
     }).catch(console.error);
   };

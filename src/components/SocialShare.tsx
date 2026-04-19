@@ -167,9 +167,10 @@ export default function SocialShare({
       // Generic Share (Global Dialog) or Fallback for IG/TikTok
       if (typeof navigator !== "undefined" && navigator.share) {
         try {
+          const companyName = channelSettings?.company?.name || "Enzymatica";
           await navigator.share({
             title: articleTitle,
-            text: "Kollade precis på den här artikeln från Enzymatica!",
+            text: `Kollade precis på den här artikeln från ${companyName}!`,
             url: articleUrl,
           });
         } catch (err) {

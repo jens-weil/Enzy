@@ -4,6 +4,7 @@ import { useEffect, Suspense, useState, useRef } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import Image from "next/image";
 import { createClient } from "@supabase/supabase-js";
+import { fetchSettingsOnce } from "@/lib/settingsCache";
 
 function VerifyContent() {
   const searchParams = useSearchParams();
@@ -11,6 +12,7 @@ function VerifyContent() {
   const [isProcessing, setIsProcessing] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [statusText, setStatusText] = useState("");
+  const [company, setCompany] = useState({ name: "Enzymatica", logoUrl: "/media/logo.png" });
 
   const [email, setEmail] = useState(searchParams.get("email") || "");
   const [otp, setOtp] = useState(["", "", "", "", "", ""]);
@@ -36,9 +38,13 @@ function VerifyContent() {
     }
   ));
 
-  // Auto-focus first field on mount
+  // Auto-focus first field on mount and fetch settings
   useEffect(() => {
     inputRefs[0].current?.focus();
+
+    fetchSettingsOnce().then(data => {
+      if (data?.company) setCompany(data.company);
+    });
   }, []);
 
   const handleOtpChange = (index: number, value: string) => {
@@ -155,14 +161,14 @@ function VerifyContent() {
     <div className="min-h-screen flex flex-col items-center justify-center p-6 bg-gray-50 dark:bg-slate-950">
       <div className="w-full max-w-xl bg-white dark:bg-slate-900 rounded-[3rem] shadow-2xl border border-gray-100 dark:border-slate-800 p-12 text-center animate-in zoom-in-95 duration-500">
         <div className="w-24 h-24 bg-brand-teal/10 text-brand-teal rounded-3xl flex items-center justify-center mx-auto mb-10 shadow-inner overflow-hidden rotate-3">
-          <Image src="/media/logo.png" alt="Enzy" width={60} height={60} className="opacity-90 object-contain -rotate-3" />
+          <Image src={company.logoUrl} alt={company.name} width={60} height={60} className="opacity-90 object-contain -rotate-3" />
         </div>
 
         <h1 className="text-4xl font-black text-brand-dark dark:text-white uppercase italic tracking-tighter mb-4">
           Bekräfta konto
         </h1>
         <p className="text-gray-500 dark:text-gray-400 font-medium mb-10 max-w-md mx-auto leading-relaxed">
-          Vi har skickat en sexsiffrig kod till din e-post. Ange den nedan för att slutföra din registrering.
+          Vi har skickat en sexsiffrig kod till din e-post. Ange den nedan för att slutföra din registrering hos {company.name}.
         </p>
 
         <form onSubmit={handleVerify} className="space-y-8">
@@ -208,7 +214,7 @@ function VerifyContent() {
 
         <div className="mt-12 pt-8 border-t border-gray-50 dark:border-slate-800 flex flex-col items-center">
           <p className="text-[10px] font-black uppercase tracking-[0.3em] text-gray-300">
-            Säker portal • Enzymatica AB
+            Säker portal • {company.name}
           </p>
         </div>
       </div>

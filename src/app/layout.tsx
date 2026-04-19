@@ -17,13 +17,13 @@ const inter = Inter({ subsets: ["latin"] });
 export async function generateMetadata(): Promise<Metadata> {
   const settingsPath = getSettingsPath();
   let companyName = "Enzymatica";
+  let description = "Barriärteknik som skyddar och förebygger";
   
   if (fs.existsSync(settingsPath)) {
     try {
       const settings = JSON.parse(fs.readFileSync(settingsPath, "utf-8"));
-      if (settings.company?.name) {
-        companyName = settings.company.name;
-      }
+      if (settings.company?.name) companyName = settings.company.name;
+      if (settings.company?.description) description = settings.company.description;
     } catch (e) {
       console.error("Failed to parse settings for metadata", e);
     }
@@ -31,7 +31,7 @@ export async function generateMetadata(): Promise<Metadata> {
 
   return {
     title: `${companyName} - Barriärteknik som skyddar`,
-    description: "Barriärteknik som skyddar och förebygger",
+    description: description,
   };
 }
 

@@ -4,6 +4,7 @@ import { useEffect, Suspense, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import Image from "next/image";
 import { supabase } from "@/lib/supabase";
+import { fetchSettingsOnce } from "@/lib/settingsCache";
 
 // Module-level variable to track across re-renders/Strict Mode
 let processedCode: string | null = null;
@@ -16,6 +17,18 @@ function AuthCallbackContent() {
   const [waitingForClick, setWaitingForClick] = useState(false);
   const [isProcessing, setIsProcessing] = useState(false);
   const [debugInfo, setDebugInfo] = useState<{ query: any, hash: string } | null>(null);
+  const [company, setCompany] = useState({ name: "Enzymatica", logoUrl: "/media/logo.png" });
+
+  useEffect(() => {
+    fetchSettingsOnce().then(data => {
+      if (data?.company) {
+        setCompany({
+          name: data.company.name || "Enzymatica",
+          logoUrl: data.company.logoUrl || "/media/logo.png"
+        });
+      }
+    });
+  }, []);
 
   const navigateToPortal = async (userId: string) => {
     try {
@@ -127,7 +140,7 @@ function AuthCallbackContent() {
         // We do NOT exchange automatically. We show a button.
         if (isMounted) {
           setWaitingForClick(true);
-          setStatusText("Välkommen till Enzymatica!");
+          setStatusText(`Välkommen till ${company.name}!`);
         }
       } else {
         if (isMounted) setErrorMessage("Ingen verifieringskod hittades i länken. Kontrollera att länken är komplett eller försök logga in igen.");
@@ -192,7 +205,7 @@ function AuthCallbackContent() {
       <div className="min-h-screen flex flex-col items-center justify-center p-6 bg-gray-50 dark:bg-slate-950">
         <div className="w-full max-w-md bg-white dark:bg-slate-900 rounded-[2.5rem] shadow-2xl border border-gray-100 dark:border-slate-800 p-10 text-center animate-in zoom-in-95 duration-500">
            <div className="w-20 h-20 bg-brand-teal/10 text-brand-teal rounded-full flex items-center justify-center text-4xl mx-auto mb-8 shadow-inner">
-             <Image src="/media/logo.png" alt="Enzy" width={40} height={40} className="opacity-80" />
+             <Image src={company.logoUrl} alt={company.name} width={40} height={40} className="opacity-80 object-contain" />
            </div>
            <h1 className="text-3xl font-black text-brand-dark dark:text-white uppercase italic tracking-tighter mb-4">
             Välkommen!
@@ -213,7 +226,7 @@ function AuthCallbackContent() {
           </button>
 
           <p className="mt-8 text-[10px] font-black uppercase tracking-widest text-gray-300">
-            Säker verifiering av Enzymatica
+            Säker verifiering av {company.name}
           </p>
         </div>
       </div>

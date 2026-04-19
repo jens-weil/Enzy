@@ -15,10 +15,10 @@ export default function SettingsPage() {
   const [linkedin, setLinkedin] = useState({ isActive: false, authorUrn: "", accessToken: "" });
   const [tiktok, setTiktok] = useState({ isActive: false, openId: "", accessToken: "" });
   const [x, setX] = useState({ isActive: false, accessToken: "" });
-  const [stock, setStock] = useState({ isActive: true, ticker: "ENZY.ST", shares: "142 823 696", sector: "Hälsovård" });
-  const [brevo, setBrevo] = useState({ isActive: false, apiKey: "", senderName: "Enzymatica", senderEmail: "news@enzymatica.se" });
+  const [stock, setStock] = useState({ isActive: true, ticker: "", shares: "", sector: "" });
+  const [brevo, setBrevo] = useState({ isActive: false, apiKey: "", senderName: "", senderEmail: "" });
   const [security, setSecurity] = useState<any>({ inactivityActive: true, inactivityTimeoutMinutes: 60, inactivityWarningSeconds: 30, siteLockActive: false, onboardingActive: true, siteCode: "0000", visitorCookieLifetimeValue: 1, visitorCookieLifetimeUnit: "days" });
-  const [company, setCompany] = useState<any>({ name: "Enzymatica", logoUrl: "/media/logo.png", description: "" });
+  const [company, setCompany] = useState<any>({ name: "", logoUrl: "/media/logo.png", description: "", address: "", email: "", phone: "" });
   const [theme, setTheme] = useState<any>({ mode: "preset", presetId: THEME_PRESETS[0].id, colors: THEME_PRESETS[0].colors });
   const [hero, setHero] = useState<any>({ 
     mode: "slideshow", 
@@ -156,7 +156,10 @@ export default function SettingsPage() {
       if (res.ok) {
         const data = await res.json();
         setAvailableImages((prev: any) => [...prev, data.url]);
-        if (activeSlideIndex !== null) {
+        if (activeSlideIndex === -1) {
+          setCompany((p: any) => ({ ...p, logoUrl: data.url }));
+          setShowMediaPicker(false);
+        } else if (activeSlideIndex !== null) {
           const newSlides = [...hero.slides];
           newSlides[activeSlideIndex].src = data.url;
           setHero({ ...hero, slides: newSlides });
@@ -377,28 +380,62 @@ export default function SettingsPage() {
                             <div className="grid grid-cols-1 md:grid-cols-2 gap-10">
                               {/* --- FÖRETAGSNAMN --- */}
                               <div className="space-y-6">
-                                <label className="space-y-3 block">
-                                  <span className="text-[10px] font-black text-gray-400 uppercase tracking-widest ml-2">Företagsnamn</span>
-                                  <input 
-                                    type="text" 
-                                    value={company.name} 
-                                    onChange={e => setCompany((p: any) => ({ ...p, name: e.target.value }))} 
-                                    className="w-full px-6 py-5 rounded-2xl border border-gray-100 dark:border-slate-800 bg-white dark:bg-slate-950 focus:border-brand-teal outline-none font-black text-lg dark:text-white transition-all shadow-sm" 
-                                    placeholder="Ex: Enzymatica"
-                                  />
-                                </label>
-                                
-                                <label className="space-y-3 block">
-                                  <span className="text-[10px] font-black text-gray-400 uppercase tracking-widest ml-2">Om företaget (beskrivning)</span>
-                                  <textarea 
-                                    value={company.description} 
-                                    onChange={e => setCompany((p: any) => ({ ...p, description: e.target.value }))} 
-                                    rows={4}
-                                    className="w-full px-6 py-5 rounded-2xl border border-gray-100 dark:border-slate-800 bg-white dark:bg-slate-950 focus:border-brand-teal outline-none font-bold text-sm dark:text-white transition-all shadow-sm resize-none" 
-                                    placeholder="Skriv en kort text om företaget..."
-                                  />
-                                </label>
-                              </div>
+                                  <label className="space-y-3 block">
+                                    <span className="text-[10px] font-black text-gray-400 uppercase tracking-widest ml-2">Företagsnamn</span>
+                                    <input 
+                                      type="text" 
+                                      value={company.name} 
+                                      onChange={e => setCompany((p: any) => ({ ...p, name: e.target.value }))} 
+                                      className="w-full px-6 py-5 rounded-2xl border border-gray-100 dark:border-slate-800 bg-white dark:bg-slate-950 focus:border-brand-teal outline-none font-black text-lg dark:text-white transition-all shadow-sm" 
+                                      placeholder="Ex: Mitt Företag AB"
+                                    />
+                                  </label>
+
+                                  <label className="space-y-3 block">
+                                    <span className="text-[10px] font-black text-gray-400 uppercase tracking-widest ml-2">Besöksadress</span>
+                                    <input 
+                                      type="text" 
+                                      value={company.address || ""} 
+                                      onChange={e => setCompany((p: any) => ({ ...p, address: e.target.value }))} 
+                                      className="w-full px-6 py-5 rounded-2xl border border-gray-100 dark:border-slate-800 bg-white dark:bg-slate-950 focus:border-brand-teal outline-none font-bold text-sm dark:text-white transition-all shadow-sm" 
+                                      placeholder="Gata, Postnummer, Ort"
+                                    />
+                                  </label>
+
+                                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                    <label className="space-y-3 block">
+                                      <span className="text-[10px] font-black text-gray-400 uppercase tracking-widest ml-2">Kontakt-epost</span>
+                                      <input 
+                                        type="email" 
+                                        value={company.email || ""} 
+                                        onChange={e => setCompany((p: any) => ({ ...p, email: e.target.value }))} 
+                                        className="w-full px-6 py-5 rounded-2xl border border-gray-100 dark:border-slate-800 bg-white dark:bg-slate-950 focus:border-brand-teal outline-none font-bold text-sm dark:text-white transition-all shadow-sm" 
+                                        placeholder="info@foretag.se"
+                                      />
+                                    </label>
+                                    <label className="space-y-3 block">
+                                      <span className="text-[10px] font-black text-gray-400 uppercase tracking-widest ml-2">Telefonnummer</span>
+                                      <input 
+                                        type="text" 
+                                        value={company.phone || ""} 
+                                        onChange={e => setCompany((p: any) => ({ ...p, phone: e.target.value }))} 
+                                        className="w-full px-6 py-5 rounded-2xl border border-gray-100 dark:border-slate-800 bg-white dark:bg-slate-950 focus:border-brand-teal outline-none font-bold text-sm dark:text-white transition-all shadow-sm" 
+                                        placeholder="+46 (0)00 000 00 00"
+                                      />
+                                    </label>
+                                  </div>
+                                  
+                                  <label className="space-y-3 block">
+                                    <span className="text-[10px] font-black text-gray-400 uppercase tracking-widest ml-2">Om företaget (beskrivning)</span>
+                                    <textarea 
+                                      value={company.description} 
+                                      onChange={e => setCompany((p: any) => ({ ...p, description: e.target.value }))} 
+                                      rows={4}
+                                      className="w-full px-6 py-5 rounded-2xl border border-gray-100 dark:border-slate-800 bg-white dark:bg-slate-950 focus:border-brand-teal outline-none font-bold text-sm dark:text-white transition-all shadow-sm resize-none" 
+                                      placeholder="Skriv en kort text om företaget..."
+                                    />
+                                  </label>
+                                </div>
 
                               {/* --- LOGOTYP --- */}
                               <div className="p-8 bg-white dark:bg-slate-900 rounded-[2.5rem] border border-gray-100 dark:border-slate-800 shadow-xl flex flex-col items-center justify-center space-y-6">
@@ -724,89 +761,161 @@ export default function SettingsPage() {
                         )}
 
                         {channel.id === 'security' && (
-                          <div className="space-y-10 mt-10">
-                            <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-                              <button
-                                onClick={() => setSecurity((prev: any) => ({ ...prev, siteLockActive: !prev.siteLockActive }))}
-                                className={`group p-10 rounded-[2.5rem] border-2 text-left transition-all ${security.siteLockActive ? "border-brand-teal bg-white dark:bg-slate-900 shadow-2xl" : "border-transparent bg-gray-100 dark:bg-slate-800/50 opacity-60 hover:opacity-100"}`}
-                              >
-                                <div className="flex justify-between items-start mb-6">
-                                  <div className={`w-14 h-14 rounded-2xl flex items-center justify-center text-2xl transition-transform group-hover:scale-110 ${security.siteLockActive ? 'bg-brand-teal/10 text-brand-teal' : 'bg-gray-200 text-gray-400'}`}>
-                                    {security.siteLockActive ? "🔒" : "🔓"}
+                          <div className="space-y-12 mt-10">
+                            {/* Step 1: Sessioner */}
+                            <div className="space-y-6">
+                              <div className="flex items-center gap-4 mb-2">
+                                <div className="w-8 h-8 rounded-full bg-amber-500 text-white flex items-center justify-center font-black text-xs">1</div>
+                                <h4 className="text-[10px] font-black uppercase tracking-[0.3em] text-brand-dark dark:text-white italic">Steg 1: Sessioner</h4>
+                              </div>
+                              <div className="grid grid-cols-1 md:grid-cols-3 gap-8 items-start">
+                                <button
+                                  onClick={() => setSecurity((prev: any) => ({ ...prev, inactivityActive: !prev.inactivityActive }))}
+                                  className={`group p-8 rounded-[2rem] border-2 text-left transition-all h-full ${security.inactivityActive ? "border-amber-500 bg-white dark:bg-slate-900 shadow-2xl" : "border-transparent bg-gray-100 dark:bg-slate-800/50 opacity-60 hover:opacity-100"}`}
+                                >
+                                  <div className="flex justify-between items-start mb-4">
+                                    <div className={`w-12 h-12 rounded-2xl flex items-center justify-center text-xl transition-transform group-hover:scale-110 ${security.inactivityActive ? 'bg-amber-500/10 text-amber-500' : 'bg-gray-200 text-gray-400'}`}>
+                                      {security.inactivityActive ? "⌛" : "♾️"}
+                                    </div>
+                                    <div className={`w-3 h-3 rounded-full ${security.inactivityActive ? "bg-amber-500 animate-pulse" : "bg-gray-300"}`} />
                                   </div>
-                                  <div className={`w-4 h-4 rounded-full ${security.siteLockActive ? "bg-brand-teal animate-pulse" : "bg-gray-300"}`} />
+                                  <h3 className="font-black text-brand-dark dark:text-white uppercase italic text-sm mb-1">Aktivitetstimer</h3>
+                                  <p className="text-[9px] text-gray-400 font-bold uppercase tracking-[0.1em] leading-tight">Global sessionskontroll</p>
+                                </button>
+
+                                <div className={`p-8 bg-white dark:bg-slate-900 rounded-[2rem] border border-gray-100 dark:border-slate-800 shadow-xl space-y-6 h-full flex flex-col justify-center transition-all duration-500 ${!security.inactivityActive ? 'opacity-20 grayscale pointer-events-none scale-95 blur-[2px]' : ''}`}>
+                                  <label className="space-y-4 block">
+                                    <span className="text-[10px] font-black text-gray-400 uppercase tracking-widest ml-2 text-center block">Timeout (minuter)</span>
+                                    <div className="relative">
+                                      <input 
+                                        type="number" 
+                                        min="1"
+                                        disabled={!security.inactivityActive}
+                                        value={security.inactivityTimeoutMinutes || 60} 
+                                        onChange={e => setSecurity((p: any) => ({ ...p, inactivityTimeoutMinutes: parseInt(e.target.value) || 1 }))}
+                                        className="w-full px-5 py-4 rounded-xl border border-gray-100 dark:border-slate-800 bg-gray-50 dark:bg-slate-950 focus:border-brand-teal outline-none font-black text-xl text-center dark:text-white transition-all shadow-inner" 
+                                      />
+                                      <div className="absolute right-4 top-1/2 -translate-y-1/2 text-[10px] font-black text-gray-400 uppercase tracking-widest pointer-events-none">MIN</div>
+                                    </div>
+                                  </label>
                                 </div>
-                                <h3 className="font-black text-brand-dark dark:text-white uppercase italic text-lg mb-2">Sajtlås Active</h3>
-                                <p className="text-[10px] text-gray-400 font-bold uppercase tracking-[0.2em] leading-relaxed">Systemet blockerar åtkomst för obehöriga</p>
-                              </button>
-                              <button
-                                onClick={() => setSecurity((prev: any) => ({ ...prev, onboardingActive: !prev.onboardingActive }))}
-                                className={`group p-10 rounded-[2.5rem] border-2 text-left transition-all ${security.onboardingActive ? "border-brand-teal bg-white dark:bg-slate-900 shadow-2xl" : "border-transparent bg-gray-100 dark:bg-slate-800/50 opacity-60 hover:opacity-100"}`}
-                              >
-                                <div className="flex justify-between items-start mb-6">
-                                  <div className={`w-14 h-14 rounded-2xl flex items-center justify-center text-2xl transition-transform group-hover:scale-110 ${security.onboardingActive ? 'bg-brand-teal/10 text-brand-teal' : 'bg-gray-200 text-gray-400'}`}>
-                                    {security.onboardingActive ? "✨" : "🚫"}
-                                  </div>
-                                  <div className={`w-4 h-4 rounded-full ${security.onboardingActive ? "bg-brand-teal animate-pulse" : "bg-gray-300"}`} />
+
+                                <div className={`p-8 bg-white dark:bg-slate-900 rounded-[2rem] border border-gray-100 dark:border-slate-800 shadow-xl space-y-6 h-full flex flex-col justify-center transition-all duration-500 ${!security.inactivityActive ? 'opacity-20 grayscale pointer-events-none scale-95 blur-[2px]' : ''}`}>
+                                  <label className="space-y-4 block">
+                                    <span className="text-[10px] font-black text-gray-400 uppercase tracking-widest ml-2 text-center block">Varningstid (sekunder)</span>
+                                    <div className="relative">
+                                      <input 
+                                        type="number" 
+                                        min="5"
+                                        max="120"
+                                        disabled={!security.inactivityActive}
+                                        value={security.inactivityWarningSeconds || 30} 
+                                        onChange={e => setSecurity((p: any) => ({ ...p, inactivityWarningSeconds: parseInt(e.target.value) || 5 }))}
+                                        className="w-full px-5 py-4 rounded-xl border border-gray-100 dark:border-slate-800 bg-gray-50 dark:bg-slate-950 focus:border-brand-teal outline-none font-black text-xl text-center dark:text-white transition-all shadow-inner" 
+                                      />
+                                      <div className="absolute right-4 top-1/2 -translate-y-1/2 text-[10px] font-black text-gray-400 uppercase tracking-widest pointer-events-none">SEK</div>
+                                    </div>
+                                  </label>
                                 </div>
-                                <h3 className="font-black text-brand-dark dark:text-white uppercase italic text-lg mb-2">Onboarding Active</h3>
-                                <p className="text-[10px] text-gray-400 font-bold uppercase tracking-[0.2em] leading-relaxed">Visa välkomst-guide och rollbeskrivningar</p>
-                              </button>
+                              </div>
                             </div>
 
-                            <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-                              <div className="p-10 bg-white dark:bg-slate-900 rounded-[2.5rem] border border-gray-100 dark:border-slate-800 shadow-xl space-y-6">
-                                <label className="space-y-4 block">
-                                  <div className="flex justify-between items-center">
-                                    <span className="text-[10px] font-black text-gray-400 uppercase tracking-widest ml-2">Säkerhetskod (3-8 siffror)</span>
-                                    <span className={`text-[9px] font-black uppercase tracking-widest px-3 py-1 rounded-full ${security.siteCode?.length >= 3 && security.siteCode?.length <= 8 ? 'bg-green-50 text-green-500' : 'bg-red-50 text-red-500'}`}>
-                                      {security.siteCode?.length || 0} tecken
-                                    </span>
-                                  </div>
-                                  <input 
-                                    type="text" 
-                                    value={security.siteCode || ""} 
-                                    onChange={e => {
-                                      const val = e.target.value.replace(/\D/g, '').slice(0, 8);
-                                      setSecurity((p: any) => ({ ...p, siteCode: val }));
-                                    }} 
-                                    className="w-full px-6 py-5 rounded-2xl border border-gray-100 dark:border-slate-800 bg-gray-50 dark:bg-slate-950 focus:border-brand-teal outline-none font-black text-2xl tracking-[0.5em] text-center dark:text-white transition-all shadow-inner" 
-                                    placeholder="0000"
-                                  />
-                                  <p className="text-[9px] text-gray-400 font-bold uppercase tracking-widest text-center italic">
-                                    Krävs för att låsa upp portalen.
-                                  </p>
-                                </label>
+                            {/* Step 2: Tillträde */}
+                            <div className={`space-y-6 transition-all duration-500 ${!security.inactivityActive ? 'opacity-20 grayscale pointer-events-none blur-[2px]' : ''}`}>
+                              <div className="flex items-center gap-4 mb-2">
+                                <div className="w-8 h-8 rounded-full bg-brand-teal text-white flex items-center justify-center font-black text-xs">2</div>
+                                <h4 className="text-[10px] font-black uppercase tracking-[0.3em] text-brand-dark dark:text-white italic">Steg 2: Tillträde</h4>
                               </div>
-
-                              <div className="p-10 bg-white dark:bg-slate-900 rounded-[2.5rem] border border-gray-100 dark:border-slate-800 shadow-xl space-y-6">
-                                <label className="space-y-4 block">
-                                  <div className="flex justify-between items-center">
-                                    <span className="text-[10px] font-black text-gray-400 uppercase tracking-widest ml-2">Inaktivitetstimer (minuter)</span>
-                                    <span className="text-[9px] font-black uppercase tracking-widest px-3 py-1 rounded-full bg-brand-teal/10 text-brand-teal">
-                                      Auto-lås
-                                    </span>
+                              <div className="grid grid-cols-1 md:grid-cols-3 gap-8 items-start">
+                                <button
+                                  disabled={!security.inactivityActive}
+                                  onClick={() => setSecurity((prev: any) => ({ ...prev, siteLockActive: !prev.siteLockActive }))}
+                                  className={`group p-8 rounded-[2rem] border-2 text-left transition-all h-full ${security.siteLockActive ? "border-brand-teal bg-white dark:bg-slate-900 shadow-2xl" : "border-transparent bg-gray-100 dark:bg-slate-800/50 opacity-60 hover:opacity-100"}`}
+                                >
+                                  <div className="flex justify-between items-start mb-4">
+                                    <div className={`w-12 h-12 rounded-2xl flex items-center justify-center text-xl transition-transform group-hover:scale-110 ${security.siteLockActive ? 'bg-brand-teal/10 text-brand-teal' : 'bg-gray-200 text-gray-400'}`}>
+                                      {security.siteLockActive ? "🔒" : "🔓"}
+                                    </div>
+                                    <div className={`w-3 h-3 rounded-full ${security.siteLockActive ? "bg-brand-teal animate-pulse" : "bg-gray-300"}`} />
                                   </div>
-                                  <div className="relative">
+                                  <h3 className="font-black text-brand-dark dark:text-white uppercase italic text-sm mb-1">Sajtlås Active</h3>
+                                  <p className="text-[9px] text-gray-400 font-bold uppercase tracking-[0.1em] leading-tight">Portvakt för anonyma</p>
+                                </button>
+
+                                <div className={`md:col-span-2 p-8 bg-white dark:bg-slate-900 rounded-[2rem] border border-gray-100 dark:border-slate-800 shadow-xl space-y-6 h-full flex flex-col justify-center transition-all duration-500 ${(!security.siteLockActive || !security.inactivityActive) ? 'opacity-20 grayscale pointer-events-none scale-95 blur-[2px]' : ''}`}>
+                                  <label className="space-y-4 block w-full">
+                                    <div className="flex justify-between items-center px-2">
+                                      <span className="text-[10px] font-black text-gray-400 uppercase tracking-widest">Säkerhetskod (3-8 siffror)</span>
+                                      <span className={`text-[8px] font-black uppercase tracking-widest px-3 py-1 rounded-full ${security.siteCode?.length >= 3 && security.siteCode?.length <= 8 ? 'bg-green-50 text-green-500' : 'bg-red-50 text-red-500'}`}>
+                                        {security.siteCode?.length || 0} tecken
+                                      </span>
+                                    </div>
                                     <input 
-                                      type="number" 
-                                      min="1"
-                                      value={security.lockTimeoutMinutes || 60} 
+                                      type="text" 
+                                      disabled={!security.siteLockActive || !security.inactivityActive}
+                                      value={security.siteCode || ""} 
                                       onChange={e => {
-                                        const val = parseInt(e.target.value) || 1;
-                                        setSecurity((p: any) => ({ ...p, lockTimeoutMinutes: val }));
+                                        const val = e.target.value.replace(/\D/g, '').slice(0, 8);
+                                        setSecurity((p: any) => ({ ...p, siteCode: val }));
                                       }} 
-                                      className="w-full px-6 py-5 rounded-2xl border border-gray-100 dark:border-slate-800 bg-gray-50 dark:bg-slate-950 focus:border-brand-teal outline-none font-black text-2xl text-center dark:text-white transition-all shadow-inner" 
+                                      className="w-full px-5 py-4 rounded-xl border border-gray-100 dark:border-slate-800 bg-gray-50 dark:bg-slate-950 focus:border-brand-teal outline-none font-black text-2xl tracking-[0.5em] text-center dark:text-white transition-all shadow-inner" 
+                                      placeholder="0000"
                                     />
-                                    <div className="absolute right-6 top-1/2 -translate-y-1/2 text-[10px] font-black text-gray-400 uppercase tracking-widest pointer-events-none">MIN</div>
-                                  </div>
-                                  <p className="text-[9px] text-gray-400 font-bold uppercase tracking-widest text-center italic">
-                                    Sajten låses vid inaktivitet efter denna tid.
-                                  </p>
-                                </label>
+                                    <p className="text-[9px] text-gray-400 font-bold uppercase tracking-widest text-center italic">Krävs för att låsa upp portalen</p>
+                                  </label>
+                                </div>
                               </div>
                             </div>
 
+                            {/* Step 3: Välkomnande */}
+                            <div className="space-y-6">
+                              <div className="flex items-center gap-4 mb-2">
+                                <div className="w-8 h-8 rounded-full bg-brand-teal text-white flex items-center justify-center font-black text-xs">3</div>
+                                <h4 className="text-[10px] font-black uppercase tracking-[0.3em] text-brand-dark dark:text-white italic">Steg 3: Välkomnande</h4>
+                              </div>
+                              <div className="grid grid-cols-1 md:grid-cols-3 gap-8 items-start">
+                                <button
+                                  onClick={() => setSecurity((prev: any) => ({ ...prev, onboardingActive: !prev.onboardingActive }))}
+                                  className={`group p-8 rounded-[2rem] border-2 text-left transition-all h-full ${security.onboardingActive ? "border-brand-teal bg-white dark:bg-slate-900 shadow-2xl" : "border-transparent bg-gray-100 dark:bg-slate-800/50 opacity-60 hover:opacity-100"}`}
+                                >
+                                  <div className="flex justify-between items-start mb-4">
+                                    <div className={`w-12 h-12 rounded-2xl flex items-center justify-center text-xl transition-transform group-hover:scale-110 ${security.onboardingActive ? 'bg-brand-teal/10 text-brand-teal' : 'bg-gray-200 text-gray-400'}`}>
+                                      {security.onboardingActive ? "✨" : "🚫"}
+                                    </div>
+                                    <div className={`w-3 h-3 rounded-full ${security.onboardingActive ? "bg-brand-teal animate-pulse" : "bg-gray-300"}`} />
+                                  </div>
+                                  <h3 className="font-black text-brand-dark dark:text-white uppercase italic text-sm mb-1">Onboarding Active</h3>
+                                  <p className="text-[9px] text-gray-400 font-bold uppercase tracking-[0.1em] leading-tight">Visa välkomstguide</p>
+                                </button>
+
+                                <div className="md:col-span-2 p-8 bg-white dark:bg-slate-900 rounded-[2rem] border border-gray-100 dark:border-slate-800 shadow-xl space-y-6 h-full flex flex-col justify-center">
+                                  <div className="space-y-4">
+                                    <span className="text-[10px] font-black text-gray-400 uppercase tracking-widest ml-2">Visa onboarding var...</span>
+                                    <div className="flex gap-4">
+                                      <div className="relative flex-1">
+                                        <input 
+                                          type="number" 
+                                          min="1"
+                                          value={security.visitorCookieLifetimeValue || 1} 
+                                          onChange={e => setSecurity((p: any) => ({ ...p, visitorCookieLifetimeValue: parseInt(e.target.value) || 1 }))}
+                                          className="w-full px-5 py-4 rounded-xl border border-gray-100 dark:border-slate-800 bg-gray-50 dark:bg-slate-950 focus:border-brand-teal outline-none font-black text-xl text-center dark:text-white transition-all shadow-inner" 
+                                        />
+                                      </div>
+                                      <select 
+                                        value={security.visitorCookieLifetimeUnit || "days"}
+                                        onChange={e => setSecurity((p: any) => ({ ...p, visitorCookieLifetimeUnit: e.target.value }))}
+                                        className="w-40 px-5 py-4 rounded-xl border border-gray-100 dark:border-slate-800 bg-gray-50 dark:bg-slate-950 focus:border-brand-teal outline-none font-black text-sm uppercase tracking-widest dark:text-white transition-all shadow-inner cursor-pointer"
+                                      >
+                                        <option value="days">Dagar</option>
+                                        <option value="minutes">Minuter</option>
+                                      </select>
+                                    </div>
+                                    <p className="text-[9px] text-gray-400 font-bold uppercase tracking-widest text-center italic">Styr hur ofta samma besökare ser guiden</p>
+                                  </div>
+                                </div>
+                              </div>
+                            </div>
+                            
                             <div className="p-8 bg-amber-50/50 dark:bg-amber-900/10 border border-amber-100/50 dark:border-amber-900/20 rounded-3xl">
                               <p className="text-[10px] text-amber-700 dark:text-amber-500 font-bold uppercase tracking-widest leading-loose flex items-start gap-3">
                                 <span className="text-xl">💡</span>
@@ -1063,7 +1172,7 @@ export default function SettingsPage() {
            <div className="flex items-center justify-center gap-4 opacity-30 grayscale hover:grayscale-0 hover:opacity-100 transition-all duration-700">
               <span className="text-[10px] font-black uppercase tracking-widest text-gray-500">Secured by</span>
               <div className="w-24 h-6 bg-brand-dark rounded flex items-center justify-center">
-                <span className="text-[8px] font-black text-white italic tracking-tighter uppercase px-2">Enzymatica CORE</span>
+                <span className="text-[8px] font-black text-white italic tracking-tighter uppercase px-2">{company.name || "COMPANY"} CORE</span>
               </div>
            </div>
         </div>
@@ -1112,7 +1221,10 @@ export default function SettingsPage() {
                   <div 
                     key={i} 
                     onClick={() => {
-                      if (activeSlideIndex !== null) {
+                      if (activeSlideIndex === -1) {
+                        setCompany((p: any) => ({ ...p, logoUrl: img }));
+                        setShowMediaPicker(false);
+                      } else if (activeSlideIndex !== null) {
                         const newSlides = [...hero.slides];
                         newSlides[activeSlideIndex].src = img;
                         setHero({ ...hero, slides: newSlides });
