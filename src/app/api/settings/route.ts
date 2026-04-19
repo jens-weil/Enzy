@@ -3,6 +3,7 @@ import fs from 'fs';
 import path from 'path';
 import { requireRole } from '@/lib/auth';
 import { getSettingsPath } from '@/lib/settingsPath';
+import { THEME_PRESETS } from '@/lib/themes';
 
 // Store settings OUTSIDE the project directory to prevent Turbopack's
 // file watcher from triggering a dev-server rebuild on every settings save.
@@ -57,11 +58,25 @@ function getSettings() {
       senderEmail: "news@enzymatica.se"
     },
     security: {
-      siteLockActive: true,
+      inactivityActive: true,
+      inactivityTimeoutMinutes: 60,
+      inactivityWarningSeconds: 30,
+      siteLockActive: false,
       onboardingActive: true,
       siteCode: "0000",
-      lockTimeoutMinutes: 60,
+      visitorCookieLifetimeValue: 1,
+      visitorCookieLifetimeUnit: "days",
       updatedAt: 1713123456789
+    },
+    company: {
+      name: "Enzymatica",
+      logoUrl: "/media/logo.png",
+      description: "Enzymatica utvecklar och säljer hälsoprodukter mot infektionsrelaterade sjukdomar, baserade på en barriärteknik som skyddar och förebygger."
+    },
+    theme: {
+      mode: "preset",
+      presetId: THEME_PRESETS[0].id,
+      colors: THEME_PRESETS[0].colors
     },
     hero: {
       mode: "slideshow",
@@ -119,7 +134,9 @@ function getSettings() {
       stock: { ...defaultSettings.stock, ...parsed.stock },
       brevo: { ...defaultSettings.brevo, ...(parsed.brevo || {}) },
       security: { ...defaultSettings.security, ...(parsed.security || {}) },
+      company: { ...defaultSettings.company, ...(parsed.company || {}) },
       hero: { ...defaultSettings.hero, ...(parsed.hero || {}) },
+      theme: { ...defaultSettings.theme, ...(parsed.theme || {}) },
       translations: { ...defaultSettings.translations, ...(parsed.translations || {}) }
     };
   } catch (e) {
@@ -155,15 +172,11 @@ export async function GET(request: NextRequest) {
       shares: settings.stock?.shares || "",
       sector: settings.stock?.sector || ""
     },
-    security: {
-      siteLockActive: settings.security?.siteLockActive ?? true,
-      onboardingActive: settings.security?.onboardingActive ?? true,
-      siteCode: settings.security?.siteCode || "0000",
-      lockTimeoutMinutes: settings.security?.lockTimeoutMinutes || 60,
-      updatedAt: settings.security?.updatedAt ?? 0
-    },
+    security: settings.security,
     hero: settings.hero,
-    translations: settings.translations
+    translations: settings.translations,
+    company: settings.company || { name: "Enzymatica", logoUrl: "/media/logo.png" },
+    theme: settings.theme || { mode: "preset", presetId: THEME_PRESETS[0].id, colors: THEME_PRESETS[0].colors }
   };
 
   return NextResponse.json(publicSettings);
@@ -227,6 +240,14 @@ export async function POST(request: NextRequest) {
       hero: {
         ...currentSettings.hero,
         ...(body.hero || {})
+      },
+      company: {
+        ...currentSettings.company,
+        ...(body.company || {})
+      },
+      theme: {
+        ...currentSettings.theme,
+        ...(body.theme || {})
       }
     };
 

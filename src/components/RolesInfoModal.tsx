@@ -1,7 +1,8 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
+import Image from "next/image";
 
 interface RoleInfo {
   id: string;
@@ -41,12 +42,28 @@ interface RolesInfoModalProps {
   onClose: () => void;
   onApply: (role: string) => void;
   isLockActive: boolean;
+  company?: { name: string; logoUrl: string; };
 }
 
-export default function RolesInfoModal({ onClose, onApply, isLockActive }: RolesInfoModalProps) {
+export default function RolesInfoModal({ onClose, onApply, isLockActive, company: providedCompany }: RolesInfoModalProps) {
   const [expandedRole, setExpandedRole] = useState<string | null>(null);
   const [selectedRole, setSelectedRole] = useState("Anonym Besökare");
   const [dontShow, setDontShow] = useState(false);
+  const [internalCompany, setInternalCompany] = useState(providedCompany || { name: "Enzymatica", logoUrl: "/media/logo.png" });
+
+  useEffect(() => {
+    if (!providedCompany) {
+      import("@/lib/settingsCache").then(m => m.fetchSettingsOnce()).then(data => {
+        if (data?.company) {
+          setInternalCompany(data.company);
+        }
+      });
+    } else {
+      setInternalCompany(providedCompany);
+    }
+  }, [providedCompany]);
+
+  const company = internalCompany;
 
   const handleToggle = (id: string) => {
     setExpandedRole(expandedRole === id ? null : id);
@@ -86,11 +103,28 @@ export default function RolesInfoModal({ onClose, onApply, isLockActive }: Roles
         className="bg-[#0f1218] border border-white/10 w-full max-w-md rounded-[2.5rem] shadow-2xl overflow-hidden flex flex-col max-h-[90vh]"
       >
         {/* Header */}
-        <div className="p-6 pb-5 bg-gradient-to-br from-brand-teal/20 to-transparent">
-          <h2 className="text-2xl font-black text-white italic uppercase tracking-tighter mb-1">
-            Välkommen till Enzymatica
-          </h2>
-          <p className="text-gray-400 text-xs">
+        <div className="p-8 pb-6 bg-gradient-to-br from-brand-teal/20 to-transparent relative overflow-hidden">
+          <div className="absolute top-0 right-0 w-32 h-32 bg-brand-teal/10 rounded-full blur-2xl -mr-16 -mt-16" />
+          <div className="flex items-center gap-4 mb-4">
+            <div className="w-12 h-12 rounded-xl bg-white/10 backdrop-blur-md flex items-center justify-center p-2 border border-white/20">
+              <Image 
+                src={company.logoUrl} 
+                alt={company.name} 
+                width={40} 
+                height={40} 
+                className="object-contain brightness-0 invert" 
+              />
+            </div>
+            <div>
+              <h2 className="text-2xl font-black text-white italic uppercase tracking-tighter leading-none">
+                Välkommen till
+              </h2>
+              <h2 className="text-2xl font-black text-brand-teal italic uppercase tracking-tighter leading-tight">
+                {company.name}
+              </h2>
+            </div>
+          </div>
+          <p className="text-gray-400 text-[10px] font-bold uppercase tracking-widest pl-1 opacity-60">
             Välj den roll som passar dig bäst.
           </p>
         </div>

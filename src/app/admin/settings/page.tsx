@@ -6,6 +6,7 @@ import Link from "next/link";
 import Image from "next/image";
 import { useAuth } from "@/components/AuthContext";
 import { supabase } from "@/lib/supabase";
+import { THEME_PRESETS } from "@/lib/themes";
 
 export default function SettingsPage() {
   const { profile, loading: authLoading } = useAuth();
@@ -16,7 +17,9 @@ export default function SettingsPage() {
   const [x, setX] = useState({ isActive: false, accessToken: "" });
   const [stock, setStock] = useState({ isActive: true, ticker: "ENZY.ST", shares: "142 823 696", sector: "Hälsovård" });
   const [brevo, setBrevo] = useState({ isActive: false, apiKey: "", senderName: "Enzymatica", senderEmail: "news@enzymatica.se" });
-  const [security, setSecurity] = useState({ siteLockActive: true, onboardingActive: true, siteCode: "0000", lockTimeoutMinutes: 60 });
+  const [security, setSecurity] = useState<any>({ inactivityActive: true, inactivityTimeoutMinutes: 60, inactivityWarningSeconds: 30, siteLockActive: false, onboardingActive: true, siteCode: "0000", visitorCookieLifetimeValue: 1, visitorCookieLifetimeUnit: "days" });
+  const [company, setCompany] = useState<any>({ name: "Enzymatica", logoUrl: "/media/logo.png", description: "" });
+  const [theme, setTheme] = useState<any>({ mode: "preset", presetId: THEME_PRESETS[0].id, colors: THEME_PRESETS[0].colors });
   const [hero, setHero] = useState<any>({ 
     mode: "slideshow", 
     interval: 8, 
@@ -59,14 +62,16 @@ export default function SettingsPage() {
         
         if (res.ok) {
           const data = await res.json();
-          if (data.facebook) setFacebook(prev => ({ ...prev, ...data.facebook }));
-          if (data.instagram) setInstagram(prev => ({ ...prev, ...data.instagram }));
-          if (data.linkedin) setLinkedin(prev => ({ ...prev, ...data.linkedin }));
-          if (data.tiktok) setTiktok(prev => ({ ...prev, ...data.tiktok }));
-          if (data.x) setX(prev => ({ ...prev, ...data.x }));
-          if (data.stock) setStock(prev => ({ ...prev, ...data.stock }));
-          if (data.brevo) setBrevo(prev => ({ ...prev, ...data.brevo }));
-          if (data.security) setSecurity(prev => ({ ...prev, ...data.security }));
+          if (data.facebook) setFacebook((prev: any) => ({ ...prev, ...data.facebook }));
+          if (data.instagram) setInstagram((prev: any) => ({ ...prev, ...data.instagram }));
+          if (data.linkedin) setLinkedin((prev: any) => ({ ...prev, ...data.linkedin }));
+          if (data.tiktok) setTiktok((prev: any) => ({ ...prev, ...data.tiktok }));
+          if (data.x) setX((prev: any) => ({ ...prev, ...data.x }));
+          if (data.stock) setStock((prev: any) => ({ ...prev, ...data.stock }));
+          if (data.brevo) setBrevo((prev: any) => ({ ...prev, ...data.brevo }));
+          if (data.security) setSecurity((prev: any) => ({ ...prev, ...data.security }));
+          if (data.company) setCompany((prev: any) => ({ ...prev, ...data.company }));
+          if (data.theme) setTheme((prev: any) => ({ ...prev, ...data.theme }));
           if (data.hero) setHero((prev: any) => ({ ...prev, ...data.hero }));
         }
 
@@ -88,6 +93,18 @@ export default function SettingsPage() {
     fetchSettings();
   }, [profile, authLoading, router]);
 
+  // Live Theme Preview
+  useEffect(() => {
+    if (theme?.colors) {
+      const root = document.documentElement;
+      root.style.setProperty('--brand-primary', theme.colors.primary);
+      root.style.setProperty('--brand-secondary', theme.colors.secondary);
+      root.style.setProperty('--brand-dark', theme.colors.dark);
+      root.style.setProperty('--brand-accent', theme.colors.accent);
+      root.style.setProperty('--brand-light', theme.colors.light);
+    }
+  }, [theme.colors]);
+
   const handleSave = async () => {
     setIsSaving(true);
     setMessage(null);
@@ -104,7 +121,7 @@ export default function SettingsPage() {
           "Content-Type": "application/json",
           "Authorization": `Bearer ${session.access_token}`
         },
-        body: JSON.stringify({ facebook, instagram, linkedin, tiktok, x, stock, brevo, security, hero })
+        body: JSON.stringify({ facebook, instagram, linkedin, tiktok, x, stock, brevo, security, hero, company, theme })
       });
 
       if (res.ok) {
@@ -138,7 +155,7 @@ export default function SettingsPage() {
       });
       if (res.ok) {
         const data = await res.json();
-        setAvailableImages(prev => [...prev, data.url]);
+        setAvailableImages((prev: any) => [...prev, data.url]);
         if (activeSlideIndex !== null) {
           const newSlides = [...hero.slides];
           newSlides[activeSlideIndex].src = data.url;
@@ -230,6 +247,33 @@ export default function SettingsPage() {
               
               <div className="space-y-6">
                 {[
+                  {
+                    id: "company_info",
+                    title: "Företagsinformation",
+                    subtitle: "Hantera företagsnamn och logotyp",
+                    state: { isActive: true },
+                    setter: null,
+                    icon: (
+                      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2.5} className="w-6 h-6">
+                        <path strokeLinecap="round" strokeLinejoin="round" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
+                      </svg>
+                    ),
+                    color: "text-brand-teal bg-brand-light dark:bg-brand-teal/20"
+                  },
+                  {
+                    id: "theme",
+                    title: "Tema & Utseende",
+                    subtitle: "Byt färgschema eller anpassa profilfärger",
+                    state: { isActive: true },
+                    setter: null,
+                    icon: (
+                      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2.5} className="w-6 h-6">
+                        <path strokeLinecap="round" strokeLinejoin="round" d="M7 21a4 4 0 01-4-4V5a2 2 0 012-2h4a1 1 0 001-1h2a1 1 0 001 1h4a2 2 0 012 2v12a4 4 0 01-4 4H7zM7 21h10a4 4 0 004-4v-1M7 21a4 4 0 00-4-4V5M7 21V5a2 2 0 012-2h4a1 1 0 001-1h2a1 1 0 001 1h4a2 2 0 012 2v12a4 4 0 01-4 4" />
+                        <path strokeLinecap="round" strokeLinejoin="round" d="M11 8a2 2 0 11-4 0 2 2 0 014 0zM17 12a2 2 0 11-4 0 2 2 0 014 0z" />
+                      </svg>
+                    ),
+                    color: "text-purple-600 bg-purple-50 dark:bg-purple-900/20"
+                  },
                   {
                     id: "hero",
                     title: "Hero & Bakgrund",
@@ -328,6 +372,136 @@ export default function SettingsPage() {
 
                     {expandedSection === channel.id && channel.state.isActive && (
                       <div className="p-10 pt-0 border-t border-gray-50 dark:border-slate-800/50 bg-gray-50/30 dark:bg-slate-800/20 animate-in slide-in-from-top-4 duration-500">
+                        {channel.id === 'company_info' && (
+                          <div className="space-y-10 mt-10">
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-10">
+                              {/* --- FÖRETAGSNAMN --- */}
+                              <div className="space-y-6">
+                                <label className="space-y-3 block">
+                                  <span className="text-[10px] font-black text-gray-400 uppercase tracking-widest ml-2">Företagsnamn</span>
+                                  <input 
+                                    type="text" 
+                                    value={company.name} 
+                                    onChange={e => setCompany((p: any) => ({ ...p, name: e.target.value }))} 
+                                    className="w-full px-6 py-5 rounded-2xl border border-gray-100 dark:border-slate-800 bg-white dark:bg-slate-950 focus:border-brand-teal outline-none font-black text-lg dark:text-white transition-all shadow-sm" 
+                                    placeholder="Ex: Enzymatica"
+                                  />
+                                </label>
+                                
+                                <label className="space-y-3 block">
+                                  <span className="text-[10px] font-black text-gray-400 uppercase tracking-widest ml-2">Om företaget (beskrivning)</span>
+                                  <textarea 
+                                    value={company.description} 
+                                    onChange={e => setCompany((p: any) => ({ ...p, description: e.target.value }))} 
+                                    rows={4}
+                                    className="w-full px-6 py-5 rounded-2xl border border-gray-100 dark:border-slate-800 bg-white dark:bg-slate-950 focus:border-brand-teal outline-none font-bold text-sm dark:text-white transition-all shadow-sm resize-none" 
+                                    placeholder="Skriv en kort text om företaget..."
+                                  />
+                                </label>
+                              </div>
+
+                              {/* --- LOGOTYP --- */}
+                              <div className="p-8 bg-white dark:bg-slate-900 rounded-[2.5rem] border border-gray-100 dark:border-slate-800 shadow-xl flex flex-col items-center justify-center space-y-6">
+                                <div className="text-[10px] font-black text-gray-400 uppercase tracking-widest self-start">Logotyp</div>
+                                <div className="relative group w-32 h-32 rounded-2xl bg-gray-50 dark:bg-slate-800 flex items-center justify-center p-4 border border-dashed border-gray-200 dark:border-slate-700">
+                                  {company.logoUrl ? (
+                                    <Image src={company.logoUrl} alt="Logo Preview" width={80} height={80} className="object-contain" />
+                                  ) : (
+                                    <span className="text-3xl">🖼️</span>
+                                  )}
+                                  <button 
+                                    onClick={() => { setActiveSlideIndex(-1); setShowMediaPicker(true); }}
+                                    className="absolute inset-0 bg-brand-teal/80 opacity-0 group-hover:opacity-100 transition-all rounded-2xl flex flex-col items-center justify-center text-white gap-2"
+                                  >
+                                    <span className="text-2xl">📸</span>
+                                    <span className="text-[8px] font-black uppercase tracking-widest">Byt Logga</span>
+                                  </button>
+                                </div>
+                                <p className="text-[9px] text-gray-400 font-bold uppercase tracking-widest text-center">
+                                  Logotypen används i Navbaren och i huvudet på alla dialogfönster.
+                                </p>
+                              </div>
+                            </div>
+                          </div>
+                        )}
+
+                        {channel.id === 'theme' && (
+                          <div className="space-y-12 mt-10">
+                            {/* --- PRESETS --- */}
+                            <div className="space-y-6">
+                              <div className="flex items-center justify-between px-2">
+                                <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest block">Fördefinierade teman</label>
+                                <button 
+                                  onClick={() => setTheme({ ...theme, mode: "custom" })}
+                                  className={`text-[8px] font-black uppercase tracking-widest px-4 py-2 rounded-full transition-all ${theme.mode === "custom" ? "bg-brand-teal text-white shadow-lg" : "bg-gray-100 dark:bg-slate-800 text-gray-400 hover:text-brand-dark dark:hover:text-white"}`}
+                                >
+                                  Anpassad färg
+                                </button>
+                              </div>
+                              <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-4">
+                                {THEME_PRESETS.map((preset) => (
+                                  <div 
+                                    key={preset.id}
+                                    onClick={() => setTheme({ mode: "preset", presetId: preset.id, colors: preset.colors })}
+                                    className={`relative p-4 rounded-2xl border-2 transition-all cursor-pointer group hover:-translate-y-1 ${theme.mode === "preset" && theme.presetId === preset.id ? "border-brand-teal bg-white dark:bg-slate-900 shadow-xl ring-4 ring-brand-teal/5" : "border-gray-100 dark:border-slate-800 bg-gray-50/50 dark:bg-slate-900/50 opacity-70 hover:opacity-100"}`}
+                                  >
+                                    <div className="flex gap-1 mb-3">
+                                      <div className="w-4 h-4 rounded-full shadow-inner" style={{ backgroundColor: preset.colors.primary }} />
+                                      <div className="w-4 h-4 rounded-full shadow-inner -ml-1 border border-white dark:border-slate-900" style={{ backgroundColor: preset.colors.secondary }} />
+                                      <div className="w-4 h-4 rounded-full shadow-inner -ml-1 border border-white dark:border-slate-900" style={{ backgroundColor: preset.colors.accent }} />
+                                    </div>
+                                    <div className={`text-[9px] font-black uppercase tracking-tighter transition-colors ${theme.mode === "preset" && theme.presetId === preset.id ? "text-brand-teal" : "text-gray-500 group-hover:text-brand-dark dark:group-hover:text-white"}`}>
+                                      {preset.name}
+                                    </div>
+                                    {theme.mode === "preset" && theme.presetId === preset.id && (
+                                      <div className="absolute top-2 right-2 text-brand-teal">
+                                        <svg viewBox="0 0 24 24" fill="currentColor" className="w-4 h-4">
+                                          <path fillRule="evenodd" d="M2.25 12c0-5.385 4.365-9.75 9.75-9.75s9.75 4.365 9.75 9.75-4.365 9.75-9.75 9.75S2.25 17.385 2.25 12zm13.36-1.814a.75.75 0 10-1.22-.872l-3.236 4.53L9.53 12.22a.75.75 0 00-1.06 1.06l2.25 2.25a.75.75 0 001.14-.094l3.75-5.25z" clipRule="evenodd" />
+                                        </svg>
+                                      </div>
+                                    )}
+                                  </div>
+                                ))}
+                              </div>
+                            </div>
+
+                            {/* --- CUSTOM COLORS --- */}
+                            {theme.mode === "custom" && (
+                              <div className="p-8 bg-white dark:bg-slate-900 rounded-[2.5rem] border border-brand-teal/20 shadow-2xl animate-in zoom-in-95 duration-500 space-y-8">
+                                <div>
+                                  <h3 className="text-sm font-black text-brand-dark dark:text-white uppercase italic tracking-widest">Anpassat Färgschema</h3>
+                                  <p className="text-[9px] font-bold text-gray-400 uppercase tracking-widest mt-1">Skapa din helt egna profil genom att välja färgkoder</p>
+                                </div>
+                                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8">
+                                  {[
+                                    { label: "Primärfärg", key: "primary", desc: "Huvudfärg för logotyper & detaljer" },
+                                    { label: "Sekundärfärg", key: "secondary", desc: "Komplementfärg för effekter" },
+                                    { label: "Accentfärg", key: "accent", desc: "Färg för knappar & interaktion" },
+                                    { label: "Mörk Bas", key: "dark", desc: "Bakgrundston i dark mode" },
+                                    { label: "Ljus Bas", key: "light", desc: "Bakgrundston i light mode" }
+                                  ].map((c) => (
+                                    <div key={c.key} className="space-y-3">
+                                      <div className="flex items-center justify-between px-1">
+                                        <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest">{c.label}</label>
+                                        <span className="text-[8px] font-bold text-gray-300 uppercase font-mono tracking-widest">{(theme.colors as any)[c.key]}</span>
+                                      </div>
+                                      <div className="flex items-center gap-4">
+                                        <input 
+                                          type="color" 
+                                          value={(theme.colors as any)[c.key]} 
+                                          onChange={e => setTheme({ ...theme, colors: { ...theme.colors, [c.key]: e.target.value } })}
+                                          className="w-12 h-12 rounded-xl bg-transparent border-none cursor-pointer overflow-hidden p-0"
+                                        />
+                                        <p className="text-[8px] text-gray-400 font-bold uppercase tracking-widest leading-tight">{c.desc}</p>
+                                      </div>
+                                    </div>
+                                  ))}
+                                </div>
+                              </div>
+                            )}
+                          </div>
+                        )}
+
                         {channel.id === 'hero' && (
                           <div className="space-y-12 mt-10">
                             <div className="grid grid-cols-1 md:grid-cols-2 gap-10 p-8 bg-white dark:bg-slate-900 rounded-[2rem] border border-gray-100 dark:border-slate-800 shadow-xl">
@@ -482,7 +656,7 @@ export default function SettingsPage() {
                                 <input 
                                   type="text" 
                                   value={stock.ticker} 
-                                  onChange={e => setStock(p => ({ ...p, ticker: e.target.value.toUpperCase() }))} 
+                                  onChange={e => setStock((p: any) => ({ ...p, ticker: e.target.value.toUpperCase() }))} 
                                   className="w-full px-6 py-5 rounded-2xl border border-gray-100 dark:border-slate-800 bg-gray-50 dark:bg-slate-950 focus:border-brand-teal outline-none font-black text-lg dark:text-white transition-all" 
                                   placeholder="ENZY.ST"
                                 />
@@ -493,7 +667,7 @@ export default function SettingsPage() {
                                 <input 
                                   type="text" 
                                   value={stock.sector} 
-                                  onChange={e => setStock(p => ({ ...p, sector: e.target.value }))} 
+                                  onChange={e => setStock((p: any) => ({ ...p, sector: e.target.value }))} 
                                   className="w-full px-6 py-5 rounded-2xl border border-gray-100 dark:border-slate-800 bg-gray-50 dark:bg-slate-950 focus:border-brand-teal outline-none font-black text-sm dark:text-white transition-all" 
                                   placeholder="Hälsovård"
                                 />
@@ -503,7 +677,7 @@ export default function SettingsPage() {
                                 <input 
                                   type="text" 
                                   value={stock.shares} 
-                                  onChange={e => setStock(p => ({ ...p, shares: e.target.value }))} 
+                                  onChange={e => setStock((p: any) => ({ ...p, shares: e.target.value }))} 
                                   className="w-full px-6 py-5 rounded-2xl border border-gray-100 dark:border-slate-800 bg-gray-50 dark:bg-slate-950 focus:border-brand-teal outline-none font-black text-sm dark:text-white transition-all" 
                                   placeholder="142 823 696"
                                 />
@@ -520,7 +694,7 @@ export default function SettingsPage() {
                                  <input 
                                    type="password" 
                                    value={brevo.apiKey} 
-                                   onChange={e => setBrevo(p => ({ ...p, apiKey: e.target.value }))} 
+                                   onChange={e => setBrevo((p: any) => ({ ...p, apiKey: e.target.value }))} 
                                    className="w-full px-6 py-5 rounded-2xl border border-gray-100 dark:border-slate-800 bg-gray-50 dark:bg-slate-950 focus:border-brand-teal outline-none font-mono text-xs dark:text-white transition-all" 
                                    placeholder="xkeysib-..."
                                  />
@@ -531,7 +705,7 @@ export default function SettingsPage() {
                                    <input 
                                      type="text" 
                                      value={brevo.senderName} 
-                                     onChange={e => setBrevo(p => ({ ...p, senderName: e.target.value }))} 
+                                     onChange={e => setBrevo((p: any) => ({ ...p, senderName: e.target.value }))} 
                                      className="w-full px-6 py-5 rounded-2xl border border-gray-100 dark:border-slate-800 bg-gray-50 dark:bg-slate-950 focus:border-brand-teal outline-none font-black text-sm dark:text-white transition-all" 
                                    />
                                 </label>
@@ -540,7 +714,7 @@ export default function SettingsPage() {
                                    <input 
                                      type="email" 
                                      value={brevo.senderEmail} 
-                                     onChange={e => setBrevo(p => ({ ...p, senderEmail: e.target.value }))} 
+                                     onChange={e => setBrevo((p: any) => ({ ...p, senderEmail: e.target.value }))} 
                                      className="w-full px-6 py-5 rounded-2xl border border-gray-100 dark:border-slate-800 bg-gray-50 dark:bg-slate-950 focus:border-brand-teal outline-none font-black text-sm dark:text-white transition-all" 
                                    />
                                 </label>
@@ -553,7 +727,7 @@ export default function SettingsPage() {
                           <div className="space-y-10 mt-10">
                             <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
                               <button
-                                onClick={() => setSecurity(prev => ({ ...prev, siteLockActive: !prev.siteLockActive }))}
+                                onClick={() => setSecurity((prev: any) => ({ ...prev, siteLockActive: !prev.siteLockActive }))}
                                 className={`group p-10 rounded-[2.5rem] border-2 text-left transition-all ${security.siteLockActive ? "border-brand-teal bg-white dark:bg-slate-900 shadow-2xl" : "border-transparent bg-gray-100 dark:bg-slate-800/50 opacity-60 hover:opacity-100"}`}
                               >
                                 <div className="flex justify-between items-start mb-6">
@@ -566,7 +740,7 @@ export default function SettingsPage() {
                                 <p className="text-[10px] text-gray-400 font-bold uppercase tracking-[0.2em] leading-relaxed">Systemet blockerar åtkomst för obehöriga</p>
                               </button>
                               <button
-                                onClick={() => setSecurity(prev => ({ ...prev, onboardingActive: !prev.onboardingActive }))}
+                                onClick={() => setSecurity((prev: any) => ({ ...prev, onboardingActive: !prev.onboardingActive }))}
                                 className={`group p-10 rounded-[2.5rem] border-2 text-left transition-all ${security.onboardingActive ? "border-brand-teal bg-white dark:bg-slate-900 shadow-2xl" : "border-transparent bg-gray-100 dark:bg-slate-800/50 opacity-60 hover:opacity-100"}`}
                               >
                                 <div className="flex justify-between items-start mb-6">
@@ -594,7 +768,7 @@ export default function SettingsPage() {
                                     value={security.siteCode || ""} 
                                     onChange={e => {
                                       const val = e.target.value.replace(/\D/g, '').slice(0, 8);
-                                      setSecurity(p => ({ ...p, siteCode: val }));
+                                      setSecurity((p: any) => ({ ...p, siteCode: val }));
                                     }} 
                                     className="w-full px-6 py-5 rounded-2xl border border-gray-100 dark:border-slate-800 bg-gray-50 dark:bg-slate-950 focus:border-brand-teal outline-none font-black text-2xl tracking-[0.5em] text-center dark:text-white transition-all shadow-inner" 
                                     placeholder="0000"
@@ -620,7 +794,7 @@ export default function SettingsPage() {
                                       value={security.lockTimeoutMinutes || 60} 
                                       onChange={e => {
                                         const val = parseInt(e.target.value) || 1;
-                                        setSecurity(p => ({ ...p, lockTimeoutMinutes: val }));
+                                        setSecurity((p: any) => ({ ...p, lockTimeoutMinutes: val }));
                                       }} 
                                       className="w-full px-6 py-5 rounded-2xl border border-gray-100 dark:border-slate-800 bg-gray-50 dark:bg-slate-950 focus:border-brand-teal outline-none font-black text-2xl text-center dark:text-white transition-all shadow-inner" 
                                     />
@@ -784,7 +958,7 @@ export default function SettingsPage() {
                             <div className="space-y-8 md:col-span-2">
                               <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
                                 <button
-                                  onClick={() => setFacebook(prev => ({ ...prev, postStrategy: "comment" }))}
+                                  onClick={() => setFacebook((prev: any) => ({ ...prev, postStrategy: "comment" }))}
                                   className={`p-8 rounded-2xl border-2 text-left transition-all relative overflow-hidden ${facebook.postStrategy === "comment" ? "border-brand-teal bg-white dark:bg-slate-900 shadow-2xl" : "border-transparent bg-gray-100 dark:bg-slate-800/40 opacity-50 hover:opacity-100"}`}
                                 >
                                   {facebook.postStrategy === "comment" && <div className="absolute top-0 right-0 w-8 h-8 bg-brand-teal text-white flex items-center justify-center text-xs font-black">✓</div>}
@@ -792,7 +966,7 @@ export default function SettingsPage() {
                                   <p className="text-[10px] text-gray-400 font-bold uppercase tracking-widest leading-relaxed">Bästa räckvidden pga algoritmen</p>
                                 </button>
                                 <button
-                                  onClick={() => setFacebook(prev => ({ ...prev, postStrategy: "direct" }))}
+                                  onClick={() => setFacebook((prev: any) => ({ ...prev, postStrategy: "direct" }))}
                                   className={`p-8 rounded-2xl border-2 text-left transition-all relative overflow-hidden ${facebook.postStrategy === "direct" ? "border-brand-teal bg-white dark:bg-slate-900 shadow-2xl" : "border-transparent bg-gray-100 dark:bg-slate-800/40 opacity-50 hover:opacity-100"}`}
                                 >
                                   {facebook.postStrategy === "direct" && <div className="absolute top-0 right-0 w-8 h-8 bg-brand-teal text-white flex items-center justify-center text-xs font-black">✓</div>}
@@ -802,7 +976,7 @@ export default function SettingsPage() {
                               </div>
                               <label className="space-y-3 block">
                                 <span className="text-[10px] font-black text-gray-400 uppercase tracking-widest ml-2">Facebook Page ID</span>
-                                <input type="text" value={facebook.pageId} onChange={e => setFacebook(p => ({ ...p, pageId: e.target.value }))} className="w-full px-6 py-4 rounded-xl border border-gray-100 dark:border-slate-800 bg-gray-50 dark:bg-slate-950 focus:border-brand-teal outline-none font-black text-sm dark:text-white transition-all focus:ring-4 ring-brand-teal/5" placeholder="1234567890" />
+                                <input type="text" value={facebook.pageId} onChange={e => setFacebook((p: any) => ({ ...p, pageId: e.target.value }))} className="w-full px-6 py-4 rounded-xl border border-gray-100 dark:border-slate-800 bg-gray-50 dark:bg-slate-950 focus:border-brand-teal outline-none font-black text-sm dark:text-white transition-all focus:ring-4 ring-brand-teal/5" placeholder="1234567890" />
                               </label>
                             </div>
                           )}
@@ -810,21 +984,21 @@ export default function SettingsPage() {
                           {sub.id === 'instagram' && (
                             <label className="space-y-3 md:col-span-2">
                               <span className="text-[10px] font-black text-gray-400 uppercase tracking-widest ml-2">Instagram Business Account ID</span>
-                              <input type="text" value={instagram.accountId} onChange={e => setInstagram(p => ({ ...p, accountId: e.target.value }))} className="w-full px-6 py-4 rounded-xl border border-gray-100 dark:border-slate-800 bg-gray-50 dark:bg-slate-950 focus:border-brand-teal outline-none font-black text-sm dark:text-white transition-all focus:ring-4 ring-brand-teal/5" />
+                              <input type="text" value={instagram.accountId} onChange={e => setInstagram((p: any) => ({ ...p, accountId: e.target.value }))} className="w-full px-6 py-4 rounded-xl border border-gray-100 dark:border-slate-800 bg-gray-50 dark:bg-slate-950 focus:border-brand-teal outline-none font-black text-sm dark:text-white transition-all focus:ring-4 ring-brand-teal/5" />
                             </label>
                           )}
 
                           {sub.id === 'linkedin' && (
                             <label className="space-y-3 md:col-span-2">
                               <span className="text-[10px] font-black text-gray-400 uppercase tracking-widest ml-2">LinkedIn Organization / Author URN</span>
-                              <input type="text" value={linkedin.authorUrn} onChange={e => setLinkedin(p => ({ ...p, authorUrn: e.target.value }))} className="w-full px-6 py-4 rounded-xl border border-gray-100 dark:border-slate-800 bg-gray-50 dark:bg-slate-950 focus:border-brand-teal outline-none font-black text-sm dark:text-white transition-all focus:ring-4 ring-brand-teal/5" placeholder="urn:li:organization:12345" />
+                              <input type="text" value={linkedin.authorUrn} onChange={e => setLinkedin((p: any) => ({ ...p, authorUrn: e.target.value }))} className="w-full px-6 py-4 rounded-xl border border-gray-100 dark:border-slate-800 bg-gray-50 dark:bg-slate-950 focus:border-brand-teal outline-none font-black text-sm dark:text-white transition-all focus:ring-4 ring-brand-teal/5" placeholder="urn:li:organization:12345" />
                             </label>
                           )}
                           
                           {sub.id === 'tiktok' && (
                             <label className="space-y-3 md:col-span-2">
                               <span className="text-[10px] font-black text-gray-400 uppercase tracking-widest ml-2">TikTok Creator OpenID</span>
-                              <input type="text" value={tiktok.openId} onChange={e => setTiktok(p => ({ ...p, openId: e.target.value }))} className="w-full px-6 py-4 rounded-xl border border-gray-100 dark:border-slate-800 bg-gray-50 dark:bg-slate-950 focus:border-brand-teal outline-none font-black text-sm dark:text-white transition-all focus:ring-4 ring-brand-teal/5" />
+                              <input type="text" value={tiktok.openId} onChange={e => setTiktok((p: any) => ({ ...p, openId: e.target.value }))} className="w-full px-6 py-4 rounded-xl border border-gray-100 dark:border-slate-800 bg-gray-50 dark:bg-slate-950 focus:border-brand-teal outline-none font-black text-sm dark:text-white transition-all focus:ring-4 ring-brand-teal/5" />
                             </label>
                           )}
 

@@ -1,15 +1,21 @@
 @import "tailwindcss";
 
 @theme {
-  --color-brand-teal: #007c91;
-  --color-brand-dark: #003a4d;
-  --color-brand-cyan: #00b4d8;
-  --color-brand-light: #e0f7fa;
-  --color-brand-accent: #0288d1;
+  --color-brand-teal: var(--brand-primary);
+  --color-brand-dark: var(--brand-dark);
+  --color-brand-cyan: var(--brand-secondary);
+  --color-brand-light: var(--brand-light);
+  --color-brand-accent: var(--brand-accent);
 }
 
 @layer base {
   :root {
+    --brand-primary: #007c91;
+    --brand-dark: #003a4d;
+    --brand-secondary: #00b4d8;
+    --brand-light: #e0f7fa;
+    --brand-accent: #0288d1;
+    
     --background: #ffffff;
     --foreground: #171717;
   }

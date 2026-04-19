@@ -1,6 +1,6 @@
 "use client";
 
-import { Suspense } from 'react';
+import { Suspense, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import Navbar from '@/components/Navbar';
 import Link from 'next/link';
@@ -12,8 +12,13 @@ function AdminDashboard() {
   const { user, profile, loading: authLoading } = useAuth();
   
   // Redirect if not Admin, Editor or Redaktör
+  useEffect(() => {
+    if (!authLoading && (!user || (profile?.role !== 'Admin' && profile?.role !== 'Editor' && profile?.role !== 'Redaktör'))) {
+      router.push('/');
+    }
+  }, [user, profile, authLoading, router]);
+
   if (!authLoading && (!user || (profile?.role !== 'Admin' && profile?.role !== 'Editor' && profile?.role !== 'Redaktör'))) {
-    router.push('/');
     return null;
   }
 

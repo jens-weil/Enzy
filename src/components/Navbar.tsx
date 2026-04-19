@@ -45,12 +45,16 @@ export default function Navbar() {
   const [showAdminMenu, setShowAdminMenu] = useState(false);
   const [tickerSymbol, setTickerSymbol] = useState("ENZY.ST");
   const [isTickerActive, setIsTickerActive] = useState(true);
+  const [company, setCompany] = useState({ name: "Enzymatica", logoUrl: "/media/logo.png" });
 
   const loadSettings = () => {
     fetchSettingsOnce().then(data => {
       if (data?.stock?.ticker) {
         setTickerSymbol(data.stock.ticker);
         setIsTickerActive(data.stock.isActive ?? true);
+      }
+      if (data?.company) {
+        setCompany(data.company);
       }
     }).catch(console.error);
   };
@@ -65,6 +69,9 @@ export default function Navbar() {
         if (data?.stock?.ticker) {
           setTickerSymbol(data.stock.ticker);
           setIsTickerActive(data.stock.isActive ?? true);
+        }
+        if (data?.company) {
+          setCompany(data.company);
         }
       });
     };
@@ -184,11 +191,11 @@ export default function Navbar() {
       <nav className="fixed top-0 w-full z-50 glassmorphism border-b border-gray-200 dark:border-gray-800">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex justify-between items-center h-[61px]">
-            <div className="flex items-center">
+             <div className="flex items-center">
               <Link href="/" className="flex items-center gap-3">
-                <Image src="/media/logo.png" alt="Enzymatica" width={61} height={61} className="object-contain" />
+                <Image src={company.logoUrl} alt={company.name} width={61} height={61} className="object-contain" />
                 <span className="text-xl font-bold text-brand-dark dark:text-white tracking-tight">
-                  Enzymatica
+                  {company.name}
                 </span>
               </Link>
             </div>
@@ -457,10 +464,10 @@ export default function Navbar() {
             onClick={e => e.stopPropagation()}
           >
             {/* Header */}
-            <div className="bg-brand-dark px-8 py-5 flex items-center gap-4 relative overflow-hidden">
+             <div className="bg-brand-dark px-8 py-5 flex items-center gap-4 relative overflow-hidden">
               <div className="absolute top-0 right-0 w-24 h-24 bg-brand-teal/20 rounded-full blur-3xl -mr-8 -mt-8" />
               <div className="w-[90px] h-[90px] bg-white/10 backdrop-blur-md rounded-full flex items-center justify-center border border-white/20 flex-shrink-0 relative z-10 overflow-hidden">
-                <Image src="/media/logo.png" alt="Enzymatica" width={90} height={90} className="opacity-80" />
+                <Image src={company.logoUrl} alt={company.name} width={90} height={90} className="object-contain" />
               </div>
               <div className="relative z-10">
                 <h2 className="text-2xl font-black text-white tracking-tight leading-none">Logga in</h2>

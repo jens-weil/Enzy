@@ -6,16 +6,24 @@ import Image from "next/image";
 import { useAuth } from "@/components/AuthContext";
 import { supabase } from "@/lib/supabase";
 
+import { fetchSettingsOnce } from "@/lib/settingsCache";
+
 function LoginForm() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
+  const [company, setCompany] = useState({ name: "Enzymatica", logoUrl: "/media/logo.png" });
   const router = useRouter();
   const searchParams = useSearchParams();
   const redirectUrl = searchParams.get("redirect") || "/articles";
   const { user, loading } = useAuth();
 
-  // Check if already logged in
+  useEffect(() => {
+    fetchSettingsOnce().then(data => {
+      if (data?.company) setCompany(data.company);
+    });
+  }, []);
+
   // Check if already logged in via Supabase
   useEffect(() => {
     if (!loading && user) {
@@ -49,12 +57,18 @@ function LoginForm() {
         <div className="bg-brand-dark px-8 py-5 text-center relative overflow-hidden">
           <div className="absolute top-0 right-0 w-24 h-24 bg-brand-teal/20 rounded-full blur-3xl -mr-8 -mt-8"></div>
           <div className="relative z-10 flex items-center justify-center gap-4">
-            <div className="w-10 h-10 bg-white/10 backdrop-blur-md rounded-xl flex items-center justify-center border border-white/20 shrink-0">
-              <Image src="/media/logo.png" alt="Enzymatica" width={20} height={20} className="opacity-80" />
+            <div className="w-12 h-12 bg-white/10 backdrop-blur-md rounded-xl flex items-center justify-center border border-white/20 shrink-0 p-2">
+              <Image 
+                src={company.logoUrl} 
+                alt={company.name} 
+                width={30} 
+                height={30} 
+                className="object-contain brightness-0 invert" 
+              />
             </div>
             <div className="text-left">
-              <h1 className="text-xl font-black text-white tracking-tight">Logga in</h1>
-              <p className="text-brand-light/60 text-xs font-medium">Enzymatica-portalen</p>
+              <h1 className="text-xl font-black text-white tracking-tight leading-none mb-1">Logga in</h1>
+              <p className="text-brand-light/60 text-[10px] font-black uppercase tracking-widest">{company.name}-portalen</p>
             </div>
           </div>
         </div>

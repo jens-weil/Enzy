@@ -9,13 +9,29 @@
  * used by the admin panel after saving new settings.
  */
 
+import { ThemeColors, THEME_PRESETS } from "./themes";
+
 export type PublicSettings = {
   security: {
+    inactivityActive: boolean;
+    inactivityTimeoutMinutes: number;
+    inactivityWarningSeconds: number;
     siteLockActive: boolean;
     onboardingActive: boolean;
     siteCode: string;
-    lockTimeoutMinutes: number;
+    visitorCookieLifetimeValue?: number;
+    visitorCookieLifetimeUnit?: "days" | "minutes";
     updatedAt: number;
+  };
+  company: {
+    name: string;
+    logoUrl: string;
+    description: string;
+  };
+  theme: {
+    mode: "preset" | "custom";
+    presetId: string;
+    colors: ThemeColors;
   };
   stock: {
     isActive: boolean;
@@ -56,5 +72,28 @@ export function invalidateSettingsCache() {
 }
 
 export function getSecurityDefaults() {
-  return { siteLockActive: true, onboardingActive: true, updatedAt: 0 };
+  return { 
+    inactivityActive: true, 
+    inactivityTimeoutMinutes: 60,
+    inactivityWarningSeconds: 30,
+    siteLockActive: false, 
+    onboardingActive: true, 
+    siteCode: "0000",
+    visitorCookieLifetimeValue: 1,
+    visitorCookieLifetimeUnit: "days",
+    updatedAt: 0,
+    company: {
+      name: "Enzymatica",
+      logoUrl: "/media/logo.png"
+    },
+    theme: {
+      mode: "preset",
+      presetId: THEME_PRESETS[0].id,
+      colors: THEME_PRESETS[0].colors
+    }
+  };
+}
+
+if (typeof window !== "undefined") {
+  window.addEventListener("settingsUpdated", invalidateSettingsCache);
 }

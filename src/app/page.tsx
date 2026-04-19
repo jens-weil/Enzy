@@ -3,6 +3,7 @@
 import Link from "next/link";
 import Image from "next/image";
 import { useState, useEffect } from "react";
+import { AnimatePresence } from "framer-motion";
 
 const heroImages = [
   {
@@ -47,11 +48,14 @@ interface HeroSettings {
 }
 
 const MembershipModal = dynamic(() => import("@/components/MembershipModal"), { ssr: false });
+const RolesInfoModal = dynamic(() => import("@/components/RolesInfoModal"), { ssr: false });
 
 export default function Home() {
   const { user } = useAuth();
   const [activeImage, setActiveImage] = useState(0);
   const [showMembershipModal, setShowMembershipModal] = useState(false);
+  const [showInfoModal, setShowInfoModal] = useState(false);
+  const [selectedRole, setSelectedRole] = useState("Medlem");
   const [heroSettings, setHeroSettings] = useState<HeroSettings | null>(null);
 
   useEffect(() => {
@@ -147,7 +151,7 @@ export default function Home() {
           <div className="flex flex-col sm:flex-row justify-center gap-6 pt-4">
             {!user && (
               <button
-                onClick={() => setShowMembershipModal(true)}
+                onClick={() => setShowInfoModal(true)}
                 className="bg-brand-cyan hover:bg-white text-brand-dark text-xl px-10 py-4 rounded-full font-black transition-all shadow-2xl hover:shadow-cyan-500/20 transform hover:-translate-y-1 inline-block uppercase tracking-widest"
               >
                 Bli medlem
@@ -167,9 +171,24 @@ export default function Home() {
         <div className="absolute -bottom-8 left-1/2 w-80 h-80 bg-brand-accent/20 rounded-full blur-3xl mix-blend-multiply dark:mix-blend-lighten filter opacity-70 animate-pulse" style={{ animationDelay: '2s' }}></div>
       </section>
 
+      <AnimatePresence mode="wait">
+        {showInfoModal && (
+          <RolesInfoModal
+            onClose={() => setShowInfoModal(false)}
+            onApply={(role) => {
+              setSelectedRole(role);
+              setShowInfoModal(false);
+              setShowMembershipModal(true);
+            }}
+            isLockActive={false}
+          />
+        )}
+      </AnimatePresence>
+
       <MembershipModal
         isOpen={showMembershipModal}
         onClose={() => setShowMembershipModal(false)}
+        initialRole={selectedRole}
       />
       {/* ColdZyme Feature Section */}
       <section id="coldzyme" className="py-32 bg-brand-dark relative overflow-hidden group focus:outline-none scroll-mt-24">
