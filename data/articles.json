@@ -39,21 +39,23 @@
   },
   {
     "id": "1773602661588",
-    "title": "Hisspitch Enzymatica",
+    "title": "Hisspitch Enzymaticas",
     "type": "Nyhet",
     "date": "2026-03-15",
     "ingress": "En kort hisspitch om Enzymatica hos Aktiespararna",
     "imageUrl": "/media/logo.png",
-    "content": "Test\n<div class=\"aspect-video w-full rounded-2xl overflow-hidden shadow-lg my-8\"><iframe src=\"https://www.youtube.com/embed/3ae_1Nr9J9M\" class=\"w-full h-full border-0\" allow=\"accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture\" allowfullscreen></iframe></div>",
+    "content": "<h1 style=\"margin-left: 0rem;\">Test</h1><div class=\"layout-section cols-2\"><div class=\"layout-column\"><p style=\"margin-left: 0rem;\">adasd</p><div class=\"youtube-wrapper\" style=\"width: 340px; height: 191.25px;\"><iframe start=\"0\" src=\"https://www.youtube-nocookie.com/embed/lsaQMTSKDCc\" frameborder=\"0\" allowfullscreen=\"true\" allow=\"autoplay; fullscreen; picture-in-picture\"></iframe></div><p style=\"margin-left: 0rem;\">sdasd</p></div><div class=\"layout-column\"><p style=\"margin-left: 0rem;\">test</p><img src=\"/media/article_1773426973538_1.jpg\" style=\"width: 203px; height: 174.463px; margin-left: 2rem;\"><p style=\"margin-left: 0rem;\">s</p></div></div><p style=\"margin-left: 0rem;\"></p>",
     "socialMedia": {
-      "facebook": false,
+      "facebook": true,
       "instagram": false,
       "linkedin": false,
       "tiktok": false,
       "x": false
     },
-    "socialLinks": {},
-    "_fbWarning": "Facebook-inlägget kunde inte skapas automatisk."
+    "socialLinks": {
+      "facebook": "https://www.facebook.com/122105856182810328"
+    },
+    "facebookPostId": "122105856182810328"
   },
   {
     "id": "1773422519230",

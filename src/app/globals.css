@@ -15,15 +15,17 @@
     --brand-secondary: #00b4d8;
     --brand-light: #e0f7fa;
     --brand-accent: #0288d1;
-    
+
     --background: #ffffff;
     --foreground: #171717;
   }
 
   @media (prefers-color-scheme: dark) {
     :root {
-      --background: #0f172a; /* Sleek dark slate */
-      --foreground: #f8fafc; /* Crisp white-gray */
+      --background: #0f172a;
+      /* Sleek dark slate */
+      --foreground: #f8fafc;
+      /* Crisp white-gray */
     }
   }
 
@@ -38,8 +40,113 @@
   .glassmorphism {
     @apply bg-white/70 dark:bg-slate-900/70 backdrop-blur-md border border-white/20 dark:border-slate-800 shadow-xl;
   }
-  
+
   .text-gradient {
     @apply bg-clip-text text-transparent bg-gradient-to-r from-brand-teal to-brand-cyan;
+  }
+
+  /* TipTap Editor Styling */
+  .ProseMirror {
+    @apply outline-none min-h-[300px] py-4;
+  }
+
+  .prose {
+    @apply max-w-none;
+  }
+
+  .prose h1 {
+    @apply text-3xl font-black mb-4 mt-8 text-brand-dark dark:text-white first:mt-0 italic;
+  }
+
+  .prose h2 {
+    @apply text-2xl font-black mb-3 mt-6 text-brand-teal dark:text-brand-cyan italic;
+  }
+
+  .prose p {
+    @apply mb-4 leading-relaxed;
+  }
+
+  .prose ul {
+    @apply list-disc list-inside mb-4 space-y-1;
+  }
+
+  .prose ol {
+    @apply list-decimal list-inside mb-4 space-y-1;
+  }
+
+  .prose blockquote {
+    @apply border-l-4 border-brand-teal/30 pl-4 italic my-6 text-gray-600 dark:text-gray-400;
+  }
+
+  .prose a {
+    @apply text-brand-teal dark:text-brand-cyan font-bold underline decoration-2 underline-offset-2 hover:text-brand-dark transition-all cursor-pointer;
+  }
+
+  .prose img {
+    @apply rounded-3xl shadow-xl my-8 max-w-full h-auto;
+  }
+
+  .prose iframe {
+    @apply rounded-3xl shadow-2xl my-8 w-full aspect-video;
+  }
+
+  .prose hr {
+    @apply border-t-2 border-gray-100 dark:border-slate-800 my-8;
+  }
+
+  .ProseMirror p.is-editor-empty:first-child::before {
+    @apply content-[attr(data-placeholder)] float-left text-gray-400 pointer-events-none h-0 font-bold italic;
+  }
+
+  /* Responsive Iframe Wrapper */
+  .iframe-wrapper {
+    @apply relative w-full h-full;
+  }
+
+  .iframe-wrapper iframe {
+    @apply absolute inset-0 w-full h-full;
+  }
+
+  /* NodeView Layout */
+  .ProseMirror .node-view-wrapper {
+    @apply my-8 block;
+  }
+
+  .ProseMirror-selectednode .group-hover\:outline-gray-200 {
+    @apply outline-2 outline-brand-teal ring-4 ring-brand-teal/20;
+  }
+
+  /* Grid Layout System */
+  .layout-section {
+    @apply flex gap-4 md:gap-8 my-12 w-full transition-all duration-300;
+  }
+
+  /* Mobile stacking */
+  @media (max-width: 768px) {
+    .layout-section {
+      @apply flex-col;
+    }
+  }
+
+  .layout-column {
+    @apply flex-1 min-w-0 relative border border-transparent transition-all duration-300;
+  }
+
+  /* Editor-only helpers */
+  .ProseMirror .layout-column {
+    @apply border-dashed border-gray-200 dark:border-slate-700 p-4 rounded-3xl min-h-[100px];
+  }
+
+  .ProseMirror .layout-column:hover {
+    @apply border-brand-teal/30 bg-gray-50/50 dark:bg-slate-800/30;
+  }
+
+  .ProseMirror .layout-column:empty::before {
+    @apply content-['Tom_kolumn'] text-[10px] font-black uppercase tracking-widest text-gray-300 dark:text-slate-600 absolute top-4 left-4;
+  }
+
+  /* Drop Indicator */
+  .ProseMirror .layout-column.ProseMirror-selectednode {
+    @apply border-brand-teal ring-4 ring-brand-teal/10;
   }
 }

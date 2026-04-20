@@ -1,8 +1,11 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo, useRef } from "react";
 import Image from "next/image";
+import { motion, AnimatePresence } from "framer-motion";
+import { supabase } from "@/lib/supabase";
 import { SOCIAL_ICONS } from "./SocialShare";
+import RichTextEditor from "./RichTextEditor";
 
 type Article = {
   id: string;
@@ -90,7 +93,8 @@ export default function ArticleEditModal({ editingArticle, accessToken, onClose,
   const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState<{ type: "success" | "error"; text: string } | null>(null);
   const [showMediaPicker, setShowMediaPicker] = useState(false);
-  const [availableImages, setAvailableImages] = useState<string[]>([]);
+  const [availableImages, setAvailableImages] = useState<{ url: string; tags: string[] }[]>([]);
+  const [imageSearch, setImageSearch] = useState("");
   const [uploading, setUploading] = useState(false);
   const [isPreview, setIsPreview] = useState(false);
   const [showStreamingPicker, setShowStreamingPicker] = useState(false);
@@ -99,8 +103,17 @@ export default function ArticleEditModal({ editingArticle, accessToken, onClose,
   const [searchResults, setSearchResults] = useState<{ id: string; title: string; thumbnail: string }[]>([]);
   const [searching, setSearching] = useState(false);
   const [channelSettings, setChannelSettings] = useState<any>(null);
+  const [imageUsageError, setImageUsageError] = useState<{ url: string; articles: { id: string; title: string }[] } | null>(null);
+  const [taggingImage, setTaggingImage] = useState<{ url: string; tags: string[] } | null>(null);
+  const [tagInput, setTagInput] = useState("");
+  const [deletingImage, setDeletingImage] = useState<string | null>(null);
+  const [pickerError, setPickerError] = useState<string | null>(null);
+  const [localLoading, setLocalLoading] = useState(false);
+  const [mediaInsertMode, setMediaInsertMode] = useState(false);
+  const [editorRef, setEditorRef] = useState<any>(null);
 
   useEffect(() => {
+    // Fetch settings - used for channel visibility
     fetch("/api/settings", { 
       headers: accessToken ? { 'Authorization': `Bearer ${accessToken}` } : {} 
     })
@@ -108,13 +121,16 @@ export default function ArticleEditModal({ editingArticle, accessToken, onClose,
       .then(data => data && setChannelSettings(data))
       .catch(console.error);
 
-    fetch("/api/images", { 
-      headers: accessToken ? { 'Authorization': `Bearer ${accessToken}` } : {} 
-    })
+    // Fetch images - now public GET for robustness
+    fetch("/api/images")
       .then(r => r.ok ? r.json() : { images: [] })
-      .then(d => setAvailableImages(d.images || []))
-      .catch(() => {});
-  }, [accessToken]);
+      .then(d => {
+        if (d.images) {
+          setAvailableImages(d.images);
+        }
+      })
+      .catch(err => console.error("Failed to load images:", err));
+  }, []); // Run once on mount to ensure images are ready when modal opens
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
     const { name, value } = e.target;
@@ -152,7 +168,7 @@ export default function ArticleEditModal({ editingArticle, accessToken, onClose,
       if (res.ok) {
         const data = await res.json();
         setFormData(prev => ({ ...prev, imageUrl: data.url }));
-        setAvailableImages(prev => [...prev, data.url]);
+        setAvailableImages(prev => [...prev, { url: data.url, tags: [] }]);
         setShowMediaPicker(false);
       } else {
         const err = await res.json();
@@ -162,6 +178,79 @@ export default function ArticleEditModal({ editingArticle, accessToken, onClose,
       setMessage({ type: "error", text: "Kunde inte ladda upp fil." });
     } finally {
       setUploading(false);
+    }
+  };
+
+  const handleDeleteImage = (url: string) => {
+    setDeletingImage(url);
+  };
+
+  const confirmDeleteImage = async (url: string) => {
+    if (!accessToken) return setPickerError("Du måste vara inloggad för att radera bilder.");
+    
+    setLocalLoading(true);
+    setPickerError(null);
+    setImageUsageError(null);
+    try {
+      const res = await fetch(`/api/images?url=${encodeURIComponent(url)}`, {
+        method: "DELETE",
+        headers: { 'Authorization': `Bearer ${accessToken}` },
+      });
+      if (res.ok) {
+        setAvailableImages(prev => prev.filter(img => img.url !== url));
+        if (formData.imageUrl === url) setFormData(p => ({ ...p, imageUrl: "" }));
+        setDeletingImage(null);
+      } else {
+        const err = await res.json();
+        if (err.articles) {
+          setImageUsageError({ url, articles: err.articles });
+          setDeletingImage(null);
+        } else {
+          setPickerError(err.error || "Radering misslyckades.");
+        }
+      }
+    } catch {
+      setPickerError("Något gick fel vid radering.");
+    } finally {
+      setLocalLoading(false);
+    }
+  };
+
+  const handleUpdateTags = (url: string, tags: string[]) => {
+    setTaggingImage({ url, tags });
+    setTagInput(tags.join(", "));
+    setPickerError(null);
+  };
+
+  const confirmUpdateTags = async () => {
+    if (!taggingImage || !accessToken) {
+      if (!accessToken) setPickerError("Du måste vara inloggad för att ändra taggar.");
+      return;
+    }
+    
+    setLocalLoading(true);
+    setPickerError(null);
+    const tags = tagInput.split(",").map(t => t.trim()).filter(Boolean);
+    try {
+      const res = await fetch("/api/images", {
+        method: "PATCH",
+        headers: {
+          "Content-Type": "application/json",
+          "Authorization": `Bearer ${accessToken}`
+        },
+        body: JSON.stringify({ url: taggingImage.url, tags })
+      });
+      if (res.ok) {
+        setAvailableImages(prev => prev.map(img => img.url === taggingImage.url ? { ...img, tags } : img));
+        setTaggingImage(null);
+      } else {
+        const err = await res.json();
+        setPickerError(err.error || "Kunde inte uppdatera taggar.");
+      }
+    } catch {
+      setPickerError("Kunde inte uppdatera taggar.");
+    } finally {
+      setLocalLoading(false);
     }
   };
 
@@ -228,18 +317,57 @@ export default function ArticleEditModal({ editingArticle, accessToken, onClose,
 
   const handleSearch = async () => {
     if (!searchQuery.trim()) return;
+    
+    // Check if it's a direct URL or HTML for Custom Embed
+    if (streamData.service === "custom") {
+      setSearchResults([{ id: "custom", title: "Anpassad inbäddning", thumbnail: "https://images.unsplash.com/photo-1550745165-9bc0b252726f?w=100&h=100&fit=crop" }]);
+      return;
+    }
+
     setSearching(true);
     try {
       const res = await fetch(`/api/videos/search?service=${streamData.service}&q=${encodeURIComponent(searchQuery)}`);
       if (res.ok) {
         const data = await res.json();
-        setSearchResults(data.videos || []);
+        setSearchResults(data.results || []);
       }
-    } catch (e) {
-      console.error("Search failed", e);
+    } catch (err) {
+      console.error("Video search failed:", err);
     } finally {
       setSearching(false);
     }
+  };
+
+  const handleMediaSelect = (url: string) => {
+    if (mediaInsertMode && editorRef) {
+      editorRef.chain().focus().setImage({ src: url }).run();
+      setMediaInsertMode(false);
+    } else {
+      setFormData(p => ({ ...p, imageUrl: url }));
+    }
+    setShowMediaPicker(false);
+  };
+
+  const handleStreamSelect = (video: any) => {
+    if (mediaInsertMode && editorRef) {
+      if (streamData.service === "youtube") {
+        editorRef.chain().focus().setYoutubeVideo({ src: `https://www.youtube.com/watch?v=${video.id}` }).run();
+      } else if (streamData.service === "vimeo") {
+        editorRef.chain().focus().insertContent(`<iframe src="https://player.vimeo.com/video/${video.id}" frameborder="0" allow="autoplay; fullscreen; picture-in-picture" allowfullscreen></iframe>`).run();
+      } else if (streamData.service === "twitch") {
+        editorRef.chain().focus().insertContent(`<iframe src="https://player.twitch.tv/?video=${video.id}&parent=${window.location.hostname}" frameborder="0" allowfullscreen="true" scrolling="no"></iframe>`).run();
+      } else if (streamData.service === "custom") {
+        // Here we use the searchQuery directly as the iframe code
+        editorRef.chain().focus().insertContent(searchQuery).run();
+      }
+      setMediaInsertMode(false);
+    } else {
+      // Set as thumbnail fallback for main image
+      setFormData(prev => ({ ...prev, imageUrl: video.thumbnail }));
+    }
+    setShowStreamingPicker(false);
+    setSearchQuery("");
+    setSearchResults([]);
   };
 
   const insertHtml = (tag: string, endTag?: string) => {
@@ -322,7 +450,7 @@ export default function ArticleEditModal({ editingArticle, accessToken, onClose,
                 <p className="text-sm font-bold text-gray-600 dark:text-gray-400">Välj en representativ bild för din artikel.</p>
                 <button
                   type="button"
-                  onClick={() => setShowMediaPicker(true)}
+                  onClick={() => { setMediaInsertMode(false); setShowMediaPicker(true); }}
                   className="px-6 py-3 rounded-2xl bg-brand-teal text-white font-black text-xs uppercase tracking-widest hover:bg-brand-dark transition-all shadow-lg shadow-brand-teal/20"
                 >
                   Välj från bibliotek +
@@ -371,6 +499,26 @@ export default function ArticleEditModal({ editingArticle, accessToken, onClose,
           </div>
 
           {/* Ingress */}
+          <div className="flex flex-col gap-2">
+            <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest ml-4">Brödtext (Artikelinnehåll)</label>
+            <RichTextEditor 
+              content={formData.content} 
+              onChange={(html) => setFormData(prev => ({ ...prev, content: html }))}
+              onMediaClick={() => {
+                setMediaInsertMode(true);
+                setShowMediaPicker(true);
+              }}
+              onVideoClick={() => {
+                setMediaInsertMode(true);
+                setShowStreamingPicker(true);
+              }}
+              // Capture editor instance for insertion
+              // We'll use a hacky way since TipTap useEditor doesn't work well with refs
+              //@ts-ignore
+              ref={(r) => { if (r?.editor) setEditorRef(r.editor); }}
+            />
+          </div>
+
           <div className="space-y-2">
             <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest">Ingress</label>
             <textarea
@@ -381,62 +529,6 @@ export default function ArticleEditModal({ editingArticle, accessToken, onClose,
               placeholder="Skriv en kraftfull ingress..."
               className="w-full px-5 py-4 rounded-2xl bg-gray-50 dark:bg-slate-800 border border-transparent focus:border-brand-teal outline-none transition-all font-bold text-gray-900 dark:text-white italic text-base"
             />
-          </div>
-
-          {/* Content with Toolbar and Preview */}
-          <div className="space-y-4">
-            <div className="flex justify-between items-center">
-              <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest">Brödtext (Rich Text Editor)</label>
-              <div className="flex bg-gray-100 dark:bg-slate-800 rounded-xl p-1">
-                <button
-                  type="button"
-                  onClick={() => setIsPreview(false)}
-                  className={`px-4 py-1.5 rounded-lg text-[10px] font-black uppercase tracking-widest transition-all ${!isPreview ? "bg-white dark:bg-slate-700 shadow-sm text-brand-teal" : "text-gray-400"}`}
-                >
-                  Redigering
-                </button>
-                <button
-                  type="button"
-                  onClick={() => setIsPreview(true)}
-                  className={`px-4 py-1.5 rounded-lg text-[10px] font-black uppercase tracking-widest transition-all ${isPreview ? "bg-white dark:bg-slate-700 shadow-sm text-brand-teal" : "text-gray-400"}`}
-                >
-                  Visning
-                </button>
-              </div>
-            </div>
-
-            {!isPreview ? (
-              <div className="space-y-2">
-                {/* Rich Text Toolbar */}
-                <div className="flex flex-wrap gap-2 p-3 bg-gray-50 dark:bg-slate-800 rounded-t-2xl border-x border-t border-gray-100 dark:border-slate-700">
-                  <button type="button" onClick={() => insertHtml("<b>", "</b>")} className="w-10 h-10 rounded-lg bg-white dark:bg-slate-700 font-bold border border-gray-100 dark:border-slate-600 hover:border-brand-teal transition-all">B</button>
-                  <button type="button" onClick={() => insertHtml("<i>", "</i>")} className="w-10 h-10 rounded-lg bg-white dark:bg-slate-700 italic border border-gray-100 dark:border-slate-600 hover:border-brand-teal transition-all">I</button>
-                  <button type="button" onClick={() => insertHtml("<h2>", "</h2>")} className="px-3 h-10 rounded-lg bg-white dark:bg-slate-700 font-black border border-gray-100 dark:border-slate-600 hover:border-brand-teal transition-all text-xs">H2</button>
-                  <button type="button" onClick={() => insertHtml("<h3>", "</h3>")} className="px-3 h-10 rounded-lg bg-white dark:bg-slate-700 font-black border border-gray-100 dark:border-slate-600 hover:border-brand-teal transition-all text-xs">H3</button>
-                   <button type="button" onClick={() => insertHtml("<ul>\n  <li>", "</li>\n</ul>")} className="w-10 h-10 rounded-lg bg-white dark:bg-slate-700 border border-gray-100 dark:border-slate-600 hover:border-brand-teal transition-all">List</button>
-                  <button type="button" onClick={() => insertHtml('<a href="#" target="_blank">', "</a>")} className="w-10 h-10 rounded-lg bg-white dark:bg-slate-700 border border-gray-100 dark:border-slate-600 hover:border-brand-teal transition-all">Länk</button>
-                  <button type="button" onClick={() => insertHtml('<img src="/media/logo.png" alt="Bild" />')} className="px-3 h-10 rounded-lg bg-white dark:bg-slate-700 border border-gray-100 dark:border-slate-600 hover:border-brand-teal transition-all text-[10px] font-black">MEDIA</button>
-                  <button type="button" onClick={() => setShowStreamingPicker(true)} className="px-3 h-10 rounded-lg bg-brand-teal text-white border border-brand-teal hover:bg-brand-dark transition-all text-[10px] font-black uppercase">STREAM</button>
-                </div>
-                <textarea
-                  id="article-content-editor"
-                  required
-                  name="content"
-                  value={formData.content}
-                  onChange={handleChange}
-                  rows={15}
-                  placeholder="Skriv din artikeltext här..."
-                  className="w-full px-5 py-4 rounded-b-2xl bg-gray-50 dark:bg-slate-800 border border-transparent focus:border-brand-teal outline-none transition-all font-bold text-gray-900 dark:text-white resize-none leading-relaxed text-base"
-                />
-              </div>
-            ) : (
-              <div className="w-full px-5 py-8 rounded-2xl bg-gray-50 dark:bg-slate-800 min-h-[400px]">
-                <div
-                  className="article-rich-content text-gray-600 dark:text-gray-300 text-lg leading-[1.8] font-medium space-y-8"
-                  dangerouslySetInnerHTML={{ __html: formData.content.replace(/\n/g, "<br/>") }}
-                />
-              </div>
-            )}
           </div>
 
           <div className="space-y-4">
@@ -552,9 +644,131 @@ export default function ArticleEditModal({ editingArticle, accessToken, onClose,
                 &times;
               </button>
             </div>
+            <div className="px-7 py-4 bg-gray-50 dark:bg-slate-800 flex gap-4 border-b border-gray-100 dark:border-slate-800">
+               <input 
+                type="text" 
+                placeholder="Filtrera på taggar eller filnamn..."
+                className="flex-1 px-5 py-3 rounded-2xl bg-white dark:bg-slate-900 border border-gray-200 dark:border-slate-700 outline-none focus:border-brand-teal transition-all font-bold italic text-sm"
+                value={imageSearch}
+                onChange={(e) => setImageSearch(e.target.value)}
+               />
+            </div>
             <div className="flex-1 overflow-y-auto p-7">
-              <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4">
-                <label className="relative aspect-square rounded-2xl border-2 border-dashed border-brand-teal/30 flex flex-col items-center justify-center cursor-pointer hover:bg-brand-teal/5 hover:border-brand-teal transition-all group">
+              {/* Media Actions & Errors - Sticky Header Overlay */}
+              <AnimatePresence>
+                {(imageUsageError || taggingImage || deletingImage) && (
+                  <motion.div 
+                    initial={{ opacity: 0, y: -20 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    exit={{ opacity: 0, y: -20 }}
+                    className="sticky top-0 z-[100] mb-6 -mx-7 -mt-7 p-7 bg-white/80 dark:bg-slate-900/80 backdrop-blur-md border-b border-gray-100 dark:border-slate-800 shadow-xl shadow-black/5"
+                  >
+                    <div className="max-w-2xl mx-auto">
+                      {imageUsageError && (
+                        <div className="p-6 bg-red-50 dark:bg-red-950/20 border border-red-200 dark:border-red-900 rounded-3xl animate-in zoom-in-95">
+                          <p className="text-red-700 dark:text-red-400 font-black text-[10px] uppercase tracking-widest mb-2 italic">⚠️ Går ej att radera!</p>
+                          <p className="text-red-600 dark:text-red-400 text-sm font-bold mb-4">Bilden används för närvarande i:</p>
+                          <ul className="space-y-2 mb-6">
+                            {imageUsageError.articles.map(a => (
+                              <li key={a.id} className="text-xs font-bold text-red-500 flex items-center gap-2">
+                                <span className="w-1.5 h-1.5 bg-red-500 rounded-full" />
+                                {a.title}
+                              </li>
+                            ))}
+                          </ul>
+                          <button 
+                            onClick={() => setImageUsageError(null)}
+                            className="w-full py-3 bg-red-600 text-white rounded-2xl text-[10px] font-black uppercase tracking-widest hover:bg-red-700 transition-all shadow-lg shadow-red-600/20"
+                          >
+                            Jag förstår
+                          </button>
+                        </div>
+                      )}
+
+                      {taggingImage && (
+                        <div className="p-6 bg-brand-teal/5 border border-brand-teal/20 rounded-3xl animate-in zoom-in-95">
+                          <div className="flex justify-between items-start mb-6">
+                            <div>
+                              <p className="text-[10px] font-black uppercase tracking-widest text-brand-teal italic">Redigera taggar för bild</p>
+                              <h4 className="text-[10px] font-bold text-gray-400 mt-1 truncate max-w-xs">{taggingImage.url}</h4>
+                            </div>
+                            {taggingImage.tags.length > 0 && (
+                              <div className="flex flex-wrap gap-1 justify-end">
+                                {taggingImage.tags.map((t, ti) => (
+                                  <span key={ti} className="px-2 py-0.5 bg-brand-teal/10 text-brand-teal text-[8px] font-black uppercase rounded-md">{t}</span>
+                                ))}
+                              </div>
+                            )}
+                          </div>
+                          
+                          <input 
+                            type="text"
+                            disabled={localLoading}
+                            value={tagInput}
+                            onChange={(e) => setTagInput(e.target.value)}
+                            className="w-full px-5 py-3 rounded-2xl bg-white dark:bg-slate-900 border border-gray-200 dark:border-slate-700 outline-none focus:border-brand-teal transition-all font-bold text-sm mb-4 disabled:opacity-50"
+                            placeholder="Taggar (kommaseparerade)..."
+                            autoFocus
+                            onKeyDown={(e) => e.key === "Enter" && confirmUpdateTags()}
+                          />
+
+                          {pickerError && (
+                            <p className="text-[10px] font-bold text-red-500 mb-4 animate-pulse">⚠️ {pickerError}</p>
+                          )}
+
+                          <div className="flex gap-3">
+                            <button 
+                              disabled={localLoading}
+                              onClick={confirmUpdateTags} 
+                              className="flex-1 py-3 bg-brand-teal text-white rounded-2xl text-[10px] font-black uppercase tracking-widest hover:bg-brand-dark transition-all disabled:opacity-50"
+                            >
+                              {localLoading ? "Sparar..." : "Spara ändringar"}
+                            </button>
+                            <button 
+                              disabled={localLoading}
+                              onClick={() => { setTaggingImage(null); setPickerError(null); }} 
+                              className="flex-1 py-3 bg-gray-100 dark:bg-slate-800 text-gray-500 rounded-2xl text-[10px] font-black uppercase tracking-widest hover:bg-gray-200 transition-all"
+                            >
+                              Avbryt
+                            </button>
+                          </div>
+                        </div>
+                      )}
+
+                      {deletingImage && (
+                        <div className="p-6 bg-red-50 dark:bg-red-950/20 border border-red-200 dark:border-red-900 rounded-3xl animate-in zoom-in-95">
+                          <p className="text-[10px] font-black uppercase tracking-widest text-red-600 mb-2 italic">Bekräfta radering</p>
+                          <p className="text-sm font-bold text-red-500 mb-6">Är du säker på att du vill ta bort den här bilden permanent?</p>
+                          
+                          {pickerError && (
+                            <p className="text-[10px] font-bold text-red-700 mb-4 animate-pulse">⚠️ {pickerError}</p>
+                          )}
+
+                          <div className="flex gap-3">
+                            <button 
+                              disabled={localLoading}
+                              onClick={() => confirmDeleteImage(deletingImage)} 
+                              className="flex-1 py-3 bg-red-600 text-white rounded-2xl text-[10px] font-black uppercase tracking-widest hover:bg-red-700 transition-all disabled:opacity-50"
+                            >
+                              {localLoading ? "Raderar..." : "Ja, radera helt"}
+                            </button>
+                            <button 
+                              disabled={localLoading}
+                              onClick={() => { setDeletingImage(null); setPickerError(null); }} 
+                              className="flex-1 py-3 bg-gray-100 dark:bg-slate-800 text-gray-500 rounded-2xl text-[10px] font-black uppercase tracking-widest hover:bg-gray-200 transition-all"
+                            >
+                              Nej, avbryt
+                            </button>
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                  </motion.div>
+                )}
+              </AnimatePresence>
+
+              <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-6">
+                <label className="relative aspect-square rounded-[2rem] border-2 border-dashed border-brand-teal/30 flex flex-col items-center justify-center cursor-pointer hover:bg-brand-teal/5 hover:border-brand-teal transition-all group overflow-hidden">
                   <input type="file" className="hidden" onChange={handleImageUpload} accept="image/*,video/*" />
                   {uploading ? (
                     <div className="text-center animate-pulse">
@@ -568,16 +782,75 @@ export default function ArticleEditModal({ editingArticle, accessToken, onClose,
                     </>
                   )}
                 </label>
-                {availableImages.map((img, i) => (
+                {availableImages
+                .filter(img => {
+                  if (!imageSearch) return true;
+                  const s = imageSearch.toLowerCase();
+                  return img.url.toLowerCase().includes(s) || img.tags.some(t => t.toLowerCase().includes(s));
+                })
+                .map((img, i) => (
                   <div
                     key={i}
-                    onClick={() => { setFormData(p => ({ ...p, imageUrl: img })); setShowMediaPicker(false); }}
-                    className={`relative aspect-square rounded-2xl overflow-hidden cursor-pointer transition-all ${
-                      formData.imageUrl === img ? "ring-4 ring-brand-teal ring-offset-4 dark:ring-offset-slate-900" : "opacity-80 hover:opacity-100 hover:scale-[1.02]"
-                    }`}
+                    className="group relative aspect-square rounded-[2rem] overflow-hidden"
                   >
-                    <Image src={img} alt="Media" fill sizes="(max-width: 640px) 50vw, 20vw" className="object-cover" />
-                    <div className={`absolute inset-0 bg-brand-teal/20 transition-opacity ${formData.imageUrl === img ? "opacity-100" : "opacity-0 hover:opacity-40"}`} />
+                    <Image 
+                      src={img.url} 
+                      alt="Media" 
+                      fill 
+                      sizes="(max-width: 640px) 50vw, 20vw" 
+                      className="object-cover cursor-pointer" 
+                      onClick={() => handleMediaSelect(img.url)}
+                    />
+                    
+                    {/* Selection Overlay - Lower Z-index */}
+                    <div 
+                      onClick={() => handleMediaSelect(img.url)}
+                      className={`absolute inset-0 z-10 bg-brand-teal/30 transition-opacity flex items-center justify-center cursor-pointer ${formData.imageUrl === img?.url ? "opacity-100" : "opacity-0 group-hover:opacity-40"}`}
+                    >
+                      {formData.imageUrl === img?.url && <span className="text-white text-3xl font-black">✓</span>}
+                    </div>
+
+                    {/* Controls Overlay - TOP positioned and high Z-index */}
+                    <div className="absolute inset-x-0 top-0 p-2 z-50 transform -translate-y-full group-hover:translate-y-0 transition-transform bg-black/60 backdrop-blur-sm flex justify-between items-center">
+                      <button 
+                        type="button"
+                        onClick={(e) => { 
+                          e.preventDefault(); 
+                          e.stopPropagation(); 
+                          if (img?.url) {
+                            handleUpdateTags(img.url, img.tags || []); 
+                          }
+                        }}
+                        className="p-2 bg-white/10 hover:bg-brand-teal text-white rounded-xl transition-all relative z-[60]"
+                        title="Redigera taggar"
+                      >
+                        <svg className="w-4 h-4 pointer-events-none" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A1.994 1.994 0 013 12V7a4 4 0 014-4z" /></svg>
+                      </button>
+                      <button 
+                        type="button"
+                        onClick={(e) => { 
+                          e.preventDefault(); 
+                          e.stopPropagation(); 
+                          if (img?.url) {
+                            handleDeleteImage(img.url); 
+                          }
+                        }}
+                        className="p-2 bg-white/10 hover:bg-red-500 text-white rounded-xl transition-all relative z-[60]"
+                        title="Radera"
+                      >
+                        <svg className="w-4 h-4 pointer-events-none" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg>
+                      </button>
+                    </div>
+
+                    {/* Tag Badges - Moved to bottom when controls are at top */}
+                    {img?.tags?.length > 0 && (
+                      <div className="absolute bottom-2 left-2 flex flex-wrap gap-1 pointer-events-none z-10">
+                        {img.tags.slice(0, 2).map((t, ti) => (
+                          <span key={ti} className="px-1.5 py-0.5 bg-black/50 text-[6px] font-black text-white uppercase tracking-widest rounded-md backdrop-blur-sm">{t}</span>
+                        ))}
+                        {img.tags.length > 2 && <span className="px-1.5 py-0.5 bg-black/50 text-[6px] font-black text-white uppercase tracking-widest rounded-md backdrop-blur-sm">+{img.tags.length - 2}</span>}
+                      </div>
+                    )}
                   </div>
                 ))}
               </div>
@@ -607,7 +880,7 @@ export default function ArticleEditModal({ editingArticle, accessToken, onClose,
             <div className="p-7 border-b border-gray-100 dark:border-slate-800 flex justify-between items-center bg-gray-50/50 dark:bg-slate-800/50">
               <div>
                 <h3 className="text-xl font-black text-brand-dark dark:text-white uppercase italic">Bädda in Video</h3>
-                <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest mt-1">YouTube eller Vimeo</p>
+                <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest mt-1">YouTube, Vimeo, Twitch eller Custom</p>
               </div>
               <button
                 type="button"
@@ -620,40 +893,47 @@ export default function ArticleEditModal({ editingArticle, accessToken, onClose,
             
             <div className="p-8 space-y-6">
               <div className="flex gap-4 p-1 bg-gray-100 dark:bg-slate-800 rounded-2xl">
-                <button
-                  type="button"
-                  onClick={() => setStreamData(p => ({ ...p, service: "youtube" }))}
-                  className={`flex-1 py-3 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all ${streamData.service === "youtube" ? "bg-white dark:bg-slate-700 text-brand-teal shadow-md" : "text-gray-400"}`}
-                >
-                  YouTube
-                </button>
-                <button
-                  type="button"
-                  onClick={() => setStreamData(p => ({ ...p, service: "vimeo" }))}
-                  className={`flex-1 py-3 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all ${streamData.service === "vimeo" ? "bg-white dark:bg-slate-700 text-brand-teal shadow-md" : "text-gray-400"}`}
-                >
-                  Vimeo
-                </button>
+                {["youtube", "vimeo", "twitch", "custom"].map(s => (
+                  <button
+                    key={s}
+                    type="button"
+                    onClick={() => setStreamData(p => ({ ...p, service: s }))}
+                    className={`flex-1 py-3 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all ${streamData.service === s ? "bg-white dark:bg-slate-700 text-brand-teal shadow-md" : "text-gray-400"}`}
+                  >
+                    {s}
+                  </button>
+                ))}
               </div>
 
               <div className="space-y-4">
-                <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest block">Sök eller ange URL</label>
+                <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest block">
+                  {streamData.service === "custom" ? "Klistra in <iframe> kod" : "Sök eller ange URL"}
+                </label>
                 <div className="flex gap-2">
-                  <input
-                    type="text"
-                    placeholder={streamData.service === "youtube" ? "Sök på YouTube eller klistra in länk..." : "Sök på Vimeo eller klistra in länk..."}
-                    className="flex-1 px-5 py-4 rounded-2xl bg-gray-50 dark:bg-slate-800 border-2 border-transparent focus:border-brand-teal outline-none font-bold italic"
-                    value={searchQuery}
-                    onChange={e => setSearchQuery(e.target.value)}
-                    onKeyDown={e => e.key === "Enter" && (e.preventDefault(), handleSearch())}
-                  />
+                  {streamData.service === "custom" ? (
+                    <textarea 
+                      placeholder="Klistra in inbäddningskod här (<iframe>...</iframe>)..."
+                      className="w-full px-5 py-4 rounded-2xl bg-gray-50 dark:bg-slate-800 border-2 border-transparent focus:border-brand-teal outline-none font-mono text-xs h-32"
+                      value={searchQuery}
+                      onChange={e => setSearchQuery(e.target.value)}
+                    />
+                  ) : (
+                    <input
+                      type="text"
+                      placeholder={`Sök på ${streamData.service} eller klistra in länk...`}
+                      className="flex-1 px-5 py-4 rounded-2xl bg-gray-50 dark:bg-slate-800 border-2 border-transparent focus:border-brand-teal outline-none font-bold italic"
+                      value={searchQuery}
+                      onChange={e => setSearchQuery(e.target.value)}
+                      onKeyDown={e => e.key === "Enter" && (e.preventDefault(), handleSearch())}
+                    />
+                  )}
                   <button
                     type="button"
                     onClick={handleSearch}
                     disabled={searching || !searchQuery}
                     className="px-6 rounded-2xl bg-brand-dark text-white font-black text-[10px] uppercase tracking-widest hover:bg-brand-teal transition-all disabled:opacity-50"
                   >
-                    {searching ? "..." : "Sök"}
+                    {searching ? "..." : (streamData.service === "custom" ? "Klar" : "Sök")}
                   </button>
                 </div>
               </div>
@@ -665,14 +945,8 @@ export default function ArticleEditModal({ editingArticle, accessToken, onClose,
                     <button
                       key={video.id}
                       type="button"
-                      onClick={() => {
-                        const embed = getEmbedHtml(streamData.service, video.id);
-                        insertHtml(embed);
-                        setShowStreamingPicker(false);
-                        setSearchResults([]);
-                        setSearchQuery("");
-                      }}
-                      className="w-full flex items-center gap-4 p-3 rounded-2xl hover:bg-gray-50 dark:hover:bg-slate-800 transition-all text-left group"
+                      onClick={() => handleStreamSelect(video)}
+                      className="group flex items-start gap-4 p-4 rounded-3xl hover:bg-gray-50 dark:hover:bg-slate-800 transition-all text-left"
                     >
                       <div className="relative w-24 aspect-video rounded-lg overflow-hidden flex-shrink-0 shadow-md">
                         <Image src={video.thumbnail} alt={video.title} fill className="object-cover" />

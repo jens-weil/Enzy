@@ -150,8 +150,8 @@ export default function ArticleModal({ article, isAdmin, onClose, onDelete, onEd
             />
           </div>
           <div
-            className="article-rich-content text-gray-600 dark:text-gray-300 text-lg leading-[1.8] font-medium space-y-8"
-            dangerouslySetInnerHTML={{ __html: article.content.replace(/\n/g, "<br/>") }}
+            className="prose dark:prose-invert text-gray-600 dark:text-gray-300 text-lg leading-[1.8] font-medium"
+            dangerouslySetInnerHTML={{ __html: article.content }}
           />
           <div className="pt-16 border-t border-gray-100 dark:border-slate-800 flex justify-end items-center">
             <button onClick={onClose} className="group px-8 py-3 rounded-2xl bg-brand-dark text-white font-black text-xs uppercase tracking-widest flex items-center gap-3 hover:bg-brand-teal transition-all">

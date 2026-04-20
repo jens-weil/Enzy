@@ -19,6 +19,10 @@ const MOCK_VIDEOS = {
   vimeo: [
     { id: '148751763', title: 'The Mountain', thumbnail: 'https://i.vimeocdn.com/video/547048258_640.jpg' },
     { id: '22428395', title: 'The Eagleman Stallion', thumbnail: 'https://i.vimeocdn.com/video/141151605_640.jpg' }
+  ],
+  twitch: [
+    { id: '1234567890', title: 'Twitch Presentation - Gaming and Beyond', thumbnail: 'https://static-cdn.jtvnw.net/previews-ttv/live_user_twitch-440x248.jpg' },
+    { id: '0987654321', title: 'Live Stream: Future of Tech', thumbnail: 'https://static-cdn.jtvnw.net/previews-ttv/live_user_test-440x248.jpg' }
   ]
 };
 
@@ -28,7 +32,7 @@ export async function GET(request: Request) {
   const service = searchParams.get('service') || 'youtube';
 
   if (!query) {
-    return NextResponse.json({ videos: [] });
+    return NextResponse.json({ results: [] });
   }
 
   // In a real implementation, we would use API keys here.
@@ -39,5 +43,5 @@ export async function GET(request: Request) {
   // If no results from mock, just return the mock list for demonstration
   const finalResults = results.length > 0 ? results : allVideos;
 
-  return NextResponse.json({ videos: finalResults });
+  return NextResponse.json({ results: finalResults });
 }
