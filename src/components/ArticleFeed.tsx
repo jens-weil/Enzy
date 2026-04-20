@@ -210,7 +210,7 @@ export default function ArticleFeed({ initialArticles }: ArticleFeedProps) {
           <div className="space-y-3">
             <label className="text-xs font-black text-gray-400 uppercase tracking-widest">Sociala medier</label>
             <div className="flex gap-2">
-              {["facebook", "linkedin", "x", "instagram", "tiktok"].map(p => (
+              {["facebook", "linkedin", "instagram", "tiktok", "x"].map(p => (
                 <button
                   key={p}
                   onClick={() => toggleSocial(p as any)}

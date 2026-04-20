@@ -51,7 +51,8 @@ export async function POST(request: NextRequest) {
         facebook: false,
         instagram: false,
         linkedin: false,
-        tiktok: false
+        tiktok: false,
+        x: false
       },
       socialLinks: body.socialLinks || {},
       facebookPostId: undefined,
@@ -73,13 +74,15 @@ export async function POST(request: NextRequest) {
         link: articleUrl,
         imageUrl: newArticle.imageUrl ? (newArticle.imageUrl.startsWith('http') ? newArticle.imageUrl : `${siteUrl}${newArticle.imageUrl}`) : undefined
       });
-      if (fbResult) {
+      if (fbResult && 'id' in fbResult) {
         console.log("Article API: Facebook post SUCCESS:", fbResult.id);
         newArticle.facebookPostId = fbResult.id;
         newArticle.socialLinks.facebook = fbResult.url;
+        newArticle._fbWarning = undefined;
       } else {
-        console.warn("Article API: Facebook post FAILED (check logs)");
-        newArticle._fbWarning = "Facebook-inlägget kunde inte skapas automatisk.";
+        const errMsg = fbResult && 'error' in fbResult ? fbResult.error : "Okänt fel";
+        console.warn("Article API: Facebook post FAILED:", errMsg);
+        newArticle._fbWarning = `Facebook-fel: ${errMsg}`;
       }
     }
 
@@ -92,13 +95,15 @@ export async function POST(request: NextRequest) {
         link: articleUrl,
         imageUrl: newArticle.imageUrl ? (newArticle.imageUrl.startsWith('http') ? newArticle.imageUrl : `${siteUrl}${newArticle.imageUrl}`) : undefined
       });
-      if (igResult) {
+      if (igResult && 'id' in igResult) {
         console.log("Article API: Instagram post SUCCESS:", igResult.id);
         newArticle.instagramPostId = igResult.id;
         newArticle.socialLinks.instagram = igResult.url;
+        newArticle._igWarning = undefined;
       } else {
-        console.warn("Article API: Instagram post FAILED (check logs)");
-        newArticle._igWarning = "Instagram-inlägget kunde inte skapas automatisk.";
+        const errMsg = igResult && 'error' in igResult ? igResult.error : "Okänt fel";
+        console.warn("Article API: Instagram post FAILED:", errMsg);
+        newArticle._igWarning = `Instagram-fel: ${errMsg}`;
       }
     }
 
@@ -175,7 +180,7 @@ export async function PATCH(request: NextRequest) {
     let instagramPostId = articles[articleIndex].instagramPostId;
     let updatedSocialLinks = { ...(socialLinks || articles[articleIndex].socialLinks || {}) };
 
-    const platforms = ["facebook", "linkedin", "instagram", "tiktok"] as const;
+    const platforms = ["facebook", "linkedin", "instagram", "tiktok", "x"] as const;
     platforms.forEach(p => {
       const oldVal = articles[articleIndex].socialMedia[p];
       const newVal = socialMedia?.[p] !== undefined ? socialMedia[p] : oldVal;
@@ -207,13 +212,15 @@ export async function PATCH(request: NextRequest) {
         link: articleUrl,
         imageUrl: imageUrl ? (imageUrl.startsWith('http') ? imageUrl : `${siteUrl}${imageUrl}`) : (articles[articleIndex].imageUrl ? (articles[articleIndex].imageUrl.startsWith('http') ? articles[articleIndex].imageUrl : `${siteUrl}${articles[articleIndex].imageUrl}`) : undefined)
       });
-      if (fbResult) {
+      if (fbResult && 'id' in fbResult) {
         console.log("Article API (PATCH): Facebook post SUCCESS:", fbResult.id);
         facebookPostId = fbResult.id;
         updatedSocialLinks.facebook = fbResult.url;
+        articles[articleIndex]._fbWarning = undefined;
       } else {
-        console.warn("Article API (PATCH): Facebook post FAILED");
-        articles[articleIndex]._fbWarning = "Facebook-inlägget kunde inte skapas automatisk.";
+        const errMsg = fbResult && 'error' in fbResult ? fbResult.error : "Okänt fel";
+        console.warn("Article API (PATCH): Facebook post FAILED:", errMsg);
+        articles[articleIndex]._fbWarning = `Facebook-fel: ${errMsg}`;
       }
     }
 
@@ -228,13 +235,15 @@ export async function PATCH(request: NextRequest) {
         link: articleUrl,
         imageUrl: imageUrl ? (imageUrl.startsWith('http') ? imageUrl : `${siteUrl}${imageUrl}`) : (articles[articleIndex].imageUrl ? (articles[articleIndex].imageUrl.startsWith('http') ? articles[articleIndex].imageUrl : `${siteUrl}${articles[articleIndex].imageUrl}`) : undefined)
       });
-      if (igResult) {
+      if (igResult && 'id' in igResult) {
         console.log("Article API (PATCH): Instagram post SUCCESS:", igResult.id);
         instagramPostId = igResult.id;
         updatedSocialLinks.instagram = igResult.url;
+        articles[articleIndex]._igWarning = undefined;
       } else {
-        console.warn("Article API (PATCH): Instagram post FAILED");
-        articles[articleIndex]._igWarning = "Instagram-inlägget kunde inte skapas automatisk.";
+        const errMsg = igResult && 'error' in igResult ? igResult.error : "Okänt fel";
+        console.warn("Article API (PATCH): Instagram post FAILED:", errMsg);
+        articles[articleIndex]._igWarning = `Instagram-fel: ${errMsg}`;
       }
     }
 
@@ -251,6 +260,7 @@ export async function PATCH(request: NextRequest) {
         instagram: socialMedia?.instagram !== undefined ? socialMedia.instagram : articles[articleIndex].socialMedia.instagram,
         linkedin: socialMedia?.linkedin !== undefined ? socialMedia.linkedin : articles[articleIndex].socialMedia.linkedin,
         tiktok: socialMedia?.tiktok !== undefined ? socialMedia.tiktok : articles[articleIndex].socialMedia.tiktok,
+        x: socialMedia?.x !== undefined ? socialMedia.x : articles[articleIndex].socialMedia.x,
       },
       socialLinks: updatedSocialLinks,
       facebookPostId,

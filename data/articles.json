@@ -14,9 +14,10 @@
       "tiktok": false
     },
     "socialLinks": {
-      "facebook": "https://www.facebook.com/834165126406288"
+      "facebook": "https://www.facebook.com/122105792132810328"
     },
-    "facebookPostId": "834165126406288"
+    "_igWarning": "Instagram-fel: Invalid OAuth access token - Cannot parse access token (Code: 190, Subcode: undefined)",
+    "facebookPostId": "122105792132810328"
   },
   {
     "id": "1773603246233",
@@ -27,13 +28,14 @@
     "imageUrl": "/media/1773424961013-product_presentation-(1).png",
     "content": "<h2>Resultat från ColdZyme-studie­­n</h2>\nKlinisk data\nEn oberoende, forskarinitierad studie­­ vid University of Kent rapporterade signifikant lägre sjukdomssymtom och färre sjukdagar på grund av övre luftvägsinfektioner (URTI) hos idrottare som använder ColdZyme.1 I denna placebokontrollerade, dubbelblinda studie­­ randomiserades 154 elitidrottare inom uthållighetssporter som triathlon, maraton och cykling till behandling med ColdZyme® eller placebo. Vidare visades det att ColdZyme minskar virusmängden med 94 % jämfört med placebo hos individer med rhinovirus orsakade förkylningar. Rhinovirus är den vanligaste orsaken till förkylning, vilket är en typ av övre luftvägsinfektion.2\n<div class=\"aspect-video w-full rounded-2xl overflow-hidden shadow-lg my-8\"><iframe src=\"https://www.youtube.com/embed/uUKuERfwCgk\" class=\"w-full h-full border-0\" allow=\"accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture\" allowfullscreen></iframe></div>\n\nDen kliniska studie­­n finns registrerad på British Clinical registry platform<a href=\"https://www.isrctn.com/ISRCTN18133939\" target=\"_blank\"> ISRCTN</a>\n<img width=200px height=300px src=\"/media/logo.png\" alt=\"Bild\" />",
     "socialMedia": {
-      "facebook": false,
+      "facebook": true,
       "instagram": false,
       "linkedin": false,
       "tiktok": false,
       "x": false
     },
-    "socialLinks": {}
+    "socialLinks": {},
+    "_fbWarning": "Facebook-fel: (#200) The permission(s) publish_actions are not available. It has been deprecated. If you want to provide a way for your app users to share content to Facebook, we encourage you to use our Sharing products instead."
   },
   {
     "id": "1773602661588",
@@ -69,7 +71,6 @@
     },
     "ingress": "Den nya smaken Eucalyptos ger ny säljrekord. Marknaden tog emot den med hull och hår och apoteken säljer ut den så fort de får påfyllning.",
     "socialLinks": {
-      "linkedin": "https://www.linkedin.com/in/jensweil/",
       "instagram": "#",
       "tiktok": "#"
     }
@@ -102,21 +103,15 @@
     "imageUrl": "/media/article_1773426972282_0.png",
     "content": "Se presentationen från Stora Aktiedagarna i Stockholm där ledningen presenterade bolagets framtidsutsikter och den senaste kliniska datan för ColdZyme®.\n\n<div class=\"aspect-video w-full rounded-2xl overflow-hidden shadow-lg my-8\"><iframe src=\"https://www.youtube.com/embed/ruOA1MWRqAU\" class=\"w-full h-full border-0\" allow=\"accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture\" allowfullscreen></iframe></div>",
     "socialMedia": {
-      "facebook": true,
-      "instagram": true,
-      "linkedin": true,
-      "tiktok": true,
+      "facebook": false,
+      "instagram": false,
+      "linkedin": false,
+      "tiktok": false,
       "x": false
     },
     "ingress": "Se presentationen från Stora Aktiedagarna i Stockholm där ledningen presenterade bolagets framtidsutsikter och den senaste kliniska datan för ColdZyme...",
-    "socialLinks": {
-      "linkedin": "https://www.linkedin.com/company/enzymatica/",
-      "x": "https://www.linkedin.com/company/enzymatica/",
-      "instagram": "https://nya.jenka.se",
-      "facebook": "https://www.facebook.com/832124036610397",
-      "tiktok": "https://www.linkedin.com/com"
-    },
-    "facebookPostId": "832124036610397"
+    "socialLinks": {},
+    "_fbWarning": "Facebook-fel: Invalid OAuth access token - Cannot parse access token"
   },
   {
     "id": "3",
@@ -189,7 +184,7 @@
     "imageUrl": "/media/article_1773426973829_3.png",
     "content": "Se när Enzymaticas nya vd, Sana Alajmovic, gästar BioStocks studio för ett samtal om sitt nya uppdrag, bolagets kommersiella strategi och vägen framåt.",
     "socialMedia": {
-      "facebook": false,
+      "facebook": true,
       "instagram": false,
       "linkedin": false,
       "tiktok": false,

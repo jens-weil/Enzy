@@ -1092,6 +1092,22 @@ export default function SettingsPage() {
                                 <span className="text-[10px] font-black text-gray-400 uppercase tracking-widest ml-2">Facebook App ID</span>
                                 <input type="text" value={facebook.appId} onChange={e => setFacebook((p: any) => ({ ...p, appId: e.target.value }))} className="w-full px-6 py-4 rounded-xl border border-gray-100 dark:border-slate-800 bg-gray-50 dark:bg-slate-950 focus:border-brand-teal outline-none font-black text-sm dark:text-white transition-all focus:ring-4 ring-brand-teal/5" placeholder="Ex: 1285187810374426" />
                               </label>
+
+                              <div className="md:col-span-2 p-6 bg-amber-50/50 dark:bg-amber-900/10 border border-amber-100/50 dark:border-amber-900/20 rounded-2xl space-y-3">
+                                <div className="flex items-start gap-3">
+                                  <span className="text-lg">💡</span>
+                                  <div className="space-y-1">
+                                    <p className="text-[10px] text-amber-700 dark:text-amber-500 font-black uppercase tracking-widest leading-relaxed">
+                                      Viktigt för autogenererade inlägg
+                                    </p>
+                                    <p className="text-[9px] text-amber-600/80 dark:text-amber-500/70 font-bold leading-relaxed">
+                                      Du måste använda en <strong>Page Access Token</strong> (inte en User Token). 
+                                      Se till att appen har behörigheten <code>pages_manage_posts</code>. 
+                                      Den gamla behörigheten <code>publish_actions</code> fungerar inte längre.
+                                    </p>
+                                  </div>
+                                </div>
+                              </div>
                             </div>
                           )}
 

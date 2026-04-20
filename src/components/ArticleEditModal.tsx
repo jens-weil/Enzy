@@ -200,11 +200,21 @@ export default function ArticleEditModal({ editingArticle, accessToken, onClose,
       if (res.ok) {
         const data = await res.json();
         const saved: Article = data.article;
-        setMessage({ type: "success", text: isEditing ? "Artikeln har uppdaterats!" : "Artikeln har publicerats!" });
-        setTimeout(() => {
-          onSaved(saved, !isEditing);
-          onClose();
-        }, 1000);
+        
+        if (data.warning) {
+          setMessage({ type: "error", text: `${isEditing ? "Artikeln uppdaterades" : "Artikeln publicerades"}, men med varning: ${data.warning}` });
+          // Don't close immediately if there's a warning so user can read it
+          setTimeout(() => {
+            onSaved(saved, !isEditing);
+            onClose();
+          }, 8000);
+        } else {
+          setMessage({ type: "success", text: isEditing ? "Artikeln har uppdaterats!" : "Artikeln har publicerats!" });
+          setTimeout(() => {
+            onSaved(saved, !isEditing);
+            onClose();
+          }, 1000);
+        }
       } else {
         const err = await res.json();
         setMessage({ type: "error", text: err.error || "Något gick fel." });

@@ -54,6 +54,7 @@ function getFacebookSettings() {
 }
 
 const errorLogPath = path.join(process.cwd(), 'data', 'facebook_errors.log');
+const diagLogPath = path.join(process.cwd(), 'data', 'facebook_diagnostics.log');
 
 function logError(message: string, detail?: any) {
   const timestamp = new Date().toISOString();
@@ -61,7 +62,46 @@ function logError(message: string, detail?: any) {
   try {
     fs.appendFileSync(errorLogPath, logMessage);
   } catch (e) {
-    console.error("Failed to write to error log file", e);
+    console.error("Failed to write to Facebook error log file", e);
+  }
+}
+
+function logDiagnostics(message: string) {
+  const timestamp = new Date().toISOString();
+  try {
+    fs.appendFileSync(diagLogPath, `[${timestamp}] ${message}\n`);
+  } catch {}
+}
+
+async function getPageAccessToken(systemToken: string, targetPageId: string): Promise<string | null> {
+  try {
+    logDiagnostics(`FB_TOKEN_EXCHANGE_START: TargetPage=${targetPageId}`);
+    const response = await fetchWithTimeout(`https://graph.facebook.com/${API_VERSION}/me/accounts?access_token=${systemToken}`);
+    
+    if (!response.ok) {
+      const err = await response.json();
+      logDiagnostics(`FB_TOKEN_EXCHANGE_HTTP_ERROR: Status=${response.status}, Msg=${err.error?.message}`);
+      return null;
+    }
+
+    const result = await response.json();
+    const pages = result.data || [];
+    const pageIds = pages.map((p: any) => p.id);
+    
+    logDiagnostics(`FB_TOKEN_EXCHANGE_PAGES_FOUND: [${pageIds.join(", ")}]`);
+
+    const targetPage = pages.find((p: any) => p.id === targetPageId);
+
+    if (targetPage && targetPage.access_token) {
+      logDiagnostics(`FB_TOKEN_EXCHANGE_SUCCESS: Found Page Token for "${targetPage.name}"`);
+      return targetPage.access_token;
+    }
+
+    logDiagnostics("FB_TOKEN_EXCHANGE_NO_MATCH: Target Page ID not in list. FALLBACK_TO_ORIGINAL.");
+    return null;
+  } catch (error: any) {
+    logDiagnostics(`FB_TOKEN_EXCHANGE_EXCEPTION: ${error.message}`);
+    return null;
   }
 }
 
@@ -70,20 +110,26 @@ export async function postToFacebook(data: {
   ingress?: string;
   link: string;
   imageUrl?: string;
-}) {
-  const { pageId, accessToken, strategy } = getFacebookSettings();
+}): Promise<{ id: string; url: string } | { error: string }> {
+  let { pageId, accessToken, strategy } = getFacebookSettings();
+  
+  accessToken = accessToken?.trim();
 
   if (!pageId || !accessToken || pageId === "your-page-id-here") {
-    const errorMsg = `Facebook credentials missing: ID=${!!pageId}, Token=${!!accessToken}`;
+    const errorMsg = `Inställningar saknas: Page ID (${!!pageId}) eller Access Token (${!!accessToken})`;
     console.warn("FB_POST_FAILURE:", errorMsg);
     logError(errorMsg);
-    return null;
+    return { error: errorMsg };
   }
 
+  // AUTO-EXCHANGE: Try to get a Page Access Token if this is a System/User token
+  const pageAccessToken = await getPageAccessToken(accessToken, pageId);
+  const effectiveToken = pageAccessToken || accessToken;
+
+  logDiagnostics(`FB_EFFECTIVE_TOKEN: [${effectiveToken?.substring(0, 10)}...] (Exchanged: ${!!pageAccessToken})`);
+
   const isDirect = strategy === "direct";
-
-  console.log(`FB_POST_START: Strategy=${strategy}, Image=${!!data.imageUrl}`);
-
+  const authHeader = { "Authorization": `Bearer ${effectiveToken}` };
 
   const message = isDirect 
     ? `${data.title}\n\n${data.ingress || ""}`
@@ -100,42 +146,52 @@ export async function postToFacebook(data: {
       const filePath = path.join(process.cwd(), 'public', localPath);
       
       if (fs.existsSync(filePath)) {
-        console.log(`FB_UPLOADING_PHOTO: ${filePath}`);
+        logDiagnostics(`FB_UPLOADING_PHOTO: ${localPath}`);
         const fileBuffer = fs.readFileSync(filePath);
         const formData = new FormData();
         const blob = new Blob([fileBuffer], { type: 'image/jpeg' });
         formData.append("source", blob, path.basename(filePath));
         formData.append("caption", message);
-        formData.append("access_token", accessToken);
+        formData.append("access_token", effectiveToken);
 
         const response = await fetchWithTimeout(`https://graph.facebook.com/${API_VERSION}/${pageId}/photos`, {
           method: "POST",
+          headers: authHeader,
           body: formData,
         });
 
         const result = await response.json();
         if (!response.ok) {
-          throw new Error(result.error?.message || "Photo Upload Failed");
+          throw new Error(result.error?.message || `Photo Upload Failed (Code: ${result.error?.code}, Subcode: ${result.error?.error_subcode})`);
         }
         
         const postId = result.id as string;
-        console.log(`FB_PHOTO_POSTED: ${postId}. Posting comment...`);
+        logDiagnostics(`FB_PHOTO_POSTED: ${postId}`);
 
         // Post the link as a comment
+        const commentParams = new URLSearchParams({ 
+          message: data.link,
+          access_token: effectiveToken 
+        });
         const commentResponse = await fetchWithTimeout(`https://graph.facebook.com/${API_VERSION}/${postId}/comments`, {
           method: "POST",
-          body: new URLSearchParams({
-            message: data.link,
-            access_token: accessToken || "",
-          }),
+          headers: { ...authHeader, "Content-Type": "application/x-www-form-urlencoded" },
+          body: commentParams,
         });
 
-        if (!commentResponse.ok) console.warn("FB_COMMENT_FAILURE");
+        if (commentResponse.ok) {
+          logDiagnostics(`FB_COMMENT_POSTED: ${postId}`);
+        } else {
+          const commentErr = await commentResponse.json();
+          logDiagnostics(`FB_COMMENT_FAILURE: ${commentErr.error?.message || "Unknown"}`);
+        }
 
         // Fetch permalink_url
         let permalinkUrl = `https://www.facebook.com/${postId}`;
         try {
-          const urlRes = await fetchWithTimeout(`https://graph.facebook.com/${API_VERSION}/${postId}?fields=permalink_url&access_token=${accessToken}`);
+          const urlRes = await fetchWithTimeout(`https://graph.facebook.com/${API_VERSION}/${postId}?fields=permalink_url&access_token=${effectiveToken}`, {
+            headers: authHeader
+          });
           if (urlRes.ok) {
             const urlData = await urlRes.json();
             if (urlData.permalink_url) permalinkUrl = urlData.permalink_url;
@@ -143,80 +199,104 @@ export async function postToFacebook(data: {
         } catch {}
 
         return { id: postId, url: permalinkUrl };
+      } else {
+        logDiagnostics(`FB_IMAGE_NOT_FOUND: ${filePath}`);
       }
     }
 
     // STRATEGY: DIRECT LINK POST (Feed)
-    console.log("FB_POSTING_FEED...");
-    const formData = new URLSearchParams();
-    formData.append("message", message);
-    if (!data.link.includes('localhost')) formData.append("link", data.link);
-    else formData.set("message", message + `\n\nLink: ${data.link}`);
-    formData.append("access_token", accessToken);
+    logDiagnostics("FB_POSTING_FEED...");
+    const feedParams = new URLSearchParams();
+    feedParams.append("message", message);
+    if (!data.link.includes('localhost')) feedParams.append("link", data.link);
+    else feedParams.set("message", message + `\n\nLink: ${data.link}`);
+    feedParams.append("access_token", effectiveToken);
 
     const response = await fetchWithTimeout(`https://graph.facebook.com/${API_VERSION}/${pageId}/feed`, {
       method: "POST",
-      body: formData,
+      headers: { ...authHeader, "Content-Type": "application/x-www-form-urlencoded" },
+      body: feedParams,
     });
 
     const result = await response.json();
     if (!response.ok) {
-      throw new Error(result.error?.message || "Feed Post Failed");
+      const fbErr = result.error;
+      const detailedError = fbErr ? `${fbErr.message} (Code: ${fbErr.code}, Subcode: ${fbErr.error_subcode}, Type: ${fbErr.type})` : "Feed Post Failed";
+      throw new Error(detailedError);
     }
 
     const postId = result.id as string;
-    console.log(`FB_POST_CREATED: ${postId}. Fetching permalink...`);
+    logDiagnostics(`FB_POST_CREATED: ${postId}`);
 
     if (!isDirect) {
-      console.log("FB_POSTING_COMMENT...");
+      logDiagnostics("FB_POSTING_LINK_COMMENT...");
+      const commentParams = new URLSearchParams({ 
+        message: data.link,
+        access_token: effectiveToken 
+      });
       await fetchWithTimeout(`https://graph.facebook.com/${API_VERSION}/${postId}/comments`, {
         method: "POST",
-        body: new URLSearchParams({
-          message: data.link,
-          access_token: accessToken || "",
-        }),
-      }).catch(e => console.warn("FB_COMMENT_FAILURE:", e.message));
+        headers: { ...authHeader, "Content-Type": "application/x-www-form-urlencoded" },
+        body: commentParams,
+      }).catch(e => logDiagnostics(`FB_COMMENT_FAILURE: ${e.message}`));
     }
 
     let permalinkUrl = `https://www.facebook.com/${postId}`;
     try {
-      const urlResponse = await fetchWithTimeout(`https://graph.facebook.com/${API_VERSION}/${postId}?fields=permalink_url&access_token=${accessToken}`);
+      const urlResponse = await fetchWithTimeout(`https://graph.facebook.com/${API_VERSION}/${postId}?fields=permalink_url&access_token=${effectiveToken}`, {
+        headers: authHeader
+      });
       if (urlResponse.ok) {
         const urlData = await urlResponse.json();
         if (urlData.permalink_url) permalinkUrl = urlData.permalink_url;
       }
     } catch (e) {
-      console.warn("FB_PERMALINK_EXCEPTION:", e instanceof Error ? e.message : "timeout");
+      logDiagnostics(`FB_PERMALINK_EXCEPTION: ${e instanceof Error ? e.message : "timeout"}`);
     }
 
-    console.log("FB_POST_SUCCESS:", { id: postId, url: permalinkUrl });
+    logDiagnostics(`FB_POST_SUCCESS: ${postId}`);
     return { id: postId, url: permalinkUrl };
   } catch (error: any) {
     const errorMsg = error instanceof Error ? error.message : String(error);
-    console.error("FB_POST_CRITICAL_FAILURE:", errorMsg);
+    logDiagnostics(`FB_POST_CRITICAL_FAILURE: ${errorMsg}`);
     logError("Failed to post to Facebook", errorMsg);
-    return null;
+    return { error: errorMsg };
   }
 }
 
 export async function deleteFromFacebook(postId: string) {
-  const { accessToken } = getFacebookSettings();
+  let { pageId, accessToken } = getFacebookSettings();
+  
+  accessToken = accessToken?.trim();
 
-  if (!accessToken || accessToken === "your-page-access-token-here") {
+  if (!accessToken || !pageId) {
+    logDiagnostics(`FB_DELETE_ABORTED: Missing PageID (${!!pageId}) or Token (${!!accessToken})`);
     return false;
   }
 
+  // AUTO-EXCHANGE: Ensure we have the correct Page Access Token for deletion
+  const pageAccessToken = await getPageAccessToken(accessToken, pageId);
+  const effectiveToken = pageAccessToken || accessToken;
+
   try {
-    console.log(`FB_DELETING_POST: ${postId}`);
+    logDiagnostics(`FB_DELETE_START: ${postId} (Exchanged: ${!!pageAccessToken})`);
     const response = await fetchWithTimeout(`https://graph.facebook.com/${API_VERSION}/${postId}`, {
       method: "DELETE",
-      body: new URLSearchParams({ access_token: accessToken }),
+      headers: { "Authorization": `Bearer ${effectiveToken}` },
+      body: new URLSearchParams({ access_token: effectiveToken }), // Dual pass for compatibility
     });
 
     const result = await response.json();
-    return !!response.ok && !!result.success;
-  } catch (error) {
-    console.error("FB_DELETE_FAILURE:", error instanceof Error ? error.message : "timeout");
+    if (response.ok && result.success) {
+      logDiagnostics(`FB_DELETE_SUCCESS: ${postId}`);
+      return true;
+    } else {
+      const errMsg = result.error?.message || "Unknown deletion error";
+      logDiagnostics(`FB_DELETE_FAILURE: ${errMsg}`);
+      return false;
+    }
+  } catch (error: any) {
+    logDiagnostics(`FB_DELETE_EXCEPTION: ${error.message}`);
     return false;
   }
 }
