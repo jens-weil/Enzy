@@ -154,8 +154,28 @@ export default function SocialShare({
       // await sharePromise; 
     }
 
+    const isMobile = typeof navigator !== "undefined" && /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+
     if (platform === "facebook") {
-      const postUrl = `https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(articleUrl)}`;
+      if (isMobile && typeof navigator !== "undefined" && navigator.share) {
+        try {
+          await navigator.share({
+            title: articleTitle,
+            text: `Kollade precis på den här artikeln från ${channelSettings?.company?.name || "Enzymatica"}!`,
+            url: articleUrl,
+          });
+          return;
+        } catch (err) {
+          if ((err as Error).name === 'AbortError') return;
+          console.warn("Navigator share failed, falling back to mobile web link:", err);
+        }
+      }
+
+      // If on mobile and navigator.share failed or is missing, use m.facebook.com to force web view
+      const postUrl = isMobile
+        ? `https://m.facebook.com/sharer/sharer.php?u=${encodeURIComponent(articleUrl)}`
+        : `https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(articleUrl)}`;
+      
       window.open(postUrl, "_blank", "noopener,noreferrer,width=600,height=400");
     } else if (platform === "linkedin") {
       const postUrl = `https://www.linkedin.com/sharing/share-offsite/?url=${encodeURIComponent(articleUrl)}`;

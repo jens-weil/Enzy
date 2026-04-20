@@ -1087,6 +1087,11 @@ export default function SettingsPage() {
                                 <span className="text-[10px] font-black text-gray-400 uppercase tracking-widest ml-2">Facebook Page ID</span>
                                 <input type="text" value={facebook.pageId} onChange={e => setFacebook((p: any) => ({ ...p, pageId: e.target.value }))} className="w-full px-6 py-4 rounded-xl border border-gray-100 dark:border-slate-800 bg-gray-50 dark:bg-slate-950 focus:border-brand-teal outline-none font-black text-sm dark:text-white transition-all focus:ring-4 ring-brand-teal/5" placeholder="1234567890" />
                               </label>
+
+                              <label className="space-y-3 block">
+                                <span className="text-[10px] font-black text-gray-400 uppercase tracking-widest ml-2">Facebook App ID</span>
+                                <input type="text" value={facebook.appId} onChange={e => setFacebook((p: any) => ({ ...p, appId: e.target.value }))} className="w-full px-6 py-4 rounded-xl border border-gray-100 dark:border-slate-800 bg-gray-50 dark:bg-slate-950 focus:border-brand-teal outline-none font-black text-sm dark:text-white transition-all focus:ring-4 ring-brand-teal/5" placeholder="Ex: 1285187810374426" />
+                              </label>
                             </div>
                           )}
 
