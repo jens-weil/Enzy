@@ -1,12 +1,13 @@
 "use client";
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { ComposedChart, Line, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, ReferenceLine } from 'recharts';
 import { format, fromUnixTime } from 'date-fns';
 import { sv } from 'date-fns/locale';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useAuth } from '@/components/AuthContext';
-import { Lock } from 'lucide-react';
+import { Lock, ArrowRight } from 'lucide-react';
+import MembershipModal from './MembershipModal';
 
 interface StockChartModalProps {
   isOpen: boolean;
@@ -63,6 +64,9 @@ export default function StockChartModal({ isOpen, onClose, ticker = 'ENZY.ST' }:
   // RBAC states
   const { profile } = useAuth();
   const [accessMessage, setAccessMessage] = useState<string | null>(null);
+  const [targetRole, setTargetRole] = useState<string>("Medlem");
+  const [showMembershipModal, setShowMembershipModal] = useState(false);
+  const messageTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
   const role = profile?.role || "Anonym";
   
@@ -73,16 +77,18 @@ export default function StockChartModal({ isOpen, onClose, ticker = 'ENZY.ST' }:
   const isAnon = role === "Anonym";
 
   // Transient message helper
-  const triggerAccessMessage = (msg: string) => {
+  const triggerAccessMessage = (msg: string, role: string = "Medlem") => {
+    if (messageTimeoutRef.current) clearTimeout(messageTimeoutRef.current);
     setAccessMessage(msg);
-    setTimeout(() => setAccessMessage(null), 3000);
+    setTargetRole(role);
+    messageTimeoutRef.current = setTimeout(() => setAccessMessage(null), 5000);
   };
 
   const handleTimeframeSelect = (tf: TimeframeOption) => {
     const isLongTerm = ['1y', '3y', '10y', 'max'].includes(tf.range);
     
     if (isLongTerm && !isMember) {
-      triggerAccessMessage("Längre historik kräver Medlemskap. Logga in eller ansök för att låsa upp.");
+      triggerAccessMessage("Längre historik kräver Medlemskap. Logga in eller ansök för att låsa upp.", "Medlem");
       return;
     }
     
@@ -93,14 +99,14 @@ export default function StockChartModal({ isOpen, onClose, ticker = 'ENZY.ST' }:
   const handleIndicatorToggle = (indicator: string, current: boolean, setter: (val: boolean) => void) => {
     if (indicator === 'ohlc' || indicator === 'log') {
       if (!isMember) {
-        triggerAccessMessage("Denna funktion kräver att du är Medlem.");
+        triggerAccessMessage("Denna funktion kräver att du är Medlem.", "Medlem");
         return;
       }
     }
 
     if (indicator === 'ma30' || indicator === 'ma100') {
       if (!isInvestor) {
-        triggerAccessMessage("Teknisk analys (MA) kräver rollen Investerare.");
+        triggerAccessMessage("Teknisk analys (MA) kräver rollen Investerare.", "Investerare");
         return;
       }
     }
@@ -657,14 +663,27 @@ export default function StockChartModal({ isOpen, onClose, ticker = 'ENZY.ST' }:
                   exit={{ opacity: 0, y: 20 }}
                   className="absolute bottom-4 left-1/2 -translate-x-1/2 px-6 py-3 bg-brand-dark/95 backdrop-blur-md rounded-2xl shadow-2xl border border-white/10 flex items-center gap-3 z-[300]"
                 >
-                  <Lock size={16} className="text-brand-teal" />
+                  <Lock size={16} className="text-brand-teal shrink-0" />
                   <span className="text-white text-[11px] font-black uppercase tracking-widest italic">{accessMessage}</span>
+                  <button
+                    onClick={() => { setShowMembershipModal(true); setAccessMessage(null); }}
+                    className="ml-2 px-4 py-1.5 bg-brand-teal text-white text-[9px] font-black uppercase tracking-widest rounded-lg hover:bg-white hover:text-brand-teal transition-all flex items-center gap-2 group/btn"
+                  >
+                    {targetRole === "Investerare" ? "Ansök nu" : "Bli Medlem"}
+                    <ArrowRight size={12} className="group-hover/btn:translate-x-1 transition-transform" />
+                  </button>
                 </motion.div>
               )}
             </AnimatePresence>
           </div>
         </div>
       </div>
+
+      <MembershipModal 
+        isOpen={showMembershipModal} 
+        onClose={() => setShowMembershipModal(false)} 
+        initialRole={targetRole}
+      />
     </div>
   );
 }

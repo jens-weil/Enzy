@@ -38,6 +38,20 @@ export default function MembershipModal({ isOpen, onClose, initialRole }: Member
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState(false);
 
+  // Reset form when modal closes
+  useEffect(() => {
+    if (!isOpen) {
+      setEmail("");
+      setPassword("");
+      setFullName("");
+      setPhone("");
+      setCompany("");
+      setLinkedin("");
+      setError(null);
+      setSuccess(false);
+    }
+  }, [isOpen]);
+
   if (!isOpen) return null;
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -138,13 +152,13 @@ export default function MembershipModal({ isOpen, onClose, initialRole }: Member
                 </div>
                 <div className="space-y-1.5">
                   <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest ml-1">E-post</label>
-                  <input required type="email" value={email} onChange={e => setEmail(e.target.value)} className="w-full px-5 py-3 rounded-2xl bg-gray-50 dark:bg-slate-800 border-none font-bold" />
+                  <input required type="email" autoComplete="email" value={email} onChange={e => setEmail(e.target.value)} className="w-full px-5 py-3 rounded-2xl bg-gray-50 dark:bg-slate-800 border-none font-bold" />
                 </div>
               </div>
 
               <div className="space-y-1.5">
                 <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest ml-1">Lösenord</label>
-                <input required type="password" value={password} onChange={e => setPassword(e.target.value)} className="w-full px-5 py-3 rounded-2xl bg-gray-50 dark:bg-slate-800 border-none font-bold" />
+                <input required type="password" autoComplete="new-password" value={password} onChange={e => setPassword(e.target.value)} className="w-full px-5 py-3 rounded-2xl bg-gray-50 dark:bg-slate-800 border-none font-bold" />
               </div>
 
               {role !== "Admin" && role !== "Editor" && (
