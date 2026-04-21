@@ -89,7 +89,7 @@ export default function Home() {
   return (
     <div className="flex flex-col w-full">
       {/* Hero Section */}
-      <section className="relative w-full h-[90vh] min-h-[700px] flex items-center justify-center overflow-hidden">
+      <section className="relative w-full h-screen min-h-[700px] flex items-center justify-center overflow-hidden">
         {/* Background Images with Cross-Fade */}
         <div className="absolute inset-0 z-0">
           {slidesToRender.map((img, idx) => (

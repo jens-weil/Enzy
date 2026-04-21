@@ -14,6 +14,7 @@ const ContactModal = dynamic(() => import("./ContactModal"), { ssr: false });
 const StockChartModal = dynamic(() => import("./StockChartModal"), { ssr: false });
 const MembershipModal = dynamic(() => import("./MembershipModal"), { ssr: false });
 const StockTicker = dynamic(() => import("./StockTicker"), { ssr: false });
+const QRModal = dynamic(() => import("./QRModal"), { ssr: false });
 
 export default function Navbar() {
   const { user, profile, loading, signOut, refreshProfile } = useAuth();
@@ -25,6 +26,7 @@ export default function Navbar() {
   const [showContactModal, setShowContactModal] = useState(false);
   const [showMembershipModal, setShowMembershipModal] = useState(false);
   const [showStockChart, setShowStockChart] = useState(false);
+  const [showQRModal, setShowQRModal] = useState(false);
   const pathname = usePathname();
 
   // Login form state
@@ -213,7 +215,9 @@ export default function Navbar() {
 
   return (
     <>
-      <nav className="fixed top-0 w-full z-50 glassmorphism border-b border-gray-200 dark:border-gray-800">
+      <nav 
+        className="fixed top-0 w-full z-50 glassmorphism border-b border-gray-200 dark:border-gray-800 select-none"
+      >
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex justify-between items-center h-[61px]">
              <div className="flex items-center">
@@ -256,6 +260,12 @@ export default function Navbar() {
                 className={`px-5 py-2.5 rounded-full font-bold transition-all text-sm uppercase tracking-widest ${showContactModal ? "bg-brand-teal text-white shadow-lg shadow-brand-teal/20" : "text-gray-600 dark:text-gray-300 hover:text-brand-teal hover:bg-brand-light dark:hover:bg-slate-800"}`}
               >
                 Kontakt
+              </button>
+              <button
+                onClick={() => setShowQRModal(true)}
+                className={`px-5 py-2.5 rounded-full font-bold transition-all text-sm uppercase tracking-widest ${showQRModal ? "bg-brand-teal text-white shadow-lg shadow-brand-teal/20" : "text-gray-600 dark:text-gray-300 hover:text-brand-teal hover:bg-brand-light dark:hover:bg-slate-800"}`}
+              >
+                Dela
               </button>
 
               {isLoggedIn && profile?.role === "Partner" && (
@@ -404,6 +414,12 @@ export default function Navbar() {
                 className={`p-4 rounded-2xl text-lg font-bold transition-all flex items-center gap-4 text-left ${showContactModal ? "bg-brand-light text-brand-teal" : "text-gray-800 dark:text-white hover:bg-gray-50 dark:hover:bg-slate-800"}`}
               >
                 Kontakt
+              </button>
+              <button
+                onClick={() => { setShowQRModal(true); setIsMobileMenuOpen(false); }}
+                className={`p-4 rounded-2xl text-lg font-bold transition-all flex items-center gap-4 text-left ${showQRModal ? "bg-brand-light text-brand-teal" : "text-gray-800 dark:text-white hover:bg-gray-50 dark:hover:bg-slate-800"}`}
+              >
+                Dela
               </button>
 
               {/* StockTicker hidden on mobile per request */}
@@ -733,6 +749,11 @@ export default function Navbar() {
         isOpen={showStockChart}
         onClose={() => setShowStockChart(false)}
         ticker={tickerSymbol}
+      />
+
+      <QRModal
+        isOpen={showQRModal}
+        onClose={() => setShowQRModal(false)}
       />
     </>
 
