@@ -4,9 +4,9 @@ import { useState, useEffect, useRef } from 'react';
 import { ComposedChart, Line, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, ReferenceLine } from 'recharts';
 import { format, fromUnixTime } from 'date-fns';
 import { sv } from 'date-fns/locale';
-import { motion, AnimatePresence } from 'framer-motion';
+import { motion, AnimatePresence, LayoutGroup } from 'framer-motion';
 import { useAuth } from '@/components/AuthContext';
-import { Lock, ArrowRight } from 'lucide-react';
+import { Lock, ArrowRight, Maximize2, Minimize2 } from 'lucide-react';
 import MembershipModal from './MembershipModal';
 
 interface StockChartModalProps {
@@ -66,6 +66,7 @@ export default function StockChartModal({ isOpen, onClose, ticker = 'ENZY.ST' }:
   const [accessMessage, setAccessMessage] = useState<string | null>(null);
   const [targetRole, setTargetRole] = useState<string>("Medlem");
   const [showMembershipModal, setShowMembershipModal] = useState(false);
+  const [isMaximized, setIsMaximized] = useState(false);
   const messageTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
   const role = profile?.role || "Anonym";
@@ -328,51 +329,61 @@ export default function StockChartModal({ isOpen, onClose, ticker = 'ENZY.ST' }:
 
   return (
     <div 
-      className="fixed inset-0 z-[200] bg-black/40 backdrop-blur-sm flex items-center justify-center p-4 md:p-10 animate-in fade-in duration-300 overflow-y-auto"
+      className={`fixed inset-0 z-[200] bg-black/40 backdrop-blur-sm flex items-center justify-center animate-in fade-in duration-300 ${isMaximized ? 'p-0' : 'p-4 md:p-10'}`}
       onClick={(e) => { if (e.target === e.currentTarget) onClose(); }}
     >
-      <div 
-        className="bg-white dark:bg-slate-900 w-full max-w-5xl my-auto rounded-[2rem] shadow-2xl flex flex-col overflow-hidden animate-in zoom-in-95 duration-300 border border-gray-100 dark:border-slate-800"
+      <motion.div 
+        layout
+        className={`bg-white dark:bg-slate-900 shadow-2xl relative overflow-hidden animate-in zoom-in-95 duration-300 flex flex-col rounded-none ${
+          isMaximized 
+            ? 'w-full h-full max-w-none max-h-none' 
+            : 'w-full max-w-[95vw] md:max-w-7xl h-[85vh] max-h-[1000px]'
+        }`}
         onClick={e => e.stopPropagation()}
       >
-        {/* Header */}
-        <div className="p-8 border-b border-gray-100 dark:border-slate-800 flex justify-between items-start">
-          <div>
-            <div className="flex items-center gap-3 mb-2">
-               <h2 className="text-3xl font-black text-brand-dark dark:text-white uppercase italic tracking-tighter">
-                 {ticker.split('.')[0]}
-               </h2>
-               <span className="px-3 py-1 rounded-full bg-brand-light text-brand-teal text-[10px] font-black uppercase tracking-widest">
-                 {stockInfo.exchangeName}
-               </span>
+        {/* Header Section */}
+        <div className="p-3 md:p-5 pb-4 md:pb-6 bg-gradient-to-br from-brand-teal/20 to-transparent relative border-b border-gray-50 dark:border-slate-800/50">
+          <div className="flex justify-between items-start">
+            <div>
+              <h2 className="text-lg md:text-2xl font-black text-brand-dark dark:text-white italic uppercase tracking-tighter mb-1">
+                {ticker.split('.')[0]} <span className="text-brand-teal text-sm md:text-base font-medium opacity-50 not-italic ml-2">({stockInfo.exchangeName})</span>
+              </h2>
+              <div className="flex items-center gap-2 md:gap-4 flex-wrap">
+                <span className="text-2xl md:text-4xl font-black text-brand-dark dark:text-white tracking-tighter">
+                  {stockInfo.price.toFixed(2)} <span className="text-sm md:text-lg font-medium text-gray-400 ml-1">{stockInfo.currency}</span>
+                </span>
+                <span className={`text-xs md:text-base font-black px-2 md:px-3 py-0.5 md:py-1 rounded-full ${isPositive ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'}`}>
+                  {isPositive ? '+' : ''}{stockInfo.changePercent.toFixed(2)}%
+                </span>
+              </div>
             </div>
-            
-            <div className="flex items-end gap-4">
-               <span className="text-4xl font-black italic text-brand-dark dark:text-white">
-                 {stockInfo.price.toFixed(2)} <span className="text-xl text-gray-400 font-bold">{stockInfo.currency}</span>
-               </span>
-               <span className={`text-lg font-bold mb-1 ${isPositive ? 'text-green-500' : 'text-red-500'}`}>
-                 {isPositive ? '+' : ''}{stockInfo.changeValue.toFixed(2)} ({isPositive ? '+' : ''}{stockInfo.changePercent.toFixed(2)}%)
-               </span>
+            <div className="flex items-center gap-2">
+              <button
+                onClick={() => setIsMaximized(!isMaximized)}
+                className="w-10 h-10 md:w-12 md:h-12 rounded-full bg-gray-50 dark:bg-slate-800 text-gray-500 dark:text-gray-400 flex items-center justify-center hover:bg-gray-200 dark:hover:bg-slate-700 transition-all"
+                title={isMaximized ? "Minimera" : "Maximera"}
+              >
+                {isMaximized ? <Minimize2 size={20} /> : <Maximize2 size={20} />}
+              </button>
+              <button 
+                onClick={onClose}
+                className="w-10 h-10 md:w-12 md:h-12 rounded-full bg-gray-50 dark:bg-slate-800 text-gray-500 dark:text-gray-400 flex items-center justify-center hover:bg-gray-200 dark:hover:bg-slate-700 transition-all text-xl md:text-2xl font-black"
+              >
+                &times;
+              </button>
             </div>
           </div>
-          <button
-            onClick={onClose}
-            className="w-12 h-12 rounded-full bg-gray-50 dark:bg-slate-800 text-gray-500 dark:text-gray-400 flex items-center justify-center hover:bg-gray-200 dark:hover:bg-slate-700 transition-all text-2xl font-black"
-          >
-            &times;
-          </button>
         </div>
 
         {/* Content */}
-        <div className="px-4 md:px-8 py-6 md:py-8 space-y-6">
+        <div className="pl-[6px] pr-4 md:px-8 py-3 md:py-8 space-y-3 md:space-y-6 overflow-hidden flex-1 flex flex-col">
           {/* Controls Row */}
-          <div className="flex flex-wrap gap-4 items-center">
+          <div className="flex flex-wrap gap-2 md:gap-4 items-center shrink-0">
             {/* Timeframe Dropdown */}
             <div className="relative">
               <button
                 onClick={() => { setShowTimeframeOpen(!showTimeframeOpen); setShowSettingsOpen(false); }}
-                className="px-6 py-3 rounded-2xl bg-gray-50 dark:bg-slate-800 border border-gray-100 dark:border-slate-800 flex items-center gap-3 hover:bg-gray-100 dark:hover:bg-slate-700 transition-all min-w-[160px] group"
+                className="px-2 md:px-6 py-3 rounded-2xl bg-gray-50 dark:bg-slate-800 border border-gray-100 dark:border-slate-800 flex items-center gap-2 md:gap-3 hover:bg-gray-100 dark:hover:bg-slate-700 transition-all min-w-[130px] md:min-w-[160px] group text-ellipsis overflow-hidden"
               >
                 <span className="text-gray-400 text-[10px] font-black uppercase tracking-widest">Period:</span>
                 <span className="text-brand-dark dark:text-white text-xs font-black uppercase tracking-widest italic">{selectedTimeframe.label}</span>
@@ -416,7 +427,7 @@ export default function StockChartModal({ isOpen, onClose, ticker = 'ENZY.ST' }:
             <div className="relative ml-0 md:ml-2">
               <button
                 onClick={() => { setShowSettingsOpen(!showSettingsOpen); setShowTimeframeOpen(false); }}
-                className="px-6 py-3 rounded-2xl bg-gray-50 dark:bg-slate-800 border border-gray-100 dark:border-slate-800 flex items-center gap-3 hover:bg-gray-100 dark:hover:bg-slate-700 transition-all min-w-[160px] group"
+                className="px-2 md:px-6 py-3 rounded-2xl bg-gray-50 dark:bg-slate-800 border border-gray-100 dark:border-slate-800 flex items-center gap-2 md:gap-3 hover:bg-gray-100 dark:hover:bg-slate-700 transition-all min-w-[130px] md:min-w-[160px] group text-ellipsis overflow-hidden"
               >
                 <span className="text-gray-400 text-[10px] font-black uppercase tracking-widest">Visa:</span>
                 <span className="text-brand-dark dark:text-white text-xs font-black uppercase tracking-widest italic">
@@ -499,8 +510,8 @@ export default function StockChartModal({ isOpen, onClose, ticker = 'ENZY.ST' }:
           </div>
 
 
-          {/* Chart Area */}
-          <div className="h-[450px] w-full relative">
+          {/* Chart Section */}
+          <div className="w-full flex-1 min-h-[300px] relative">
             {loading ? (
               <div className="absolute inset-0 flex items-center justify-center">
                 <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-brand-teal"></div>
@@ -677,7 +688,7 @@ export default function StockChartModal({ isOpen, onClose, ticker = 'ENZY.ST' }:
             </AnimatePresence>
           </div>
         </div>
-      </div>
+      </motion.div>
 
       <MembershipModal 
         isOpen={showMembershipModal} 
