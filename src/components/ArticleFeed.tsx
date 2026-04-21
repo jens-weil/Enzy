@@ -296,7 +296,7 @@ export default function ArticleFeed({ initialArticles }: ArticleFeedProps) {
                 </div>
                 
                 <h2 
-                  className="text-lg font-black text-brand-dark dark:text-white mb-0 line-clamp-2 leading-[1.1] uppercase italic group-hover:text-brand-teal transition-colors duration-300"
+                  className="text-lg font-black text-brand-dark dark:text-white mb-0 line-clamp-2 leading-[1.3] uppercase italic group-hover:text-brand-teal transition-colors duration-300"
                   title={article.title}
                 >
                   {article.title}

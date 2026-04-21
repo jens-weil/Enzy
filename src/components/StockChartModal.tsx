@@ -30,6 +30,17 @@ const timeframes: TimeframeOption[] = [
 ];
 
 export default function StockChartModal({ isOpen, onClose, ticker = 'ENZY.ST' }: StockChartModalProps) {
+  useEffect(() => {
+    if (isOpen) {
+      document.body.style.overflow = "hidden";
+    } else {
+      document.body.style.overflow = "unset";
+    }
+    return () => {
+      document.body.style.overflow = "unset";
+    };
+  }, [isOpen]);
+
   const [selectedTimeframe, setSelectedTimeframe] = useState<TimeframeOption>(timeframes[2]); // Default 1 month
   const [data, setData] = useState<any[]>([]);
   const [loading, setLoading] = useState(false);

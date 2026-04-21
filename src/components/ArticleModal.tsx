@@ -1,5 +1,6 @@
 "use client";
 
+import { useEffect } from "react";
 import Image from "next/image";
 import { SOCIAL_ICONS } from "./SocialShare";
 import SocialShare from "./SocialShare";
@@ -53,17 +54,23 @@ interface ArticleModalProps {
 }
 
 export default function ArticleModal({ article, isAdmin, onClose, onDelete, onEdit }: ArticleModalProps) {
+  useEffect(() => {
+    document.body.style.overflow = "hidden";
+    return () => {
+      document.body.style.overflow = "unset";
+    };
+  }, []);
+
   return (
     <div
-      className="fixed inset-0 z-[100] bg-black/60 flex items-start justify-center p-4 md:p-8 backdrop-blur-sm animate-in fade-in duration-300 overflow-y-auto"
+      className="fixed inset-0 z-[100] bg-brand-dark/80 backdrop-blur-md overflow-y-auto px-2 py-4 md:px-4 md:py-12 lg:py-20"
       onClick={(e) => { if (e.target === e.currentTarget) onClose(); }}
     >
       <div
-        className="bg-white dark:bg-slate-900 w-full max-w-4xl rounded-[1.5rem] shadow-2xl flex flex-col relative animate-in slide-in-from-bottom-5 duration-500 my-auto"
+        className="bg-white dark:bg-slate-900 w-full max-w-4xl mx-auto mt-4 md:mt-24 mb-12 rounded-[1.5rem] md:rounded-[2rem] shadow-2xl flex flex-col relative animate-in slide-in-from-bottom-10 duration-700 min-h-[500px] md:min-h-[600px]"
         onClick={e => e.stopPropagation()}
-        style={{ minHeight: "842px" }}
       >
-        <div className="sticky top-0 z-50 bg-white/80 dark:bg-slate-900/80 backdrop-blur-md p-6 border-b border-gray-100 dark:border-slate-800 flex justify-between items-center rounded-t-[1.5rem]">
+        <div className="sticky top-0 z-50 bg-white/95 dark:bg-slate-900/95 backdrop-blur-xl px-5 md:px-8 py-4 md:py-6 border-b border-gray-100 dark:border-slate-800 flex justify-between items-center rounded-t-[1.5rem] md:rounded-t-[2rem]">
           <div className="flex items-center gap-4">
             <span className={`px-4 py-1.5 rounded-full text-[10px] font-black tracking-widest ${getTypeColor(article.type)}`}>
               {article.type.toUpperCase()}
@@ -74,13 +81,13 @@ export default function ArticleModal({ article, isAdmin, onClose, onDelete, onEd
               <>
                 <button
                   onClick={() => { onClose(); onEdit(article); }}
-                  className="px-5 py-2 rounded-xl bg-brand-teal text-white font-black text-[10px] uppercase tracking-widest shadow-md hover:bg-brand-dark transition-all"
+                  className="px-3 md:px-5 py-2 rounded-xl bg-brand-teal text-white font-black text-[9px] md:text-[10px] uppercase tracking-widest shadow-md hover:bg-brand-dark transition-all"
                 >
                   Redigera
                 </button>
                 <button
                   onClick={() => onDelete(article.id)}
-                  className="px-5 py-2 rounded-xl bg-red-500 text-white font-black text-[10px] uppercase tracking-widest shadow-md hover:bg-red-600 transition-all"
+                  className="px-3 md:px-5 py-2 rounded-xl bg-red-500 text-white font-black text-[9px] md:text-[10px] uppercase tracking-widest shadow-md hover:bg-red-600 transition-all"
                 >
                    Radera
                 </button>
@@ -95,9 +102,9 @@ export default function ArticleModal({ article, isAdmin, onClose, onDelete, onEd
           </div>
         </div>
 
-        <div className="p-8 md:p-16 flex-1 space-y-12 max-w-3xl mx-auto w-full pb-24">
+        <div className="p-6 md:p-16 flex-1 space-y-8 md:space-y-12 max-w-3xl mx-auto w-full pb-24">
           {article.imageUrl && (
-            <div className="relative w-full aspect-video rounded-[2rem] overflow-hidden shadow-2xl mb-12 transform hover:scale-[1.01] transition-transform duration-500 group">
+            <div className="relative w-full aspect-video rounded-[1.5rem] md:rounded-[2rem] overflow-hidden shadow-2xl mb-8 md:mb-12 transform hover:scale-[1.01] transition-transform duration-500 group">
               <Image src={article.imageUrl} alt={article.title} fill sizes="(max-width: 1024px) 100vw, 896px" className="object-cover" />
               
               {/* Social Post Overlay (Admin Only) */}
@@ -123,17 +130,17 @@ export default function ArticleModal({ article, isAdmin, onClose, onDelete, onEd
           )}
           <div className="space-y-6">
             <div className="space-y-4">
-              <h1 className="text-4xl md:text-5xl font-black text-brand-dark dark:text-white leading-[1.1] uppercase italic">
+              <h1 className="text-2xl sm:text-4xl md:text-5xl font-black text-brand-dark dark:text-white leading-[1.1] uppercase italic">
                 {article.title}
               </h1>
               <div className="flex items-center gap-3">
-                <div className="h-1.5 w-12 bg-brand-teal rounded-full" />
-                <time className="text-[11px] font-black text-gray-400 uppercase tracking-widest italic">{formatDate(article.date)}</time>
+                <div className="h-1.5 w-10 md:w-12 bg-brand-teal rounded-full" />
+                <time className="text-[10px] md:text-[11px] font-black text-gray-400 uppercase tracking-widest italic">{formatDate(article.date)}</time>
               </div>
             </div>
 
             {article.ingress && (
-              <div className="text-xl md:text-2xl font-bold text-gray-900 dark:text-gray-100 leading-relaxed border-l-4 border-brand-teal pl-8 italic mb-8">
+              <div className="text-lg md:text-2xl font-bold text-gray-900 dark:text-gray-100 leading-relaxed border-l-4 border-brand-teal pl-6 md:pl-8 italic mb-8">
                 {article.ingress}
               </div>
             )}

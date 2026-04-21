@@ -21,6 +21,17 @@ interface ContactModalProps {
 }
 
 export default function ContactModal({ isOpen, onClose, canEdit }: ContactModalProps) {
+  useEffect(() => {
+    if (isOpen) {
+      document.body.style.overflow = "hidden";
+    } else {
+      document.body.style.overflow = "unset";
+    }
+    return () => {
+      document.body.style.overflow = "unset";
+    };
+  }, [isOpen]);
+
   const [data, setData] = useState<ContactData | null>(null);
   const [activeTabId, setActiveTabId] = useState<string>("");
   const [isEditing, setIsEditing] = useState(false);

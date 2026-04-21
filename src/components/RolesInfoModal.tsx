@@ -46,6 +46,13 @@ interface RolesInfoModalProps {
 }
 
 export default function RolesInfoModal({ onClose, onApply, isLockActive, company: providedCompany }: RolesInfoModalProps) {
+  useEffect(() => {
+    document.body.style.overflow = "hidden";
+    return () => {
+      document.body.style.overflow = "unset";
+    };
+  }, []);
+
   const [expandedRole, setExpandedRole] = useState<string | null>(null);
   const [selectedRole, setSelectedRole] = useState("Anonym Besökare");
   const [dontShow, setDontShow] = useState(false);

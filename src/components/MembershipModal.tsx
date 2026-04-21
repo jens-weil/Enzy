@@ -10,6 +10,17 @@ interface MembershipModalProps {
 }
 
 export default function MembershipModal({ isOpen, onClose, initialRole }: MembershipModalProps) {
+  useEffect(() => {
+    if (isOpen) {
+      document.body.style.overflow = "hidden";
+    } else {
+      document.body.style.overflow = "unset";
+    }
+    return () => {
+      document.body.style.overflow = "unset";
+    };
+  }, [isOpen]);
+
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [role, setRole] = useState(initialRole || "Medlem");

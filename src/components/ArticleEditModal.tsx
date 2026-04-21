@@ -77,6 +77,13 @@ interface ArticleEditModalProps {
 }
 
 export default function ArticleEditModal({ editingArticle, accessToken, onClose, onSaved }: ArticleEditModalProps) {
+  useEffect(() => {
+    document.body.style.overflow = "hidden";
+    return () => {
+      document.body.style.overflow = "unset";
+    };
+  }, []);
+
   const isEditing = editingArticle !== null;
   const [formData, setFormData] = useState<ArticleForm>(
     editingArticle
@@ -179,38 +186,38 @@ export default function ArticleEditModal({ editingArticle, accessToken, onClose,
   };
 
   return (
-    <div className="fixed inset-0 z-[150] bg-black/70 backdrop-blur-md flex items-start justify-center p-4 md:p-8 overflow-y-auto" onClick={onClose}>
+    <div className="fixed inset-0 z-[150] bg-black/70 backdrop-blur-md flex items-start justify-center px-2 py-4 md:p-8 overflow-y-auto" onClick={onClose}>
       <motion.div
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
-        className="bg-white dark:bg-slate-900 w-full max-w-5xl rounded-[2.5rem] shadow-2xl flex flex-col my-auto overflow-hidden border border-white/20"
+        className="bg-white dark:bg-slate-900 w-full max-w-5xl rounded-[1.5rem] md:rounded-[2.5rem] shadow-2xl flex flex-col my-auto overflow-hidden border border-white/20"
         onClick={e => e.stopPropagation()}
       >
         {/* Modal Header */}
-        <div className="sticky top-0 z-[160] bg-white/95 dark:bg-slate-900/95 backdrop-blur-xl px-10 py-6 border-b border-gray-100 dark:border-slate-800 flex justify-between items-center">
-          <div className="flex items-center gap-4">
-            <div className="w-12 h-12 rounded-2xl bg-brand-teal/10 flex items-center justify-center text-brand-teal">
-              <FileText size={24} />
+        <div className="sticky top-0 z-[160] bg-white/95 dark:bg-slate-900/95 backdrop-blur-xl px-6 md:px-10 py-4 md:py-6 border-b border-gray-100 dark:border-slate-800 flex justify-between items-center">
+          <div className="flex items-center gap-3 md:gap-4">
+            <div className="w-10 h-10 md:w-12 md:h-12 rounded-xl bg-brand-teal/10 flex items-center justify-center text-brand-teal">
+              <FileText size={20} className="md:w-6 md:h-6" />
             </div>
             <div>
-              <h2 className="text-2xl font-black text-brand-dark dark:text-white uppercase italic tracking-tight">
-                {isEditing ? "Redigera artikel" : "Skapa ny artikel"}
+              <h2 className="text-lg md:text-2xl font-black text-brand-dark dark:text-white uppercase italic tracking-tight">
+                {isEditing ? "Redigera artikel" : "Skapa ny"}
               </h2>
-              <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest mt-0.5">
+              <p className="text-[8px] md:text-[10px] font-black text-gray-400 uppercase tracking-widest mt-0.5">
                 Layout & arkitektur
               </p>
             </div>
           </div>
           <button
             onClick={onClose}
-            className="w-12 h-12 rounded-2xl bg-gray-50 dark:bg-slate-800 text-gray-400 flex items-center justify-center hover:bg-gray-100 dark:hover:bg-slate-700 transition-all group"
+            className="w-10 h-10 md:w-12 md:h-12 rounded-xl bg-gray-50 dark:bg-slate-800 text-gray-400 flex items-center justify-center hover:bg-gray-100 dark:hover:bg-slate-700 transition-all group"
           >
-            <span className="text-3xl font-light group-hover:scale-110 transition-transform">&times;</span>
+            <span className="text-2xl md:text-3xl font-light group-hover:scale-110 transition-transform">&times;</span>
           </button>
         </div>
 
         {/* Scrollable Form Content */}
-        <form onSubmit={handleSubmit} className="p-10 space-y-10">
+        <form onSubmit={handleSubmit} className="p-6 md:p-10 space-y-8 md:space-y-10">
           
           {/* 1. TOP BAR: SOCIAL DROPDOWN */}
           <div className="relative z-[155]">
@@ -239,7 +246,7 @@ export default function ArticleEditModal({ editingArticle, accessToken, onClose,
                   initial={{ opacity: 0, y: -10, height: 0 }}
                   animate={{ opacity: 1, y: 5, height: "auto" }}
                   exit={{ opacity: 0, y: -10, height: 0 }}
-                  className="absolute top-full left-0 right-0 overflow-hidden bg-white dark:bg-slate-900 border-2 border-brand-teal rounded-3xl shadow-2xl p-6 grid grid-cols-1 md:grid-cols-5 gap-4 mt-2"
+                  className="absolute top-full left-0 right-0 overflow-hidden bg-white dark:bg-slate-900 border-2 border-brand-teal rounded-3xl shadow-2xl p-4 md:p-6 grid grid-cols-3 sm:grid-cols-5 gap-3 md:gap-4 mt-2"
                 >
                   {["facebook", "linkedin", "instagram", "tiktok", "x"]
                   .sort((a, b) => {
@@ -262,19 +269,19 @@ export default function ArticleEditModal({ editingArticle, accessToken, onClose,
                               }));
                             }
                           }}
-                          className={`w-full flex flex-col items-center justify-center p-8 rounded-3xl border-2 transition-all gap-4 ${
+                          className={`w-full flex flex-col items-center justify-center p-4 md:p-8 rounded-2xl md:rounded-3xl border-2 transition-all gap-2 md:gap-4 ${
                             !isActive ? 'opacity-30 grayscale cursor-not-allowed border-transparent' :
                             isSelected
                               ? "bg-brand-teal/10 border-brand-teal text-brand-teal cursor-pointer shadow-xl shadow-brand-teal/10 scale-[1.05]"
                               : "bg-gray-50 dark:bg-slate-800 border-transparent text-gray-400 cursor-pointer hover:bg-gray-100 dark:hover:bg-slate-700 hover:scale-[1.02]"
                           }`}
                         >
-                          <div className={`w-16 h-16 rounded-2xl flex items-center justify-center p-3.5 transition-all duration-500 ${
+                          <div className={`w-10 h-10 md:w-16 md:h-16 rounded-xl md:rounded-2xl flex items-center justify-center p-2.5 md:p-3.5 transition-all duration-500 ${
                               isSelected 
                               ? "bg-brand-teal text-white shadow-lg shadow-brand-teal/40 rotate-[360deg]" 
                               : "bg-gray-200 dark:bg-slate-700 text-gray-500"
                           }`}>
-                            {SOCIAL_ICONS[platform]}
+                            <div className="w-full h-full">{SOCIAL_ICONS[platform]}</div>
                           </div>
                         </div>
 
@@ -322,31 +329,31 @@ export default function ArticleEditModal({ editingArticle, accessToken, onClose,
                     value={formData.title}
                     onChange={handleChange}
                     placeholder="Artikelrubrik..."
-                    className="w-full px-6 py-4 rounded-2xl bg-gray-50 dark:bg-slate-800 border border-transparent focus:border-brand-teal focus:ring-4 focus:ring-brand-teal/5 outline-none transition-all font-bold text-lg"
+                    className="w-full px-5 md:px-6 py-3 md:py-4 rounded-xl md:rounded-2xl bg-gray-50 dark:bg-slate-800 border border-transparent focus:border-brand-teal focus:ring-4 focus:ring-brand-teal/5 outline-none transition-all font-bold text-base md:text-lg"
                   />
                 </div>
-                <div className="grid grid-cols-2 gap-4">
-                  <div className="space-y-3">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div className="space-y-2 md:space-y-3">
                     <label className="flex items-center gap-2 text-[10px] font-black text-brand-teal uppercase tracking-widest"><Globe size={12}/> Kategori</label>
                     <select
                       name="type"
                       value={formData.type}
                       onChange={handleChange}
-                      className="w-full px-5 py-4 rounded-2xl bg-gray-50 dark:bg-slate-800 border-transparent focus:border-brand-teal outline-none transition-all font-bold"
+                      className="w-full px-5 py-3 md:py-4 rounded-xl md:rounded-2xl bg-gray-50 dark:bg-slate-800 border-transparent focus:border-brand-teal outline-none transition-all font-bold"
                     >
                       <option value="Artikel">Artikel</option>
                       <option value="PM">PM</option>
                       <option value="Nyhet">Nyhet</option>
                     </select>
                   </div>
-                  <div className="space-y-3">
+                  <div className="space-y-2 md:space-y-3">
                     <label className="flex items-center gap-2 text-[10px] font-black text-brand-teal uppercase tracking-widest"><Calendar size={12}/> Datum</label>
                     <input
                       type="date"
                       name="date"
                       value={formData.date}
                       onChange={handleChange}
-                      className="w-full px-5 py-4 rounded-2xl bg-gray-50 dark:bg-slate-800 border-transparent focus:border-brand-teal outline-none transition-all font-bold"
+                      className="w-full px-5 py-3 md:py-4 rounded-xl md:rounded-2xl bg-gray-50 dark:bg-slate-800 border-transparent focus:border-brand-teal outline-none transition-all font-bold"
                     />
                   </div>
                 </div>
@@ -403,19 +410,19 @@ export default function ArticleEditModal({ editingArticle, accessToken, onClose,
             <button
               type="submit"
               disabled={loading}
-              className="flex-1 bg-brand-teal text-white py-6 rounded-3xl font-black text-sm uppercase tracking-widest hover:bg-brand-dark transition-all shadow-xl shadow-brand-teal/20 active:scale-[0.98] disabled:opacity-50 flex items-center justify-center gap-3"
+              className="flex-1 bg-brand-teal text-white py-4 md:py-6 rounded-2xl md:rounded-3xl font-black text-xs md:text-sm uppercase tracking-widest hover:bg-brand-dark transition-all shadow-xl shadow-brand-teal/20 active:scale-[0.98] disabled:opacity-50 flex items-center justify-center gap-3"
             >
               {loading ? (
                 <>
-                  <Loader2 className="animate-spin" size={20} />
-                  Publicerar...
+                  <Loader2 className="animate-spin" size={18} />
+                  <span>Publicerar...</span>
                 </>
               ) : isEditing ? "Spara ändringar" : "Publicera artikel"}
             </button>
             <button
               type="button"
               onClick={onClose}
-              className="px-10 bg-gray-50 dark:bg-slate-800 text-gray-500 py-6 rounded-3xl font-black text-sm uppercase tracking-widest hover:bg-gray-100 dark:hover:bg-slate-700 transition-all outline-none"
+              className="px-6 md:px-10 bg-gray-50 dark:bg-slate-800 text-gray-500 py-4 md:py-6 rounded-2xl md:rounded-3xl font-black text-xs md:text-sm uppercase tracking-widest hover:bg-gray-100 dark:hover:bg-slate-700 transition-all outline-none"
             >
               Avbryt
             </button>
