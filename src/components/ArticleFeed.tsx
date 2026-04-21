@@ -242,7 +242,7 @@ export default function ArticleFeed({ initialArticles }: ArticleFeedProps) {
               exit={{ opacity: 0, scale: 0.95, transition: { duration: 0.2 } }}
               transition={{ duration: 0.3, ease: "easeOut" }}
               key={article.id}
-              className="group flex flex-col bg-white dark:bg-slate-900 rounded-[2.5rem] overflow-hidden border border-gray-100 dark:border-slate-800 shadow-sm hover:shadow-2xl transition-all duration-700 cursor-pointer h-full"
+              className="group flex flex-col bg-white dark:bg-slate-900 rounded-[5px] md:rounded-[2.5rem] overflow-hidden border border-gray-100 dark:border-slate-800 shadow-sm hover:shadow-2xl transition-all duration-700 cursor-pointer h-full"
               onClick={(e) => {
                 const target = e.target as HTMLElement;
                 if (target.closest(".social-share-container")) {
@@ -302,7 +302,7 @@ export default function ArticleFeed({ initialArticles }: ArticleFeedProps) {
                   {article.title}
                 </h2>
                 
-                <div className="hidden md:block article-rich-content text-gray-500 dark:text-gray-400 line-clamp-2 mb-0 leading-relaxed text-[12px] font-medium opacity-80"
+                <div className="article-rich-content text-gray-500 dark:text-gray-400 line-clamp-3 mb-0 leading-relaxed text-[10px] md:text-[12px] font-medium opacity-80"
                   dangerouslySetInnerHTML={{ __html: article.ingress || "" }}
                 />
 
