@@ -186,15 +186,15 @@ export default function ArticleEditModal({ editingArticle, accessToken, onClose,
   };
 
   return (
-    <div className="fixed inset-0 z-[150] bg-black/70 backdrop-blur-md flex items-start justify-center px-2 py-4 md:p-8 overflow-y-auto" onClick={onClose}>
+    <div className="fixed inset-0 z-[150] bg-black/70 backdrop-blur-md flex items-center justify-center p-2 md:p-8" onClick={onClose}>
       <motion.div
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
-        className="bg-white dark:bg-slate-900 w-full max-w-5xl rounded-[1.5rem] md:rounded-[2.5rem] shadow-2xl flex flex-col my-auto overflow-hidden border border-white/20"
+        className="bg-white dark:bg-slate-900 w-full max-w-5xl max-h-[calc(100vh-1rem)] md:max-h-[min(92vh,1200px)] rounded-[1.5rem] md:rounded-[2.5rem] shadow-2xl flex flex-col overflow-hidden border border-white/20"
         onClick={e => e.stopPropagation()}
       >
         {/* Modal Header */}
-        <div className="sticky top-0 z-[160] bg-white/95 dark:bg-slate-900/95 backdrop-blur-xl px-6 md:px-10 py-4 md:py-6 border-b border-gray-100 dark:border-slate-800 flex justify-between items-center">
+        <div className="sticky top-0 z-[160] bg-white/95 dark:bg-slate-900/95 backdrop-blur-xl px-6 md:px-10 py-4 md:py-6 border-b border-gray-100 dark:border-slate-800 flex justify-between items-center shrink-0">
           <div className="flex items-center gap-3 md:gap-4">
             <div className="w-10 h-10 md:w-12 md:h-12 rounded-xl bg-brand-teal/10 flex items-center justify-center text-brand-teal">
               <FileText size={20} className="md:w-6 md:h-6" />
@@ -217,7 +217,7 @@ export default function ArticleEditModal({ editingArticle, accessToken, onClose,
         </div>
 
         {/* Scrollable Form Content */}
-        <form onSubmit={handleSubmit} className="p-6 md:p-10 space-y-8 md:space-y-10">
+        <form onSubmit={handleSubmit} className="p-6 md:p-10 space-y-8 md:space-y-10 overflow-y-auto flex-1 scroll-smooth">
           
           {/* 1. TOP BAR: SOCIAL DROPDOWN */}
           <div className="relative z-[155]">

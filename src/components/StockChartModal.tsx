@@ -5,6 +5,8 @@ import { ComposedChart, Line, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Respons
 import { format, fromUnixTime } from 'date-fns';
 import { sv } from 'date-fns/locale';
 import { motion, AnimatePresence } from 'framer-motion';
+import { useAuth } from '@/components/AuthContext';
+import { Lock } from 'lucide-react';
 
 interface StockChartModalProps {
   isOpen: boolean;
@@ -56,8 +58,55 @@ export default function StockChartModal({ isOpen, onClose, ticker = 'ENZY.ST' }:
   const [showOHLC, setShowOHLC] = useState(false);
   const [showTimeframeOpen, setShowTimeframeOpen] = useState(false);
   const [showSettingsOpen, setShowSettingsOpen] = useState(false);
-
   const [hasInitialFetchStarted, setHasInitialFetchStarted] = useState(false);
+
+  // RBAC states
+  const { profile } = useAuth();
+  const [accessMessage, setAccessMessage] = useState<string | null>(null);
+
+  const role = profile?.role || "Anonym";
+  
+  // Role helpers
+  const isAdminOrEditor = ["Admin", "Redaktör", "Editor"].includes(role);
+  const isInvestor = isAdminOrEditor || ["Investerare", "Investor"].includes(role);
+  const isMember = isInvestor || ["Medlem", "Regular", "Partner", "Säljare", "Sales"].includes(role);
+  const isAnon = role === "Anonym";
+
+  // Transient message helper
+  const triggerAccessMessage = (msg: string) => {
+    setAccessMessage(msg);
+    setTimeout(() => setAccessMessage(null), 3000);
+  };
+
+  const handleTimeframeSelect = (tf: TimeframeOption) => {
+    const isLongTerm = ['1y', '3y', '10y', 'max'].includes(tf.range);
+    
+    if (isLongTerm && !isMember) {
+      triggerAccessMessage("Längre historik kräver Medlemskap. Logga in eller ansök för att låsa upp.");
+      return;
+    }
+    
+    setSelectedTimeframe(tf);
+    setShowTimeframeOpen(false);
+  };
+
+  const handleIndicatorToggle = (indicator: string, current: boolean, setter: (val: boolean) => void) => {
+    if (indicator === 'ohlc' || indicator === 'log') {
+      if (!isMember) {
+        triggerAccessMessage("Denna funktion kräver att du är Medlem.");
+        return;
+      }
+    }
+
+    if (indicator === 'ma30' || indicator === 'ma100') {
+      if (!isInvestor) {
+        triggerAccessMessage("Teknisk analys (MA) kräver rollen Investerare.");
+        return;
+      }
+    }
+
+    setter(!current);
+  };
 
   // Helper to fetch and process data
   const fetchStockData = async (tf: TimeframeOption, isMounted: boolean) => {
@@ -334,19 +383,23 @@ export default function StockChartModal({ isOpen, onClose, ticker = 'ENZY.ST' }:
                       exit={{ opacity: 0, y: 10, scale: 0.95 }}
                       className="absolute left-0 mt-3 w-48 bg-white dark:bg-slate-900 rounded-2xl shadow-2xl border border-gray-100 dark:border-slate-800 py-2 z-20 overflow-hidden"
                     >
-                      {timeframes.map((tf) => (
-                        <button
-                          key={tf.label}
-                          onClick={() => { setSelectedTimeframe(tf); setShowTimeframeOpen(false); }}
-                          className={`w-full px-5 py-3 text-left text-[10px] font-black uppercase tracking-widest transition-colors ${
-                            selectedTimeframe.label === tf.label
-                              ? 'bg-brand-teal text-white'
-                              : 'text-gray-500 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-slate-800 hover:text-brand-teal'
-                          }`}
-                        >
-                          {tf.label}
-                        </button>
-                      ))}
+                      {timeframes.map((tf) => {
+                        const isLocked = ['1y', '3y', '10y', 'max'].includes(tf.range) && !isMember;
+                        return (
+                          <button
+                            key={tf.label}
+                            onClick={() => handleTimeframeSelect(tf)}
+                            className={`w-full px-5 py-3 text-left text-[10px] font-black uppercase tracking-widest transition-colors flex items-center justify-between ${
+                              selectedTimeframe.label === tf.label
+                                ? 'bg-brand-teal text-white'
+                                : 'text-gray-500 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-slate-800 hover:text-brand-teal'
+                            }`}
+                          >
+                            {tf.label}
+                            {isLocked && <Lock size={10} className="text-gray-400" />}
+                          </button>
+                        );
+                      })}
                     </motion.div>
                   </>
                 )}
@@ -361,7 +414,7 @@ export default function StockChartModal({ isOpen, onClose, ticker = 'ENZY.ST' }:
               >
                 <span className="text-gray-400 text-[10px] font-black uppercase tracking-widest">Visa:</span>
                 <span className="text-brand-dark dark:text-white text-xs font-black uppercase tracking-widest italic">
-                  {[showLog, showVolume, showMA30, showMA100].filter(Boolean).length || 'Inga'} aktiva
+                  {[showLog, showVolume, showMA30, showMA100, showOHLC].filter(Boolean).length || 'Inga'} aktiva
                 </span>
                 <span className={`ml-auto text-brand-teal transition-transform duration-300 ${showSettingsOpen ? 'rotate-180' : ''}`}>▼</span>
               </button>
@@ -376,46 +429,58 @@ export default function StockChartModal({ isOpen, onClose, ticker = 'ENZY.ST' }:
                       exit={{ opacity: 0, y: 10, scale: 0.95 }}
                       className="absolute left-0 mt-3 w-56 bg-white dark:bg-slate-900 rounded-[1.5rem] shadow-2xl border border-gray-100 dark:border-slate-800 p-4 z-20 space-y-4"
                     >
-                      <label className="flex items-center justify-between cursor-pointer group">
-                        <span className="text-[10px] font-black text-gray-500 uppercase tracking-widest group-hover:text-brand-teal">OHLC (Staplar)</span>
+                      <label className="flex items-center justify-between cursor-pointer group" onClick={(e) => { e.preventDefault(); handleIndicatorToggle('ohlc', showOHLC, setShowOHLC); }}>
+                        <div className="flex items-center gap-2">
+                          <span className="text-[10px] font-black text-gray-500 uppercase tracking-widest group-hover:text-brand-teal">OHLC (Candles)</span>
+                          {!isMember && <Lock size={10} className="text-gray-400" />}
+                        </div>
                         <div className="relative">
-                          <input type="checkbox" checked={showOHLC} onChange={(e) => setShowOHLC(e.target.checked)} className="sr-only" />
+                          <input type="checkbox" checked={showOHLC} readOnly className="sr-only" />
                           <div className={`w-8 h-4 rounded-full transition-colors ${showOHLC ? 'bg-brand-teal' : 'bg-gray-200 dark:bg-slate-700'}`}></div>
                           <div className={`absolute top-0.5 left-0.5 w-3 h-3 rounded-full bg-white transition-transform ${showOHLC ? 'translate-x-4' : ''}`}></div>
                         </div>
                       </label>
 
-                      <label className="flex items-center justify-between cursor-pointer group">
-                        <span className="text-[10px] font-black text-gray-500 uppercase tracking-widest group-hover:text-brand-teal">Logaritmisk</span>
+                      <label className="flex items-center justify-between cursor-pointer group" onClick={(e) => { e.preventDefault(); handleIndicatorToggle('log', showLog, setShowLog); }}>
+                        <div className="flex items-center gap-2">
+                          <span className="text-[10px] font-black text-gray-500 uppercase tracking-widest group-hover:text-brand-teal">Logaritmisk</span>
+                          {!isMember && <Lock size={10} className="text-gray-400" />}
+                        </div>
                         <div className="relative">
-                          <input type="checkbox" checked={showLog} onChange={(e) => setShowLog(e.target.checked)} className="sr-only" />
+                          <input type="checkbox" checked={showLog} readOnly className="sr-only" />
                           <div className={`w-8 h-4 rounded-full transition-colors ${showLog ? 'bg-brand-teal' : 'bg-gray-200 dark:bg-slate-700'}`}></div>
                           <div className={`absolute top-0.5 left-0.5 w-3 h-3 rounded-full bg-white transition-transform ${showLog ? 'translate-x-4' : ''}`}></div>
                         </div>
                       </label>
 
-                      <label className="flex items-center justify-between cursor-pointer group">
+                      <label className="flex items-center justify-between cursor-pointer group" onClick={(e) => { e.preventDefault(); handleIndicatorToggle('vol', showVolume, setShowVolume); }}>
                         <span className="text-[10px] font-black text-gray-500 uppercase tracking-widest group-hover:text-brand-teal">Volym</span>
                         <div className="relative">
-                          <input type="checkbox" checked={showVolume} onChange={(e) => setShowVolume(e.target.checked)} className="sr-only" />
+                          <input type="checkbox" checked={showVolume} readOnly className="sr-only" />
                           <div className={`w-8 h-4 rounded-full transition-colors ${showVolume ? 'bg-brand-teal' : 'bg-gray-200 dark:bg-slate-700'}`}></div>
                           <div className={`absolute top-0.5 left-0.5 w-3 h-3 rounded-full bg-white transition-transform ${showVolume ? 'translate-x-4' : ''}`}></div>
                         </div>
                       </label>
 
-                      <label className="flex items-center justify-between cursor-pointer group">
-                        <span className="text-[10px] font-black text-gray-500 uppercase tracking-widest group-hover:text-orange-500">MA30</span>
+                      <label className="flex items-center justify-between cursor-pointer group" onClick={(e) => { e.preventDefault(); handleIndicatorToggle('ma30', showMA30, setShowMA30); }}>
+                        <div className="flex items-center gap-2">
+                          <span className="text-[10px] font-black text-gray-500 uppercase tracking-widest group-hover:text-orange-500">MA30</span>
+                          {!isInvestor && <Lock size={10} className="text-gray-400" />}
+                        </div>
                         <div className="relative">
-                          <input type="checkbox" checked={showMA30} onChange={(e) => setShowMA30(e.target.checked)} className="sr-only" />
+                          <input type="checkbox" checked={showMA30} readOnly className="sr-only" />
                           <div className={`w-8 h-4 rounded-full transition-colors ${showMA30 ? 'bg-orange-500' : 'bg-gray-200 dark:bg-slate-700'}`}></div>
                           <div className={`absolute top-0.5 left-0.5 w-3 h-3 rounded-full bg-white transition-transform ${showMA30 ? 'translate-x-4' : ''}`}></div>
                         </div>
                       </label>
 
-                      <label className="flex items-center justify-between cursor-pointer group">
-                        <span className="text-[10px] font-black text-gray-500 uppercase tracking-widest group-hover:text-purple-500">MA100</span>
+                      <label className="flex items-center justify-between cursor-pointer group" onClick={(e) => { e.preventDefault(); handleIndicatorToggle('ma100', showMA100, setShowMA100); }}>
+                        <div className="flex items-center gap-2">
+                          <span className="text-[10px] font-black text-gray-500 uppercase tracking-widest group-hover:text-purple-500">MA100</span>
+                          {!isInvestor && <Lock size={10} className="text-gray-400" />}
+                        </div>
                         <div className="relative">
-                          <input type="checkbox" checked={showMA100} onChange={(e) => setShowMA100(e.target.checked)} className="sr-only" />
+                          <input type="checkbox" checked={showMA100} readOnly className="sr-only" />
                           <div className={`w-8 h-4 rounded-full transition-colors ${showMA100 ? 'bg-purple-500' : 'bg-gray-200 dark:bg-slate-700'}`}></div>
                           <div className={`absolute top-0.5 left-0.5 w-3 h-3 rounded-full bg-white transition-transform ${showMA100 ? 'translate-x-4' : ''}`}></div>
                         </div>
@@ -534,7 +599,7 @@ export default function StockChartModal({ isOpen, onClose, ticker = 'ENZY.ST' }:
                   {showOHLC ? (
                     <Bar
                       yAxisId="price"
-                      dataKey="ohl_range" // We'll compute this below
+                      dataKey="ohl_range"
                       shape={(props: any) => {
                         const { x, y, width, height, index } = props;
                         const item = data[index];
@@ -544,7 +609,6 @@ export default function StockChartModal({ isOpen, onClose, ticker = 'ENZY.ST' }:
                         const color = isUp ? '#10B981' : '#EF4444';
                         const centerX = x + width / 2;
                         
-                        // We need to calculate body Y and height relative to the total bar Y/height (high/low)
                         const range = item.high - item.low;
                         if (range <= 0) return <line x1={centerX} y1={y} x2={centerX} y2={y+height} stroke={color} />;
                         
@@ -583,6 +647,21 @@ export default function StockChartModal({ isOpen, onClose, ticker = 'ENZY.ST' }:
                 </ComposedChart>
               </ResponsiveContainer>
             ) : null}
+
+            {/* Access Message Notification */}
+            <AnimatePresence>
+              {accessMessage && (
+                <motion.div
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0, y: 20 }}
+                  className="absolute bottom-4 left-1/2 -translate-x-1/2 px-6 py-3 bg-brand-dark/95 backdrop-blur-md rounded-2xl shadow-2xl border border-white/10 flex items-center gap-3 z-[300]"
+                >
+                  <Lock size={16} className="text-brand-teal" />
+                  <span className="text-white text-[11px] font-black uppercase tracking-widest italic">{accessMessage}</span>
+                </motion.div>
+              )}
+            </AnimatePresence>
           </div>
         </div>
       </div>

@@ -7,12 +7,16 @@ import { useAuth } from "@/components/AuthContext";
 import { supabase } from "@/lib/supabase";
 
 import { fetchSettingsOnce } from "@/lib/settingsCache";
+import MembershipModal from "@/components/MembershipModal";
 
 function LoginForm() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [isForgotPassword, setIsForgotPassword] = useState(false);
   const [error, setError] = useState("");
+  const [statusMessage, setStatusMessage] = useState("");
   const [company, setCompany] = useState({ name: "Enzymatica", logoUrl: "/media/logo.png" });
+  const [showMembershipModal, setShowMembershipModal] = useState(false);
   const router = useRouter();
   const searchParams = useSearchParams();
   const redirectUrl = searchParams.get("redirect") || "/articles";
@@ -31,9 +35,23 @@ function LoginForm() {
     }
   }, [user, loading, router, redirectUrl]);
 
-  const handleLogin = async (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError("");
+    setStatusMessage("");
+
+    if (isForgotPassword) {
+      const { error } = await supabase.auth.resetPasswordForEmail(email);
+      if (error) {
+        setError(error.message);
+      } else {
+        setStatusMessage("Länk för återställning skickas till din mail");
+        setTimeout(() => {
+          router.push(`/auth/reset-password?email=${encodeURIComponent(email)}`);
+        }, 1500);
+      }
+      return;
+    }
 
     const { error } = await supabase.auth.signInWithPassword({
       email,
@@ -71,20 +89,31 @@ function LoginForm() {
               )}
             </div>
             <div className="text-left">
-              <h1 className="text-xl font-black text-white tracking-tight leading-none mb-1">Logga in</h1>
+              <h1 className="text-xl font-black text-white tracking-tight leading-none mb-1">
+                {isForgotPassword ? "Återställ lösenord" : "Logga in"}
+              </h1>
               <p className="text-brand-light/60 text-[10px] font-black uppercase tracking-widest">{company.name}-portalen</p>
             </div>
           </div>
         </div>
 
         {/* Form */}
-        <form onSubmit={handleLogin} className="px-8 py-6 space-y-3">
+        <form onSubmit={handleSubmit} className="px-8 py-6 space-y-3">
           {error && (
             <div className="p-3 bg-red-50 dark:bg-red-900/30 border border-red-200 dark:border-red-800 text-red-700 dark:text-red-300 rounded-xl text-xs font-bold flex items-center gap-2 animate-shake">
               <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" viewBox="0 0 20 20" fill="currentColor">
                 <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z" clipRule="evenodd" />
               </svg>
               {error}
+            </div>
+          )}
+
+          {statusMessage && (
+            <div className="p-3 bg-brand-light/20 border border-brand-teal/20 text-brand-teal rounded-xl text-xs font-bold flex items-center gap-2 animate-pulse">
+               <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" viewBox="0 0 20 20" fill="currentColor">
+                <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clipRule="evenodd" />
+              </svg>
+              {statusMessage}
             </div>
           )}
 
@@ -100,37 +129,66 @@ function LoginForm() {
             />
           </div>
 
-          <div className="space-y-1">
-            <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest ml-1">Lösenord</label>
-            <input
-              type="password"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              className="w-full px-5 py-3 rounded-xl bg-gray-50 dark:bg-slate-800 border border-transparent focus:border-brand-teal focus:ring-4 focus:ring-brand-teal/10 outline-none transition-all text-sm font-bold"
-              placeholder="••••••••"
-              required
-            />
-          </div>
+          {!isForgotPassword && (
+            <div className="space-y-3 animate-in fade-in slide-in-from-top-2 duration-300">
+              <div className="space-y-1">
+                <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest ml-1">Lösenord</label>
+                <input
+                  type="password"
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  className="w-full px-5 py-3 rounded-xl bg-gray-50 dark:bg-slate-800 border border-transparent focus:border-brand-teal focus:ring-4 focus:ring-brand-teal/10 outline-none transition-all text-sm font-bold"
+                  placeholder="••••••••"
+                  required={!isForgotPassword}
+                />
+              </div>
+              <div className="text-right px-1">
+                <button 
+                  type="button" 
+                  onClick={() => setIsForgotPassword(true)} 
+                  className="text-brand-teal font-black uppercase tracking-widest hover:underline text-[10px]"
+                >
+                  Glömt lösenordet?
+                </button>
+              </div>
+            </div>
+          )}
 
           <button
             type="submit"
             className="w-full bg-brand-teal hover:bg-brand-dark text-white py-3 rounded-xl text-sm font-black shadow-lg shadow-brand-teal/20 transform active:scale-95 transition-all mt-2 uppercase tracking-widest"
           >
-            Logga in
+            {isForgotPassword ? "Skicka" : "Logga in"}
           </button>
         </form>
 
-        <div className="px-8 pb-5 text-center text-xs font-medium">
-          <p className="text-gray-400 mb-1">Saknar du konto?</p>
-          <button 
-            type="button" 
-            onClick={() => router.push('/')} 
-            className="text-brand-teal font-black uppercase tracking-widest hover:underline"
-          >
-            Klicka här för att ansöka
-          </button>
+        <div className="px-8 pb-5 text-center text-xs font-medium space-y-2">
+          {!isForgotPassword ? (
+            <div className="pt-2">
+              <p className="text-gray-400 mb-1">Saknar du konto?</p>
+              <button 
+                type="button" 
+                onClick={() => setShowMembershipModal(true)} 
+                className="text-brand-teal font-black uppercase tracking-widest hover:underline"
+              >
+                Registrera dig
+              </button>
+            </div>
+          ) : (
+            <button 
+              type="button" 
+              onClick={() => setIsForgotPassword(false)} 
+              className="text-brand-teal font-black uppercase tracking-widest hover:underline"
+            >
+              Tillbaka till inloggning
+            </button>
+          )}
         </div>
       </div>
+      <MembershipModal
+        isOpen={showMembershipModal}
+        onClose={() => setShowMembershipModal(false)}
+      />
     </div>
   );
 }
