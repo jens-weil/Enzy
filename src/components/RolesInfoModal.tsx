@@ -107,13 +107,17 @@ export default function RolesInfoModal({ onClose, onApply, isLockActive, company
           <div className="absolute top-0 right-0 w-32 h-32 bg-brand-teal/10 rounded-full blur-2xl -mr-16 -mt-16" />
           <div className="flex items-center gap-4 mb-4">
             <div className="w-12 h-12 rounded-xl bg-white/10 backdrop-blur-md flex items-center justify-center p-2 border border-white/20">
-              <Image 
-                src={company.logoUrl} 
-                alt={company.name} 
-                width={40} 
-                height={40} 
-                className="object-contain brightness-0 invert" 
-              />
+              {company.logoUrl && company.logoUrl.trim() !== "" ? (
+                <Image 
+                  src={company.logoUrl} 
+                  alt={company.name} 
+                  width={40} 
+                  height={40} 
+                  className="object-contain brightness-0 invert" 
+                />
+              ) : (
+                <div className="text-xl font-black text-white/40">{company.name.charAt(0)}</div>
+              )}
             </div>
             <div>
               <h2 className="text-2xl font-black text-white italic uppercase tracking-tighter leading-none">

@@ -137,7 +137,11 @@ function getSettings() {
       stock: { ...defaultSettings.stock, ...parsed.stock },
       brevo: { ...defaultSettings.brevo, ...(parsed.brevo || {}) },
       security: { ...defaultSettings.security, ...(parsed.security || {}) },
-      company: { ...defaultSettings.company, ...(parsed.company || {}) },
+      company: { 
+        ...defaultSettings.company, 
+        ...(parsed.company || {}),
+        logoUrl: (parsed.company?.logoUrl && parsed.company.logoUrl.trim() !== "") ? parsed.company.logoUrl : defaultSettings.company.logoUrl
+      },
       hero: { ...defaultSettings.hero, ...(parsed.hero || {}) },
       theme: { ...defaultSettings.theme, ...(parsed.theme || {}) },
       translations: { ...defaultSettings.translations, ...(parsed.translations || {}) }
@@ -246,7 +250,8 @@ export async function POST(request: NextRequest) {
       },
       company: {
         ...currentSettings.company,
-        ...(body.company || {})
+        ...(body.company || {}),
+        logoUrl: (body.company?.logoUrl && body.company.logoUrl.trim() !== "") ? body.company.logoUrl : "/media/logo.png"
       },
       theme: {
         ...currentSettings.theme,

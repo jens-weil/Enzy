@@ -67,7 +67,10 @@ export async function GET(request: NextRequest) {
       }
     });
 
-    return NextResponse.json({ images });
+    return NextResponse.json({ 
+      images, 
+      systemTags: metadata['__system_tags__']?.tags || [] 
+    });
   } catch (error) {
     console.error("Images API Exception:", error);
     return NextResponse.json({ error: 'Failed to list images' }, { status: 500 });
@@ -116,15 +119,42 @@ export async function PATCH(request: NextRequest) {
   if (!auth.authorized) return NextResponse.json({ error: auth.error }, { status: auth.status });
 
   try {
-    const { url, tags } = await request.json();
-    if (!url) return NextResponse.json({ error: 'URL required' }, { status: 400 });
-
+    const { url, tags, action, tagToDelete, newTag } = await request.json();
     const metadata = getMetadata();
+
+    // GLOBAL ACTIONS (No specific URL required)
+    if (action === 'globalDeleteTag' && tagToDelete) {
+      Object.keys(metadata).forEach(key => {
+        if (metadata[key].tags) {
+          metadata[key].tags = metadata[key].tags.filter((t: string) => t !== tagToDelete);
+        }
+      });
+      saveMetadata(metadata);
+      return NextResponse.json({ success: true });
+    }
+
+    if (action === 'globalCreateTag' && newTag) {
+      const systemKey = '__system_tags__';
+      if (!metadata[systemKey]) metadata[systemKey] = { tags: [] };
+      const currentTags = metadata[systemKey].tags || [];
+      if (!currentTags.includes(newTag)) {
+        metadata[systemKey].tags = [...currentTags, newTag.toLowerCase().trim()];
+        saveMetadata(metadata);
+      }
+      return NextResponse.json({ success: true, tags: metadata[systemKey].tags });
+    }
+
+    // PER-IMAGE ACTIONS
+    if (!url) return NextResponse.json({ error: 'URL required for per-image updates' }, { status: 400 });
+
     metadata[url] = { ...metadata[url], tags: Array.isArray(tags) ? tags : [] };
+    
+    // If this tag was in __system_tags__, we can leave it there as a predefined pool
     saveMetadata(metadata);
 
     return NextResponse.json({ success: true, tags: metadata[url].tags });
   } catch (error) {
+    console.error("PATCH error:", error);
     return NextResponse.json({ error: 'Update failed' }, { status: 500 });
   }
 }

@@ -329,13 +329,17 @@ function SiteLockContent() {
           >
             <div className="mx-auto flex flex-col items-center">
               <div className="w-20 h-20 rounded-full bg-amber-500/10 flex items-center justify-center border border-amber-500/20 relative overflow-hidden p-4 mb-2">
-                <Image 
-                  src={settings.company?.logoUrl || "/media/logo.png"} 
-                  alt={settings.company?.name || "Logo"} 
-                  width={60} 
-                  height={60} 
-                  className="object-contain" 
-                />
+                {settings.company?.logoUrl && settings.company.logoUrl.trim() !== "" ? (
+                  <Image 
+                    src={settings.company.logoUrl} 
+                    alt={settings.company.name || "Logo"} 
+                    width={40} 
+                    height={40} 
+                    className="object-contain" 
+                  />
+                ) : (
+                  <div className="text-xl font-black text-amber-500/40">{settings.company?.name?.charAt(0) || "E"}</div>
+                )}
               </div>
               <div className="text-[10px] font-black text-amber-500/60 uppercase tracking-[0.3em] mb-4">Inaktivitet</div>
             </div>
@@ -437,13 +441,17 @@ function SiteLockContent() {
             >
               <div className="space-y-4">
                 <div className="mx-auto w-32 h-32 rounded-full bg-brand-teal/10 flex items-center justify-center border border-brand-teal/20 mb-8 mt-[-100px] overflow-hidden p-6 shadow-2xl">
-                  <Image 
-                    src={settings.company?.logoUrl || "/media/logo.png"} 
-                    alt={settings.company?.name || "Logo"} 
-                    width={100} 
-                    height={100} 
-                    className="object-contain brightness-0 invert" 
-                  />
+                  {settings.company?.logoUrl && settings.company.logoUrl.trim() !== "" ? (
+                    <Image 
+                      src={settings.company.logoUrl} 
+                      alt={settings.company.name || "Logo"} 
+                      width={100} 
+                      height={100} 
+                      className="object-contain brightness-0 invert" 
+                    />
+                  ) : (
+                    <div className="text-4xl font-black text-brand-teal/40">{settings.company?.name?.charAt(0) || "E"}</div>
+                  )}
                 </div>
                 <h1 className="text-4xl md:text-5xl font-black text-white italic uppercase tracking-tighter">
                   Säkerhetskod

@@ -9,12 +9,15 @@
     "tags": [
       "Sana",
       "Aktiedagarna",
-      "Presentation"
+      "Presentation",
+      "test-tag"
     ]
   },
   "/media/article_1773426973538_1.jpg": {
     "tags": [
-      "Förkylning"
+      "Förkylning",
+      "test-tag",
+      "enzy"
     ]
   },
   "/media/sick_person_hero.png": {
@@ -46,6 +49,11 @@
     "tags": [
       "New",
       "Logo"
+    ]
+  },
+  "/media/article_1773426974275_5.png": {
+    "tags": [
+      "enzy"
     ]
   }
 }

@@ -7,6 +7,7 @@ import Image from "next/image";
 import { useAuth } from "@/components/AuthContext";
 import { supabase } from "@/lib/supabase";
 import { THEME_PRESETS } from "@/lib/themes";
+import MediaPicker from "@/components/MediaPicker";
 
 export default function SettingsPage() {
   const { profile, loading: authLoading } = useAuth();
@@ -32,8 +33,6 @@ export default function SettingsPage() {
   
   // Media Picker state
   const [showMediaPicker, setShowMediaPicker] = useState(false);
-  const [availableImages, setAvailableImages] = useState<string[]>([]);
-  const [uploading, setUploading] = useState(false);
   const [activeSlideIndex, setActiveSlideIndex] = useState<number | null>(null);
   
   const [expandedSection, setExpandedSection] = useState<string | null>(null);
@@ -73,15 +72,6 @@ export default function SettingsPage() {
           if (data.company) setCompany((prev: any) => ({ ...prev, ...data.company }));
           if (data.theme) setTheme((prev: any) => ({ ...prev, ...data.theme }));
           if (data.hero) setHero((prev: any) => ({ ...prev, ...data.hero }));
-        }
-
-        // Fetch images for the picker
-        const imgRes = await fetch("/api/images", {
-          headers: { 'Authorization': `Bearer ${session?.access_token}` }
-        });
-        if (imgRes.ok) {
-          const imgData = await imgRes.json();
-          setAvailableImages(imgData.images || []);
         }
       } catch (err) {
         console.error("Failed to load settings:", err);
@@ -140,37 +130,15 @@ export default function SettingsPage() {
     }
   };
 
-  const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
-    setUploading(true);
-    const body = new FormData();
-    body.append("file", file);
-    try {
-      const { data: { session } } = await supabase.auth.getSession();
-      const res = await fetch("/api/images", { 
-        method: "POST", 
-        headers: { 'Authorization': `Bearer ${session?.access_token}` },
-        body 
-      });
-      if (res.ok) {
-        const data = await res.json();
-        setAvailableImages((prev: any) => [...prev, data.url]);
-        if (activeSlideIndex === -1) {
-          setCompany((p: any) => ({ ...p, logoUrl: data.url }));
-          setShowMediaPicker(false);
-        } else if (activeSlideIndex !== null) {
-          const newSlides = [...hero.slides];
-          newSlides[activeSlideIndex].src = data.url;
-          setHero({ ...hero, slides: newSlides });
-          setShowMediaPicker(false);
-        }
-      }
-    } catch (err) {
-      console.error("Upload failed", err);
-    } finally {
-      setUploading(false);
+  const handleMediaSelect = (url: string) => {
+    if (activeSlideIndex === -1) {
+      setCompany((p: any) => ({ ...p, logoUrl: url }));
+    } else if (activeSlideIndex !== null) {
+      const newSlides = [...hero.slides];
+      newSlides[activeSlideIndex].src = url;
+      setHero({ ...hero, slides: newSlides });
     }
+    setShowMediaPicker(false);
   };
 
   const addSlide = () => {
@@ -1199,72 +1167,13 @@ export default function SettingsPage() {
         </div>
       </div>
 
-      {/* Global Media Picker Modal */}
-      {showMediaPicker && (
-        <div className="fixed inset-0 z-[1000] flex items-center justify-center p-6 md:p-12 animate-in fade-in duration-300">
-          <div className="absolute inset-0 bg-brand-dark/95 backdrop-blur-2xl" onClick={() => setShowMediaPicker(false)} />
-          <div className="bg-white dark:bg-slate-900 w-full max-w-6xl max-h-full rounded-2xl shadow-2xl flex flex-col overflow-hidden relative z-10 border border-white/10">
-            <div className="p-8 border-b border-gray-100 dark:border-slate-800 flex justify-between items-center bg-gray-50 dark:bg-slate-900/50">
-              <div>
-                <h3 className="text-3xl font-black text-brand-dark dark:text-white uppercase italic tracking-tighter">Mediebibliotek</h3>
-                <p className="text-[10px] font-black text-gray-400 uppercase tracking-[0.2em] mt-2">Välj sajtens nästa bakgrund eller ladda upp ny bild</p>
-              </div>
-              <button 
-                onClick={() => setShowMediaPicker(false)} 
-                className="w-12 h-12 rounded-full bg-white dark:bg-slate-800 shadow-2xl flex items-center justify-center text-xl font-black hover:bg-brand-teal hover:text-white transition-all hover:rotate-90 active:scale-90"
-              >
-                &times;
-              </button>
-            </div>
-            
-            <div className="flex-1 overflow-y-auto p-8 custom-scrollbar">
-              <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-6">
-                <label className="relative aspect-[4/5] rounded-2xl border-4 border-dashed border-brand-teal/20 flex flex-col items-center justify-center cursor-pointer hover:bg-brand-teal/5 hover:border-brand-teal/40 transition-all group overflow-hidden">
-                  <input type="file" className="hidden" onChange={handleImageUpload} accept="image/*" />
-                  {uploading ? (
-                    <div className="flex flex-col items-center gap-4">
-                      <div className="w-10 h-10 border-4 border-brand-teal/20 border-t-brand-teal rounded-full animate-spin" />
-                      <span className="text-[8px] font-black uppercase text-brand-teal">Laddar upp...</span>
-                    </div>
-                  ) : (
-                    <div className="flex flex-col items-center gap-3">
-                      <div className="w-12 h-12 rounded-full bg-brand-teal/10 text-brand-teal flex items-center justify-center transition-transform group-hover:scale-125">
-                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={3} className="w-6 h-6">
-                          <path strokeLinecap="round" strokeLinejoin="round" d="M12 4v16m8-8H4" />
-                        </svg>
-                      </div>
-                      <span className="text-[10px] font-black uppercase text-gray-400 tracking-widest">Ny Bild</span>
-                    </div>
-                  )}
-                </label>
-                
-                {availableImages.map((img, i) => (
-                  <div 
-                    key={i} 
-                    onClick={() => {
-                      if (activeSlideIndex === -1) {
-                        setCompany((p: any) => ({ ...p, logoUrl: img }));
-                        setShowMediaPicker(false);
-                      } else if (activeSlideIndex !== null) {
-                        const newSlides = [...hero.slides];
-                        newSlides[activeSlideIndex].src = img;
-                        setHero({ ...hero, slides: newSlides });
-                        setShowMediaPicker(false);
-                      }
-                    }} 
-                    className="relative aspect-[4/5] rounded-2xl overflow-hidden cursor-pointer group shadow-lg hover:shadow-2xl transition-all hover:-translate-y-2 ring-4 ring-transparent hover:ring-brand-teal/50"
-                  >
-                    <Image src={img} alt="Media Asset" fill className="object-cover transition-transform duration-700 group-hover:scale-110" />
-                    <div className="absolute inset-0 bg-brand-teal/40 opacity-0 group-hover:opacity-100 transition-all flex items-end p-6 duration-500">
-                      <span className="text-[8px] font-black text-white uppercase tracking-widest bg-brand-dark/80 px-3 py-2 rounded-full backdrop-blur-md">Använd Bild</span>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </div>
-          </div>
-        </div>
-      )}
+      <MediaPicker 
+        isOpen={showMediaPicker}
+        onClose={() => setShowMediaPicker(false)}
+        onSelect={handleMediaSelect}
+        title="Mediebibliotek"
+        description={activeSlideIndex === -1 ? "Välj logotyp för företaget" : "Välj bild för bildspelet"}
+      />
     </div>
   );
 }

@@ -161,7 +161,11 @@ function VerifyContent() {
     <div className="min-h-screen flex flex-col items-center justify-center p-6 bg-gray-50 dark:bg-slate-950">
       <div className="w-full max-w-xl bg-white dark:bg-slate-900 rounded-[3rem] shadow-2xl border border-gray-100 dark:border-slate-800 p-12 text-center animate-in zoom-in-95 duration-500">
         <div className="w-24 h-24 bg-brand-teal/10 text-brand-teal rounded-3xl flex items-center justify-center mx-auto mb-10 shadow-inner overflow-hidden rotate-3">
-          <Image src={company.logoUrl} alt={company.name} width={60} height={60} className="opacity-90 object-contain -rotate-3" />
+          {company.logoUrl && company.logoUrl.trim() !== "" ? (
+            <Image src={company.logoUrl} alt={company.name} width={60} height={60} className="opacity-90 object-contain -rotate-3" />
+          ) : (
+            <div className="text-4xl font-black text-brand-teal/40 -rotate-3">{company.name.charAt(0)}</div>
+          )}
         </div>
 
         <h1 className="text-4xl font-black text-brand-dark dark:text-white uppercase italic tracking-tighter mb-4">

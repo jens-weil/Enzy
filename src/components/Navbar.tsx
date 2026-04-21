@@ -74,7 +74,10 @@ export default function Navbar() {
           setIsTickerActive(data.stock.isActive ?? true);
         }
         if (data?.company) {
-          setCompany(data.company);
+          setCompany({
+            name: data.company.name || "Enzymatica",
+            logoUrl: data.company.logoUrl || "/media/logo.png"
+          });
         }
       });
     };
@@ -196,7 +199,13 @@ export default function Navbar() {
           <div className="flex justify-between items-center h-[61px]">
              <div className="flex items-center">
               <Link href="/" className="flex items-center gap-3">
-                <Image src={company.logoUrl} alt={company.name} width={61} height={61} className="object-contain" />
+                {company.logoUrl && company.logoUrl.trim() !== "" ? (
+                  <Image src={company.logoUrl} alt={company.name} width={61} height={61} className="object-contain" />
+                ) : (
+                  <div className="w-[61px] h-[61px] bg-brand-teal/10 rounded-full flex items-center justify-center font-black text-brand-teal">
+                    {company.name.charAt(0)}
+                  </div>
+                )}
                 <span className="text-xl font-bold text-brand-dark dark:text-white tracking-tight">
                   {company.name}
                 </span>
@@ -470,7 +479,11 @@ export default function Navbar() {
              <div className="bg-brand-dark px-8 py-5 flex items-center gap-4 relative overflow-hidden">
               <div className="absolute top-0 right-0 w-24 h-24 bg-brand-teal/20 rounded-full blur-3xl -mr-8 -mt-8" />
               <div className="w-[90px] h-[90px] bg-white/10 backdrop-blur-md rounded-full flex items-center justify-center border border-white/20 flex-shrink-0 relative z-10 overflow-hidden">
-                <Image src={company.logoUrl} alt={company.name} width={90} height={90} className="object-contain" />
+                {company.logoUrl && company.logoUrl.trim() !== "" ? (
+                  <Image src={company.logoUrl} alt={company.name} width={90} height={90} className="object-contain" />
+                ) : (
+                   <div className="text-3xl font-black text-white/20">{company.name.charAt(0)}</div>
+                )}
               </div>
               <div className="relative z-10">
                 <h2 className="text-2xl font-black text-white tracking-tight leading-none">Logga in</h2>

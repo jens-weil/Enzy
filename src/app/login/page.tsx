@@ -58,13 +58,17 @@ function LoginForm() {
           <div className="absolute top-0 right-0 w-24 h-24 bg-brand-teal/20 rounded-full blur-3xl -mr-8 -mt-8"></div>
           <div className="relative z-10 flex items-center justify-center gap-4">
             <div className="w-12 h-12 bg-white/10 backdrop-blur-md rounded-xl flex items-center justify-center border border-white/20 shrink-0 p-2">
-              <Image 
-                src={company.logoUrl} 
-                alt={company.name} 
-                width={30} 
-                height={30} 
-                className="object-contain brightness-0 invert" 
-              />
+              {company.logoUrl && company.logoUrl.trim() !== "" ? (
+                <Image 
+                  src={company.logoUrl} 
+                  alt={company.name} 
+                  width={30} 
+                  height={30} 
+                  className="object-contain brightness-0 invert" 
+                />
+              ) : (
+                <div className="text-xl font-black text-white/40">{company.name.charAt(0)}</div>
+              )}
             </div>
             <div className="text-left">
               <h1 className="text-xl font-black text-white tracking-tight leading-none mb-1">Logga in</h1>

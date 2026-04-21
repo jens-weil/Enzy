@@ -231,7 +231,7 @@ export default function ArticleFeed({ initialArticles }: ArticleFeedProps) {
       {/* Article Grid */}
       <motion.div 
         layout
-        className="grid gap-8 sm:gap-10 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-3"
+        className="grid gap-[22px] sm:gap-[30px] md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-3"
       >
         <AnimatePresence mode="popLayout">
           {filteredArticles.map((article) => (
@@ -252,7 +252,7 @@ export default function ArticleFeed({ initialArticles }: ArticleFeedProps) {
               }}
             >
               {/* Image Section */}
-              <div className="relative w-full aspect-video overflow-hidden bg-gray-50 dark:bg-slate-800 flex-shrink-0">
+              <div className="relative w-full aspect-[1.7/1] overflow-hidden bg-gray-50 dark:bg-slate-800 flex-shrink-0">
                 <Image
                   src={article.imageUrl || "/media/logo.png"}
                   alt={article.title}
@@ -289,25 +289,24 @@ export default function ArticleFeed({ initialArticles }: ArticleFeedProps) {
               </div>
 
               {/* Content Section */}
-              <div className="p-5 sm:p-6 flex-1 flex flex-col bg-white dark:bg-slate-900">
-                <div className="flex items-center gap-3 mb-2 transition-transform duration-500 group-hover:translate-x-1">
-                   <div className="h-[2px] w-8 bg-brand-teal rounded-full" />
-                   <time className="text-[10px] font-black text-gray-400 uppercase tracking-widest italic">{formatDate(article.date)}</time>
+              <div className="pt-2 px-4 pb-0 sm:pt-3 sm:px-5 sm:pb-0 flex-1 flex flex-col bg-white dark:bg-slate-900 transition-all duration-300">
+                <div className="flex items-center gap-3 mb-0.5 transition-transform duration-500 group-hover:translate-x-1">
+                   <div className="h-[2px] w-6 bg-brand-teal rounded-full" />
+                   <time className="text-[9px] font-black text-gray-400 uppercase tracking-widest italic">{formatDate(article.date)}</time>
                 </div>
                 
                 <h2 
-                  className="text-xl font-black text-brand-dark dark:text-white mb-3 line-clamp-2 leading-[1.2] uppercase italic group-hover:text-brand-teal transition-colors duration-300"
+                  className="text-lg font-black text-brand-dark dark:text-white mb-0 line-clamp-2 leading-[1.1] uppercase italic group-hover:text-brand-teal transition-colors duration-300"
                   title={article.title}
                 >
                   {article.title}
                 </h2>
                 
-                <div 
-                  className="article-rich-content text-gray-500 dark:text-gray-400 line-clamp-2 mb-3 leading-relaxed text-sm font-medium opacity-80"
+                <div className="article-rich-content text-gray-500 dark:text-gray-400 line-clamp-2 mb-0 leading-relaxed text-[12px] font-medium opacity-80"
                   dangerouslySetInnerHTML={{ __html: article.ingress || "" }}
                 />
 
-                <div className="mt-auto pt-4 border-t border-gray-50 dark:border-slate-800/50 flex items-center justify-end">
+                <div className="mt-auto pt-0.5 border-t border-gray-50 dark:border-slate-800/50 flex items-center justify-end">
                   <div className="social-share-container transition-opacity duration-500">
                     <SocialShare 
                       articleId={article.id}
@@ -315,7 +314,7 @@ export default function ArticleFeed({ initialArticles }: ArticleFeedProps) {
                       articleImage={article.imageUrl}
                       socialMedia={article.socialMedia}
                       socialLinks={article.socialLinks}
-                      size="sm"
+                      size="xs"
                       showLabel={false}
                       hideAdminLinks={true}
                     />

@@ -60,6 +60,9 @@ export function fetchSettingsOnce(): Promise<PublicSettings | null> {
   _promise = fetch("/api/settings")
     .then((res) => (res.ok ? res.json() : null))
     .then((data) => {
+      if (data?.company && !data.company.logoUrl) {
+        data.company.logoUrl = "/media/logo.png";
+      }
       _cache = data;
       return data as PublicSettings | null;
     })
