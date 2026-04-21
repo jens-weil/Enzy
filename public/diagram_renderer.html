@@ -1,0 +1,117 @@
+<!DOCTYPE html>
+<html lang="sv">
+<head>
+    <meta charset="UTF-8">
+    <title>Enzymatica Diagrams</title>
+    <script type="module">
+        import mermaid from 'https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.esm.min.mjs';
+        mermaid.initialize({ startOnLoad: true, theme: 'neutral' });
+    </script>
+    <style>
+        body { font-family: sans-serif; display: flex; flex-direction: column; gap: 50px; padding: 50px; background: white; }
+        .diagram-container { border: 1px solid #eee; padding: 20px; border-radius: 10px; background: white; width: fit-content; min-width: 600px; }
+        h2 { color: #333; margin-bottom: 20px; }
+    </style>
+</head>
+<body>
+
+    <div id="diag0" class="diagram-container">
+        <h2>Diagram 1: Systemarkitektur (L0)</h2>
+        <div class="mermaid">
+        graph TD
+            User((Användare))
+            Client[Next.js Frontend / Client Components]
+            API[Next.js API Routes / Server Components]
+            FS[(Lokala JSON-filer / data/)]
+            DB[(Supabase PostgreSQL)]
+            FB[Facebook Graph API]
+            Brevo[Brevo SMTP]
+            Yahoo[Yahoo Finance API]
+
+            User <--> Client
+            Client <--> API
+            API <--> FS
+            API <--> DB
+            API --> FB
+            API --> Brevo
+            API --> Yahoo
+        </div>
+    </div>
+
+    <div id="diag1" class="diagram-container">
+        <h2>Diagram 2: Hybrid Datastrategi</h2>
+        <div class="mermaid">
+        graph LR
+            Request[Dataförfrågan]
+            Router{Typ av data?}
+            Content[Artiklar / Inställningar]
+            Identity[Användarprofiler / Delningar]
+            FS[Läs från data/*.json]
+            SQL[Läs/Skriv till Supabase]
+            Cache[Memory Cache]
+
+            Request --> Router
+            Router -->|Innehåll| Content
+            Router -->|Identitet| Identity
+            Content --> FS
+            FS --> Cache
+            Identity --> SQL
+        </div>
+    </div>
+
+    <div id="diag2" class="diagram-container">
+        <h2>Diagram 3: Auth & RBAC Flöde</h2>
+        <div class="mermaid">
+        sequenceDiagram
+            participant U as Användare
+            participant M as requireRole Middleware
+            participant P as Supabase Profiles
+            participant A as API Route
+
+            U->>M: HTTP Request (JWT Token)
+            M->>M: Validera JWT Token
+            M->>P: Hämta Roll för id
+            P-->>M: Role: 'Admin'
+            M->>M: Kontrollera AllowedRoles
+            M->>A: Godkänd -> Utför Operation
+            A-->>U: Resultat
+        </div>
+    </div>
+
+    <div id="diag3" class="diagram-container">
+        <h2>Diagram 4: Social Media Publiceringsflöde</h2>
+        <div class="mermaid">
+        graph TD
+            Start[Spara Artikel]
+            Setting{SoMe Aktiv?}
+            CheckToken{Token Giltig?}
+            Exchange[Auto-Exchange Token]
+            Post[Publicera på Plattform]
+            Log[Logga Status/ID]
+
+            Start --> Setting
+            Setting -->|Ja| CheckToken
+            CheckToken -->|Nej| Exchange
+            Exchange --> Post
+            CheckToken -->|Ja| Post
+            Post --> Log
+        </div>
+    </div>
+
+    <div id="diag4" class="diagram-container">
+        <h2>Diagram 5: Finansiell Data & TA-analys</h2>
+        <div class="mermaid">
+        graph LR
+            Yahoo[Yahoo Finance]
+            Server[API Proxy]
+            Client[Technical Analysis Engine]
+            Indicators[MA30 / MA100 / OHLC]
+
+            Yahoo -->|Rådata| Server
+            Server -->|JSON| Client
+            Client -->|Beräkning| Indicators
+        </div>
+    </div>
+
+</body>
+</html>

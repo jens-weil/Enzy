@@ -231,7 +231,7 @@ export default function ArticleFeed({ initialArticles }: ArticleFeedProps) {
       {/* Article Grid */}
       <motion.div 
         layout
-        className="grid gap-[22px] sm:gap-[30px] md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-3"
+        className="grid grid-cols-2 lg:grid-cols-3 gap-3 md:gap-[30px]"
       >
         <AnimatePresence mode="popLayout">
           {filteredArticles.map((article) => (
@@ -260,8 +260,8 @@ export default function ArticleFeed({ initialArticles }: ArticleFeedProps) {
                   sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
                   className={`object-cover transition-transform duration-1000 group-hover:scale-105 ${!article.imageUrl && "p-12 object-contain opacity-40"}`}
                 />
-                <div className="absolute top-5 left-5 z-10">
-                  <span className={`px-5 py-2 rounded-full text-[9px] font-black tracking-widest shadow-xl backdrop-blur-md ${getTypeColor(article.type)}`}>
+                <div className="absolute top-2 left-2 md:top-5 md:left-5 z-10">
+                  <span className={`px-2 py-1 md:px-5 md:py-2 rounded-full text-[7px] md:text-[9px] font-black tracking-widest shadow-xl backdrop-blur-md ${getTypeColor(article.type)}`}>
                     {article.type.toUpperCase()}
                   </span>
                 </div>
@@ -289,20 +289,20 @@ export default function ArticleFeed({ initialArticles }: ArticleFeedProps) {
               </div>
 
               {/* Content Section */}
-              <div className="pt-2 px-4 pb-0 sm:pt-3 sm:px-5 sm:pb-0 flex-1 flex flex-col bg-white dark:bg-slate-900 transition-all duration-300">
-                <div className="flex items-center gap-3 mb-0.5 transition-transform duration-500 group-hover:translate-x-1">
-                   <div className="h-[2px] w-6 bg-brand-teal rounded-full" />
-                   <time className="text-[9px] font-black text-gray-400 uppercase tracking-widest italic">{formatDate(article.date)}</time>
+              <div className="pt-2 px-3 pb-0 sm:pt-3 sm:px-5 sm:pb-0 flex-1 flex flex-col bg-white dark:bg-slate-900 transition-all duration-300">
+                <div className="flex items-center gap-2 md:gap-3 mb-0.5 transition-transform duration-500 group-hover:translate-x-1">
+                   <div className="h-[1px] md:h-[2px] w-4 md:w-6 bg-brand-teal rounded-full" />
+                   <time className="text-[7px] md:text-[9px] font-black text-gray-400 uppercase tracking-widest italic">{formatDate(article.date)}</time>
                 </div>
                 
                 <h2 
-                  className="text-lg font-black text-brand-dark dark:text-white mb-0 line-clamp-2 leading-[1.3] uppercase italic group-hover:text-brand-teal transition-colors duration-300"
+                  className="text-[14px] md:text-lg font-black text-brand-dark dark:text-white mb-0 line-clamp-2 leading-[1.2] md:leading-[1.3] uppercase italic group-hover:text-brand-teal transition-colors duration-300"
                   title={article.title}
                 >
                   {article.title}
                 </h2>
                 
-                <div className="article-rich-content text-gray-500 dark:text-gray-400 line-clamp-2 mb-0 leading-relaxed text-[12px] font-medium opacity-80"
+                <div className="hidden md:block article-rich-content text-gray-500 dark:text-gray-400 line-clamp-2 mb-0 leading-relaxed text-[12px] font-medium opacity-80"
                   dangerouslySetInnerHTML={{ __html: article.ingress || "" }}
                 />
 

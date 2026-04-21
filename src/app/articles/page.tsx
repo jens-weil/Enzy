@@ -61,7 +61,7 @@ export default async function ArticlesPage() {
         <h1 className="text-4xl md:text-5xl font-bold tracking-tight text-brand-dark dark:text-white mb-4">
           Nyheter & Artiklar
         </h1>
-        <p className="text-xl text-gray-600 dark:text-gray-400">
+        <p className="hidden md:block text-xl text-gray-600 dark:text-gray-400">
           Håll dig uppdaterad med de senaste pressmeddelandena, nyheterna och insikterna från {companyName}.
         </p>
       </div>

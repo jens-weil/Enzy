@@ -387,15 +387,7 @@ export default function Navbar() {
                 Kontakt
               </button>
 
-              {isTickerActive && (
-                <div className="pt-2 pb-4">
-                  <StockTicker
-                    onOpenChart={() => { setShowStockChart(true); setIsMobileMenuOpen(false); }}
-                    ticker={tickerSymbol}
-                    className="flex !w-full"
-                  />
-                </div>
-              )}
+              {/* StockTicker hidden on mobile per request */}
             </div>
 
             <div className="pt-6 border-t border-gray-100 dark:border-slate-800 flex flex-col space-y-4">
@@ -445,20 +437,14 @@ export default function Navbar() {
                   <span className="text-brand-teal/40">Profil &rarr;</span>
                 </button>
               ) : (
-                <>
-                  <button
-                    onClick={() => { setShowMembershipModal(true); setIsMobileMenuOpen(false); }}
-                    className="w-full bg-brand-teal text-white px-6 py-4 rounded-2xl font-black text-xs uppercase tracking-widest text-left shadow-lg shadow-brand-teal/20"
-                  >
-                    Ansök om medlemskap
-                  </button>
-                  <button
-                    onClick={() => { setShowLoginModal(true); setLoginError(""); setIsMobileMenuOpen(false); }}
-                    className="w-full bg-brand-light text-brand-teal px-6 py-4 rounded-2xl font-black text-xs uppercase tracking-widest text-left"
-                  >
-                    Logga in
-                  </button>
-                </>
+                  <div className="flex justify-center">
+                    <button
+                      onClick={() => { setShowLoginModal(true); setLoginError(""); setIsMobileMenuOpen(false); }}
+                      className="inline-block bg-brand-light text-brand-teal px-8 py-4 rounded-2xl font-black text-xs uppercase tracking-widest text-center min-w-[140px]"
+                    >
+                      Logga in
+                    </button>
+                  </div>
               )}
             </div>
           </div>
