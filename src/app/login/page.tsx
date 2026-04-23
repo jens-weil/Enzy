@@ -41,7 +41,9 @@ function LoginForm() {
     setStatusMessage("");
 
     if (isForgotPassword) {
-      const { error } = await supabase.auth.resetPasswordForEmail(email);
+      const { error } = await supabase.auth.resetPasswordForEmail(email, {
+        redirectTo: window.location.origin + "/auth/callback?next=/auth/update-password",
+      });
       if (error) {
         setError(error.message);
       } else {

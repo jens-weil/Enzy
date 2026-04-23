@@ -31,6 +31,13 @@ function AuthCallbackContent() {
   }, []);
 
   const navigateToPortal = async (userId: string) => {
+    // Check for "next" parameter first (e.g. for password resets)
+    const next = searchParams.get("next");
+    if (next) {
+      router.replace(next);
+      return;
+    }
+
     try {
       const { data: profile } = await supabase
         .from('profiles')
@@ -150,9 +157,15 @@ function AuthCallbackContent() {
     handleAuth();
 
     const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
-      if (session && (event === "SIGNED_IN" || event === "INITIAL_SESSION")) {
-        if (isMounted && !isProcessing && !waitingForClick) {
-          navigateToPortal(session.user.id);
+      if (session) {
+        if (event === "PASSWORD_RECOVERY") {
+          router.replace("/auth/update-password");
+          return;
+        }
+        if (event === "SIGNED_IN" || event === "INITIAL_SESSION") {
+          if (isMounted && !isProcessing && !waitingForClick) {
+            navigateToPortal(session.user.id);
+          }
         }
       }
     });
