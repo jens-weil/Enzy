@@ -31,10 +31,19 @@ function AuthCallbackContent() {
   }, []);
 
   const navigateToPortal = async (userId: string) => {
-    // Check for "next" parameter first (e.g. for password resets)
+    // 1. Check for explicit "next" parameter
     const next = searchParams.get("next");
+    
+    // 2. Check for Supabase "type=recovery" (password reset)
+    const type = searchParams.get("type");
+    
     if (next) {
       router.replace(next);
+      return;
+    }
+    
+    if (type === "recovery") {
+      router.replace("/auth/update-password");
       return;
     }
 
@@ -162,10 +171,9 @@ function AuthCallbackContent() {
           router.replace("/auth/update-password");
           return;
         }
-        if (event === "SIGNED_IN" || event === "INITIAL_SESSION") {
-          if (isMounted && !isProcessing && !waitingForClick) {
-            navigateToPortal(session.user.id);
-          }
+        // Only trigger automatic navigation if we're not already processing a manual click
+        if ((event === "SIGNED_IN" || event === "INITIAL_SESSION") && !isProcessing && !waitingForClick) {
+          navigateToPortal(session.user.id);
         }
       }
     });
