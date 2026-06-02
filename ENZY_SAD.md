@@ -85,7 +85,8 @@ Detta gör att hela portalen kan byta utseende (färger, logotyper, bakgrunder) 
 - Används för att hämta realtidsdata för ENZY.ST. Systemet mappar rådata till OHLC-format för visualisering i Recharts.
 
 ### 5.3 Brevo SMTP
-- Integrerat för transaktionella mejl (glömt lösenord, nya medlemsansökningar). Inställningar hanteras krypterat via API:et.
+- Integrerat för transaktionella mejl (glömt lösenord, nya medlemsansökningar). Inställningar hanteras 
+ via API:et.
 
 ---
 

@@ -34,6 +34,170 @@
     color: var(--foreground);
     @apply transition-colors duration-300 antialiased;
   }
+
+  /* Interactive Elements Reset & Global Hover/Active feedback */
+  button, 
+  a, 
+  [role="button"],
+  select,
+  input[type="submit"],
+  article,
+  [role="article"],
+  .clickable,
+  .cursor-pointer,
+  [class*="cursor-pointer"] {
+    cursor: pointer;
+    transition: background-color 0.25s cubic-bezier(0.34, 1.56, 0.64, 1),
+                color 0.25s cubic-bezier(0.34, 1.56, 0.64, 1),
+                border-color 0.25s cubic-bezier(0.34, 1.56, 0.64, 1),
+                transform 0.25s cubic-bezier(0.34, 1.56, 0.64, 1),
+                box-shadow 0.25s cubic-bezier(0.34, 1.56, 0.64, 1),
+                filter 0.25s cubic-bezier(0.34, 1.56, 0.64, 1);
+  }
+
+  /* Exclude inline text links from bouncy transform to prevent layout shifting */
+  button:hover,
+  [role="button"]:hover,
+  select:hover,
+  input[type="submit"]:hover,
+  nav a:hover,
+  section a:hover,
+  article:hover,
+  .clickable:hover,
+  .cursor-pointer:hover,
+  [class*="cursor-pointer"]:hover {
+    filter: brightness(1.1) contrast(1.05) !important;
+    transform: translateY(-3px) scale(1.03) !important;
+    box-shadow: 0 12px 24px -8px rgba(0, 124, 145, 0.3), 0 8px 16px -8px rgba(0, 0, 0, 0.2) !important;
+  }
+
+  /* 
+     Tydlig skiftning i bakgrundsfärgen på hover för alla interaktiva element
+     Clear background color shift on hover for all interactive elements
+  */
+
+  /* 1. Primary Teal Backgrounds (bg-brand-teal or similar) -> Shifts to dark brand color */
+  [class*="bg-brand-teal"]:hover,
+  [class*="bg-teal-"]:hover {
+    background-color: var(--brand-dark) !important;
+    color: #ffffff !important;
+  }
+
+  /* 2. Secondary Cyan Backgrounds (bg-brand-cyan or similar) -> Shifts to dark brand color */
+  [class*="bg-brand-cyan"]:hover,
+  [class*="bg-cyan-"]:hover {
+    background-color: var(--brand-dark) !important;
+    color: #ffffff !important;
+  }
+
+  /* 3. Light Teal Backgrounds (bg-brand-light, bg-brand-teal/10, bg-brand-teal/5, bg-brand-light/50, etc.) -> Shifts to primary teal */
+  [class*="bg-brand-light"]:hover,
+  [class*="bg-brand-teal/"]:hover {
+    background-color: var(--brand-primary) !important;
+    color: #ffffff !important;
+  }
+
+  /* 4. White or slate background articles/cards (like article grids) */
+  article:hover,
+  [role="article"]:hover,
+  .article-card:hover {
+    background-color: var(--brand-light) !important;
+    border-color: var(--brand-primary) !important;
+  }
+
+  @media (prefers-color-scheme: dark) {
+    article:hover,
+    [role="article"]:hover,
+    .article-card:hover {
+      background-color: var(--brand-dark) !important;
+      border-color: var(--brand-secondary) !important;
+    }
+  }
+
+  /* 5. Glassmorphism cards / buttons / links -> Shifts to solid teal or dark teal */
+  .glassmorphism:not(nav):hover {
+    background-color: var(--brand-primary) !important;
+    color: #ffffff !important;
+  }
+
+  @media (prefers-color-scheme: dark) {
+    .glassmorphism:not(nav):hover {
+      background-color: var(--brand-dark) !important;
+      color: #ffffff !important;
+    }
+  }
+
+  /* 6. General/Transparent buttons, links or divs with hover effect (having no other bg- class) */
+  button:not([class*="bg-"]):hover,
+  [role="button"]:not([class*="bg-"]):hover,
+  .cursor-pointer:not([class*="bg-"]):hover,
+  [class*="cursor-pointer"]:not([class*="bg-"]):hover {
+    background-color: var(--brand-light) !important;
+    color: var(--brand-dark) !important;
+  }
+
+  @media (prefers-color-scheme: dark) {
+    button:not([class*="bg-"]):hover,
+    [role="button"]:not([class*="bg-"]):hover,
+    .cursor-pointer:not([class*="bg-"]):hover,
+    [class*="cursor-pointer"]:not([class*="bg-"]):hover {
+      background-color: var(--brand-dark) !important;
+      color: #ffffff !important;
+    }
+  }
+
+  /* Ensure list items or press release row links change background on hover */
+  .group.hover\:px-6:hover {
+    background-color: var(--brand-light) !important;
+    padding-left: 1.5rem !important;
+    padding-right: 1.5rem !important;
+  }
+  @media (prefers-color-scheme: dark) {
+    .group.hover\:px-6:hover {
+      background-color: var(--brand-dark) !important;
+    }
+  }
+
+  /* 7. Slate/Gray Background elements -> Shifts to brand-light or brand-primary */
+  [class*="bg-slate-"]:hover,
+  [class*="bg-gray-"]:hover {
+    background-color: var(--brand-light) !important;
+    border-color: var(--brand-primary) !important;
+    color: var(--brand-dark) !important;
+  }
+  @media (prefers-color-scheme: dark) {
+    [class*="bg-slate-"]:hover,
+    [class*="bg-gray-"]:hover {
+      background-color: var(--brand-dark) !important;
+      border-color: var(--brand-secondary) !important;
+      color: #ffffff !important;
+    }
+  }
+
+  /* Financial report a links */
+  a[class*="min-h-"]:hover {
+    background-color: var(--brand-light) !important;
+    border-color: var(--brand-primary) !important;
+  }
+  @media (prefers-color-scheme: dark) {
+    a[class*="min-h-"]:hover {
+      background-color: var(--brand-dark) !important;
+      border-color: var(--brand-secondary) !important;
+    }
+  }
+
+  button:active,
+  [role="button"]:active,
+  select:active,
+  input[type="submit"]:active,
+  nav a:active,
+  section a:active,
+  article:active,
+  .clickable:active {
+    transform: translateY(1px) scale(0.98) !important;
+    filter: brightness(0.9) contrast(0.95) !important;
+    box-shadow: 0 4px 6px -4px rgba(0, 0, 0, 0.15) !important;
+  }
 }
 
 @layer utilities {

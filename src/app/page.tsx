@@ -95,7 +95,7 @@ export default function Home() {
           {slidesToRender.map((img, idx) => (
             <div
               key={img.id}
-              className={`absolute inset-0 transition-opacity duration-[2000ms] ease-in-out ${activeImage === idx ? "opacity-100" : "opacity-0"}`}
+              className={`absolute inset-0 transition-opacity duration-[2000ms] ease-in-out ${activeImage === idx ? "opacity-100" : "opacity-0 pointer-events-none"}`}
             >
               <Image
                 src={img.src}
@@ -134,7 +134,7 @@ export default function Home() {
                     key={img.id}
                     className={`block transition-all duration-700 ease-in-out ${activeImage === idx
                       ? "opacity-100 translate-y-0"
-                      : "opacity-0 -translate-y-6 absolute inset-x-0"
+                      : "opacity-0 -translate-y-6 absolute inset-x-0 pointer-events-none"
                       } ${!hasChanged ? "duration-0" : ""}`}
                   >
                     <span className="whitespace-nowrap">{img.headline}</span>
@@ -152,23 +152,23 @@ export default function Home() {
             {!user && (
               <button
                 onClick={() => setShowInfoModal(true)}
-                className="bg-brand-cyan hover:bg-white text-brand-dark text-xl px-10 py-4 rounded-full font-black transition-all shadow-2xl hover:shadow-cyan-500/20 transform hover:-translate-y-1 inline-block uppercase tracking-widest"
+                className="bg-brand-cyan hover:bg-brand-dark text-brand-dark hover:text-white text-xl px-10 py-4 rounded-full font-black transition-all shadow-2xl inline-block uppercase tracking-widest"
               >
                 Bli medlem
               </button>
             )}
-            <a href="#coldzyme" className="bg-brand-teal hover:bg-brand-dark text-white text-xl px-10 py-4 rounded-full font-bold transition-all shadow-2xl hover:shadow-cyan-500/20 transform hover:-translate-y-1 inline-block scroll-smooth text-center">
+            <a href="https://www.coldzyme.se/" target="_blank" rel="noopener noreferrer" className="bg-brand-teal hover:bg-white text-white hover:text-brand-dark text-xl px-10 py-4 rounded-full font-bold transition-all shadow-2xl inline-block text-center">
               Läs mer om ColdZyme®
             </a>
-            <Link href="/articles" className="glassmorphism text-white text-xl px-10 py-4 rounded-full font-bold transition-all shadow-xl hover:bg-white/20 transform hover:-translate-y-1 text-center">
+            <Link href="/articles" className="glassmorphism hover:bg-white text-white hover:text-brand-dark text-xl px-10 py-4 rounded-full font-bold transition-all shadow-xl text-center">
               Våra Nyheter
             </Link>
           </div>
         </div>
 
         {/* Abstract shapes for decoration */}
-        <div className="absolute top-20 left-10 w-64 h-64 bg-brand-cyan/20 rounded-full blur-3xl mix-blend-multiply dark:mix-blend-lighten filter opacity-70 animate-pulse"></div>
-        <div className="absolute -bottom-8 left-1/2 w-80 h-80 bg-brand-accent/20 rounded-full blur-3xl mix-blend-multiply dark:mix-blend-lighten filter opacity-70 animate-pulse" style={{ animationDelay: '2s' }}></div>
+        <div className="absolute top-20 left-10 w-64 h-64 bg-brand-cyan/20 rounded-full blur-3xl mix-blend-multiply dark:mix-blend-lighten filter opacity-70 animate-pulse pointer-events-none"></div>
+        <div className="absolute -bottom-8 left-1/2 w-80 h-80 bg-brand-accent/20 rounded-full blur-3xl mix-blend-multiply dark:mix-blend-lighten filter opacity-70 animate-pulse pointer-events-none" style={{ animationDelay: '2s' }}></div>
       </section>
 
       <AnimatePresence mode="wait">
@@ -251,7 +251,7 @@ export default function Home() {
                   href="https://www.coldzyme.se/"
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="inline-flex items-center gap-6 bg-brand-teal hover:bg-white text-white hover:text-brand-dark text-lg px-12 py-6 rounded-full font-black uppercase tracking-widest transition-all shadow-[0_0_40px_rgba(20,184,166,0.3)] hover:shadow-[0_0_60px_rgba(255,255,255,0.4)] transform hover:-translate-y-1"
+                  className="inline-flex items-center gap-6 bg-brand-teal hover:bg-white text-white hover:text-brand-dark text-lg px-12 py-6 rounded-full font-black uppercase tracking-widest transition-all shadow-[0_0_40px_rgba(20,184,166,0.3)] hover:shadow-[0_0_60px_rgba(255,255,255,0.4)]"
                 >
                   Utforska på ColdZyme.se
                   <span className="w-10 h-10 rounded-full bg-black/10 flex items-center justify-center leading-none text-2xl transition-transform group-hover:translate-x-2">&rarr;</span>
