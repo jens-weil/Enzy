@@ -5,6 +5,7 @@ import Image from "next/image";
 import { motion, AnimatePresence } from "framer-motion";
 import { X, Plus, Loader2, Search, Tag, Trash2, Check, AlertCircle, ChevronDown, Filter } from "lucide-react";
 import { useAuth } from "@/components/AuthContext";
+import { supabase } from "@/lib/supabase";
 
 interface MediaPickerProps {
   isOpen: boolean;
@@ -74,9 +75,10 @@ export default function MediaPicker({
   const fetchImages = async () => {
     try {
       setLoading(true);
+      const { data: { session: currentSession } } = await supabase.auth.getSession();
       const res = await fetch("/api/images", {
         headers: {
-          'Authorization': `Bearer ${session?.access_token}`
+          'Authorization': `Bearer ${currentSession?.access_token}`
         }
       });
       const data = await res.json();
@@ -98,10 +100,11 @@ export default function MediaPicker({
     formData.append("file", file);
 
     try {
+      const { data: { session: currentSession } } = await supabase.auth.getSession();
       const res = await fetch("/api/images", {
         method: "POST",
         headers: {
-          'Authorization': `Bearer ${session?.access_token}`
+          'Authorization': `Bearer ${currentSession?.access_token}`
         },
         body: formData,
       });
@@ -111,9 +114,15 @@ export default function MediaPicker({
         // The API returns { url, tags }
         const newImage = { url: data.url, tags: data.tags || [] };
         setAvailableImages(prev => [newImage, ...prev]);
+      } else {
+        const data = await res.json().catch(() => ({}));
+        setErrorMessage(data.error || "Uppladdning misslyckades.");
+        setTimeout(() => setErrorMessage(null), 4000);
       }
     } catch (err) {
       console.error("Upload error:", err);
+      setErrorMessage("Kunde inte ladda upp filen. Kontrollera anslutningen.");
+      setTimeout(() => setErrorMessage(null), 4000);
     } finally {
       setUploading(false);
     }
@@ -121,10 +130,11 @@ export default function MediaPicker({
 
   const handleDelete = async (url: string) => {
     try {
+      const { data: { session: currentSession } } = await supabase.auth.getSession();
       const res = await fetch(`/api/images?url=${encodeURIComponent(url)}`, {
         method: "DELETE",
         headers: {
-          'Authorization': `Bearer ${session?.access_token}`
+          'Authorization': `Bearer ${currentSession?.access_token}`
         }
       });
 
@@ -144,11 +154,12 @@ export default function MediaPicker({
 
   const handleTagUpdate = async (url: string, newTags: string[]) => {
     try {
+      const { data: { session: currentSession } } = await supabase.auth.getSession();
       const res = await fetch("/api/images", {
         method: "PATCH",
         headers: { 
           "Content-Type": "application/json",
-          "Authorization": `Bearer ${session?.access_token}`
+          "Authorization": `Bearer ${currentSession?.access_token}`
         },
         body: JSON.stringify({ url, tags: newTags }),
       });
@@ -276,11 +287,12 @@ export default function MediaPicker({
                             if (e.key === 'Enter') {
                               const val = (e.target as HTMLInputElement).value;
                               if (!val.trim()) return;
+                              const { data: { session: currentSession } } = await supabase.auth.getSession();
                               await fetch("/api/images", {
                                 method: "PATCH",
                                 headers: { 
                                   "Content-Type": "application/json",
-                                  "Authorization": `Bearer ${session?.access_token}`
+                                  "Authorization": `Bearer ${currentSession?.access_token}`
                                 },
                                 body: JSON.stringify({ action: 'globalCreateTag', newTag: val })
                               });
@@ -318,11 +330,12 @@ export default function MediaPicker({
                             onClick={async (e) => {
                               e.stopPropagation();
                               if (confirm(`Vill du radera taggen "#${tag}" från ALLA bilder?`)) {
+                                const { data: { session: currentSession } } = await supabase.auth.getSession();
                                 await fetch("/api/images", {
                                   method: "PATCH",
                                   headers: { 
                                     "Content-Type": "application/json",
-                                    "Authorization": `Bearer ${session?.access_token}`
+                                    "Authorization": `Bearer ${currentSession?.access_token}`
                                   },
                                   body: JSON.stringify({ action: 'globalDeleteTag', tagToDelete: tag })
                                 });
