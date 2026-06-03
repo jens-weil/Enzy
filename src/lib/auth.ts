@@ -26,6 +26,8 @@ export async function requireRole(
   allowedRoles: string[]
 ): Promise<AuthResult> {
   const authHeader = req.headers.get("authorization") || req.headers.get("x-authorization");
+  console.log("[requireRole] Auth header retrieved:", authHeader ? `${authHeader.substring(0, 20)}...` : "NONE");
+  
   if (!authHeader) {
     return { authorized: false, error: "Ej inloggad.", status: 401 };
   }
@@ -39,8 +41,11 @@ export async function requireRole(
   } = await supabaseAnon.auth.getUser(token);
 
   if (authError || !user) {
+    console.error("[requireRole] Token verification failed:", authError?.message || "No user found");
     return { authorized: false, error: "Ogiltig session.", status: 401 };
   }
+
+  console.log("[requireRole] Token verified for user ID:", user.id);
 
   // Fetch role from profiles table
   const { data: profile, error: profileError } = await supabaseAdmin
@@ -50,10 +55,14 @@ export async function requireRole(
     .single();
 
   if (profileError || !profile) {
+    console.error("[requireRole] Profile fetch failed for user:", user.id, profileError?.message || "No profile row found");
     return { authorized: false, error: "Profil saknas.", status: 403 };
   }
 
+  console.log("[requireRole] Profile role:", profile.role, "Allowed roles:", allowedRoles);
+
   if (!allowedRoles.includes(profile.role)) {
+    console.warn("[requireRole] Role not allowed:", profile.role);
     return {
       authorized: false,
       error: `Åtkomst nekad. Krävd roll: ${allowedRoles.join(" eller ")}.`,
@@ -70,6 +79,8 @@ export async function requireRole(
  */
 export async function requireAuth(req: NextRequest): Promise<{ authorized: true; userId: string } | { authorized: false; error: string; status: number }> {
   const authHeader = req.headers.get("authorization") || req.headers.get("x-authorization");
+  console.log("[requireAuth] Auth header retrieved:", authHeader ? `${authHeader.substring(0, 20)}...` : "NONE");
+  
   if (!authHeader) {
     return { authorized: false, error: "Ej inloggad.", status: 401 };
   }
@@ -82,6 +93,7 @@ export async function requireAuth(req: NextRequest): Promise<{ authorized: true;
   } = await supabaseAnon.auth.getUser(token);
 
   if (authError || !user) {
+    console.error("[requireAuth] Token verification failed:", authError?.message || "No user found");
     return { authorized: false, error: "Ogiltig session.", status: 401 };
   }
 
