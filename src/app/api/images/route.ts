@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import fs from 'fs';
 import path from 'path';
-import { requireRole } from '@/lib/auth';
+import { requireRole, supabaseAdmin } from '@/lib/auth';
 
 const metadataPath = path.join(process.cwd(), 'data', 'media_metadata.json');
 
@@ -26,38 +26,68 @@ function saveMetadata(data: any) {
 
 export async function GET(request: NextRequest) {
   try {
-    const uploadDir = path.join(process.cwd(), 'public', 'media');
-    
-    if (!fs.existsSync(uploadDir)) {
-      fs.mkdirSync(uploadDir, { recursive: true });
+    const images: { url: string; tags: string[] }[] = [];
+    const metadata = getMetadata();
+
+    // 1. Try fetching from Supabase Storage
+    try {
+      const { data: buckets } = await supabaseAdmin.storage.listBuckets();
+      const hasMediaBucket = buckets?.some(b => b.id === 'media');
+      if (!hasMediaBucket) {
+        await supabaseAdmin.storage.createBucket('media', {
+          public: true,
+          allowedMimeTypes: ['image/*', 'video/*'],
+          fileSizeLimit: 10485760 // 10MB
+        });
+      }
+
+      const { data: files, error } = await supabaseAdmin.storage.from('media').list('', {
+        limit: 100,
+        sortBy: { column: 'created_at', order: 'desc' }
+      });
+
+      if (files && !error) {
+        files.forEach(file => {
+          const { data } = supabaseAdmin.storage.from('media').getPublicUrl(file.name);
+          images.push({
+            url: data.publicUrl,
+            tags: metadata[data.publicUrl]?.tags || []
+          });
+        });
+      }
+    } catch (e) {
+      console.warn("Supabase Storage list failed, using local disk:", e);
     }
 
-    const getAllFiles = (dirPath: string, arrayOfFiles: string[] = []): string[] => {
-      if (!fs.existsSync(dirPath)) return arrayOfFiles;
-      const files = fs.readdirSync(dirPath).filter(f => !f.startsWith('.'));
-      files.forEach((file) => {
-        const fullPath = path.join(dirPath, file);
-        if (fs.statSync(fullPath).isDirectory()) {
-          arrayOfFiles = getAllFiles(fullPath, arrayOfFiles);
-        } else {
-          arrayOfFiles.push(fullPath);
+    // 2. Fallback/Include local disk files
+    const uploadDir = path.join(process.cwd(), 'public', 'media');
+    if (fs.existsSync(uploadDir)) {
+      const getAllFiles = (dirPath: string, arrayOfFiles: string[] = []): string[] => {
+        const files = fs.readdirSync(dirPath).filter(f => !f.startsWith('.'));
+        files.forEach((file) => {
+          const fullPath = path.join(dirPath, file);
+          if (fs.statSync(fullPath).isDirectory()) {
+            arrayOfFiles = getAllFiles(fullPath, arrayOfFiles);
+          } else {
+            arrayOfFiles.push(fullPath);
+          }
+        });
+        return arrayOfFiles;
+      };
+
+      const allFiles = getAllFiles(uploadDir);
+      allFiles.forEach(fullPath => {
+        const relativePath = path.relative(path.join(process.cwd(), 'public'), fullPath);
+        const url = `/${relativePath.replace(/\\/g, '/')}`;
+        if (!images.find(i => i.url === url)) {
+          images.push({
+            url,
+            tags: metadata[url]?.tags || []
+          });
         }
       });
-      return arrayOfFiles;
-    };
+    }
 
-    const allFiles = getAllFiles(uploadDir);
-    const metadata = getMetadata();
-    
-    const images = allFiles.map(fullPath => {
-      const relativePath = path.relative(path.join(process.cwd(), 'public'), fullPath);
-      const url = `/${relativePath.replace(/\\/g, '/')}`;
-      return {
-        url,
-        tags: metadata[url]?.tags || []
-      };
-    });
-    
     // Add default images if they exist
     ['/media/logo.png', '/media/hero.png', '/media/hero_authentic.webp'].forEach(img => {
       if (fs.existsSync(path.join(process.cwd(), 'public', img))) {
@@ -92,9 +122,6 @@ export async function POST(request: NextRequest) {
     const bytes = await file.arrayBuffer();
     const buffer = Buffer.from(bytes);
 
-    const uploadDir = path.join(process.cwd(), 'public', 'media');
-    if (!fs.existsSync(uploadDir)) fs.mkdirSync(uploadDir, { recursive: true });
-
     const filename = `${Date.now()}-${file.name.replace(/\s+/g, '-')}`;
     const extension = path.extname(filename).toLowerCase();
     const allowedExtensions = ['.jpg', '.jpeg', '.png', '.webp', '.gif', '.svg', '.mp4', '.webm', '.mov', '.avi'];
@@ -103,13 +130,37 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Filtypen stöds inte.' }, { status: 400 });
     }
 
+    // 1. Try Supabase Storage first
+    try {
+      const { data, error } = await supabaseAdmin.storage
+        .from('media')
+        .upload(filename, buffer, {
+          contentType: file.type,
+          upsert: true
+        });
+
+      if (data && !error) {
+        const { data: urlData } = supabaseAdmin.storage.from('media').getPublicUrl(filename);
+        return NextResponse.json({ url: urlData.publicUrl, tags: [] });
+      }
+      if (error) throw error;
+    } catch (e) {
+      console.warn("Supabase Storage upload failed, falling back to local disk:", e);
+    }
+
+    // 2. Fallback to Local Disk
+    const uploadDir = path.join(process.cwd(), 'public', 'media');
+    if (!fs.existsSync(uploadDir)) fs.mkdirSync(uploadDir, { recursive: true });
+
     const filePath = path.join(uploadDir, filename);
     fs.writeFileSync(filePath, buffer);
 
     return NextResponse.json({ url: `/media/${filename}`, tags: [] });
   } catch (error) {
     console.error("Error uploading file:", error);
-    return NextResponse.json({ error: 'Upload failed' }, { status: 500 });
+    return NextResponse.json({ 
+      error: `Uppladdning misslyckades: ${error instanceof Error ? error.message : String(error)}` 
+    }, { status: 500 });
   }
 }
 
@@ -188,19 +239,31 @@ export async function DELETE(request: NextRequest) {
       }
     }
 
-    // 2. DELETE FROM DISK
+    // 2. DELETE FROM SUPABASE STORAGE IF APPLICABLE
+    if (url.includes('supabase.co/storage/v1/object/public/media/')) {
+      const filename = url.split('/').pop();
+      if (filename) {
+        const { error } = await supabaseAdmin.storage.from('media').remove([filename]);
+        if (error) console.error("Error deleting from Supabase Storage:", error);
+      }
+    }
+
+    // 3. DELETE FROM LOCAL DISK
     const publicPath = path.join(process.cwd(), 'public');
     const fullPath = path.join(publicPath, url.startsWith('/') ? url.substring(1) : url);
     
     if (fs.existsSync(fullPath)) {
       // Safety check: only delete from public/media
-      if (!fullPath.includes(path.join('public', 'media'))) {
-         return NextResponse.json({ error: 'Otillåten sökväg' }, { status: 400 });
+      if (fullPath.includes(path.join('public', 'media'))) {
+        try {
+          fs.unlinkSync(fullPath);
+        } catch (e) {
+          console.warn("Local file delete failed (might be read-only):", e);
+        }
       }
-      fs.unlinkSync(fullPath);
     }
 
-    // 3. CLEAN UP METADATA
+    // 4. CLEAN UP METADATA
     const metadata = getMetadata();
     if (metadata[url]) {
       delete metadata[url];
