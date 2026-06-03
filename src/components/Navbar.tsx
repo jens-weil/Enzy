@@ -268,7 +268,7 @@ export default function Navbar() {
                 Dela
               </button>
 
-              {isLoggedIn && profile?.role === "Partner" && (
+              {isLoggedIn && (profile?.role === "Partner" || profile?.role === "Admin" || profile?.role === "Editor" || profile?.role === "Redaktör") && (
                 <Link
                   href="/partner"
                   className={`px-5 py-2.5 rounded-full font-bold transition-all text-sm uppercase tracking-widest ${pathname.startsWith("/partner") ? "bg-brand-teal text-white shadow-lg shadow-brand-teal/20" : "text-brand-teal bg-brand-teal/10 hover:bg-brand-teal hover:text-white"}`}
@@ -421,6 +421,16 @@ export default function Navbar() {
               >
                 Dela
               </button>
+
+              {isLoggedIn && (profile?.role === "Partner" || profile?.role === "Admin" || profile?.role === "Editor" || profile?.role === "Redaktör") && (
+                <Link
+                  href="/partner"
+                  onClick={() => setIsMobileMenuOpen(false)}
+                  className={`p-4 rounded-2xl text-lg font-bold transition-all flex items-center gap-4 ${pathname.startsWith("/partner") ? "bg-brand-light text-brand-teal" : "text-gray-800 dark:text-white hover:bg-gray-50 dark:hover:bg-slate-800"}`}
+                >
+                  Partner Portal
+                </Link>
+              )}
 
               {/* StockTicker hidden on mobile per request */}
             </div>
