@@ -18,11 +18,11 @@ const supabaseAnon = createClient(
 export async function POST(req: NextRequest) {
   try {
     // 1. Extract the user's JWT from the Authorization header
-    const authHeader = req.headers.get("authorization");
-    if (!authHeader?.startsWith("Bearer ")) {
+    const authHeader = req.headers.get("authorization") || req.headers.get("x-authorization");
+    if (!authHeader) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
-    const token = authHeader.replace("Bearer ", "");
+    const token = authHeader.startsWith("Bearer ") ? authHeader.replace("Bearer ", "") : authHeader;
 
     // 2. Verify the token and get the user
     const { data: { user }, error: authError } = await supabaseAnon.auth.getUser(token);
@@ -61,11 +61,11 @@ export async function POST(req: NextRequest) {
 export async function PATCH(req: NextRequest) {
   try {
     // 1. Extract the user's JWT from the Authorization header
-    const authHeader = req.headers.get("authorization");
-    if (!authHeader?.startsWith("Bearer ")) {
+    const authHeader = req.headers.get("authorization") || req.headers.get("x-authorization");
+    if (!authHeader) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
-    const token = authHeader.replace("Bearer ", "");
+    const token = authHeader.startsWith("Bearer ") ? authHeader.replace("Bearer ", "") : authHeader;
 
     // 2. Verify the token and get the user
     const { data: { user }, error: authError } = await supabaseAnon.auth.getUser(token);

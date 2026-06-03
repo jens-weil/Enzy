@@ -11,8 +11,8 @@ const supabaseAdmin = createClient(
 export async function POST(req: NextRequest) {
   try {
     // 1. Authorization check
-    const authHeader = req.headers.get("authorization");
-    if (!authHeader?.startsWith("Bearer ")) {
+    const authHeader = req.headers.get("authorization") || req.headers.get("x-authorization");
+    if (!authHeader) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
     

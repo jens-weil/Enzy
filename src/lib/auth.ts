@@ -25,12 +25,12 @@ export async function requireRole(
   req: NextRequest,
   allowedRoles: string[]
 ): Promise<AuthResult> {
-  const authHeader = req.headers.get("authorization");
-  if (!authHeader?.startsWith("Bearer ")) {
+  const authHeader = req.headers.get("authorization") || req.headers.get("x-authorization");
+  if (!authHeader) {
     return { authorized: false, error: "Ej inloggad.", status: 401 };
   }
 
-  const token = authHeader.replace("Bearer ", "");
+  const token = authHeader.startsWith("Bearer ") ? authHeader.replace("Bearer ", "") : authHeader;
 
   // Verify token
   const {
@@ -69,12 +69,12 @@ export async function requireRole(
  * without checking for any specific role. Useful for ownership checks.
  */
 export async function requireAuth(req: NextRequest): Promise<{ authorized: true; userId: string } | { authorized: false; error: string; status: number }> {
-  const authHeader = req.headers.get("authorization");
-  if (!authHeader?.startsWith("Bearer ")) {
+  const authHeader = req.headers.get("authorization") || req.headers.get("x-authorization");
+  if (!authHeader) {
     return { authorized: false, error: "Ej inloggad.", status: 401 };
   }
 
-  const token = authHeader.replace("Bearer ", "");
+  const token = authHeader.startsWith("Bearer ") ? authHeader.replace("Bearer ", "") : authHeader;
 
   const {
     data: { user },

@@ -78,7 +78,8 @@ export default function MediaPicker({
       const { data: { session: currentSession } } = await supabase.auth.getSession();
       const res = await fetch("/api/images", {
         headers: {
-          'Authorization': `Bearer ${currentSession?.access_token}`
+          'Authorization': `Bearer ${currentSession?.access_token}`,
+          'X-Authorization': `Bearer ${currentSession?.access_token}`
         }
       });
       const data = await res.json();
@@ -104,7 +105,8 @@ export default function MediaPicker({
       const res = await fetch("/api/images", {
         method: "POST",
         headers: {
-          'Authorization': `Bearer ${currentSession?.access_token}`
+          'Authorization': `Bearer ${currentSession?.access_token}`,
+          'X-Authorization': `Bearer ${currentSession?.access_token}`
         },
         body: formData,
       });
@@ -134,7 +136,8 @@ export default function MediaPicker({
       const res = await fetch(`/api/images?url=${encodeURIComponent(url)}`, {
         method: "DELETE",
         headers: {
-          'Authorization': `Bearer ${currentSession?.access_token}`
+          'Authorization': `Bearer ${currentSession?.access_token}`,
+          'X-Authorization': `Bearer ${currentSession?.access_token}`
         }
       });
 
@@ -159,7 +162,8 @@ export default function MediaPicker({
         method: "PATCH",
         headers: { 
           "Content-Type": "application/json",
-          "Authorization": `Bearer ${currentSession?.access_token}`
+          "Authorization": `Bearer ${currentSession?.access_token}`,
+          "X-Authorization": `Bearer ${currentSession?.access_token}`
         },
         body: JSON.stringify({ url, tags: newTags }),
       });
@@ -288,13 +292,14 @@ export default function MediaPicker({
                               const val = (e.target as HTMLInputElement).value;
                               if (!val.trim()) return;
                               const { data: { session: currentSession } } = await supabase.auth.getSession();
-                              await fetch("/api/images", {
-                                method: "PATCH",
-                                headers: { 
-                                  "Content-Type": "application/json",
-                                  "Authorization": `Bearer ${currentSession?.access_token}`
-                                },
-                                body: JSON.stringify({ action: 'globalCreateTag', newTag: val })
+                               await fetch("/api/images", {
+                                 method: "PATCH",
+                                 headers: { 
+                                   "Content-Type": "application/json",
+                                   "Authorization": `Bearer ${currentSession?.access_token}`,
+                                   "X-Authorization": `Bearer ${currentSession?.access_token}`
+                                 },
+                                 body: JSON.stringify({ action: 'globalCreateTag', newTag: val })
                               });
                               (e.target as HTMLInputElement).value = "";
                               fetchImages();
@@ -331,13 +336,14 @@ export default function MediaPicker({
                               e.stopPropagation();
                               if (confirm(`Vill du radera taggen "#${tag}" från ALLA bilder?`)) {
                                 const { data: { session: currentSession } } = await supabase.auth.getSession();
-                                await fetch("/api/images", {
-                                  method: "PATCH",
-                                  headers: { 
-                                    "Content-Type": "application/json",
-                                    "Authorization": `Bearer ${currentSession?.access_token}`
-                                  },
-                                  body: JSON.stringify({ action: 'globalDeleteTag', tagToDelete: tag })
+                                 await fetch("/api/images", {
+                                   method: "PATCH",
+                                   headers: { 
+                                     "Content-Type": "application/json",
+                                     "Authorization": `Bearer ${currentSession?.access_token}`,
+                                     "X-Authorization": `Bearer ${currentSession?.access_token}`
+                                   },
+                                   body: JSON.stringify({ action: 'globalDeleteTag', tagToDelete: tag })
                                 });
                                 if (selectedTag === tag) setSelectedTag(null);
                                 fetchImages();
@@ -405,7 +411,13 @@ export default function MediaPicker({
                 <div key={img.url} className="relative group aspect-[4/5] animate-in fade-in zoom-in-95 duration-500" style={{ animationDelay: `${Math.min(i * 30, 600)}ms` }}>
                   <motion.div 
                     layout
-                    onClick={() => onSelect(img.url)} 
+                    onClick={(e) => {
+                      const target = e.target as HTMLElement;
+                      if (target.closest('[data-no-select="true"]')) {
+                        return;
+                      }
+                      onSelect(img.url);
+                    }} 
                     className="w-full h-full rounded-2xl overflow-hidden cursor-pointer shadow-lg hover:shadow-2xl transition-all hover:-translate-y-2 ring-4 ring-transparent hover:ring-brand-teal/50 relative"
                   >
                     <Image 
@@ -433,6 +445,7 @@ export default function MediaPicker({
 
                     {/* Actions (Floating) */}
                     <div 
+                      data-no-select="true"
                       className="absolute top-3 right-3 flex flex-col gap-2 transition-all z-20"
                       onClick={(e) => e.stopPropagation()}
                       onMouseDown={(e) => e.stopPropagation()}
@@ -460,6 +473,7 @@ export default function MediaPicker({
                     <AnimatePresence>
                       {deletingImage === img.url && (
                         <motion.div 
+                          data-no-select="true"
                           initial={{ opacity: 0 }}
                           animate={{ opacity: 1 }}
                           exit={{ opacity: 0 }}
@@ -496,6 +510,7 @@ export default function MediaPicker({
                     <AnimatePresence>
                       {taggingImage === img.url && (
                         <motion.div 
+                          data-no-select="true"
                           initial={{ opacity: 0, scale: 0.98 }}
                           animate={{ opacity: 1, scale: 1 }}
                           exit={{ opacity: 0, scale: 0.98 }}

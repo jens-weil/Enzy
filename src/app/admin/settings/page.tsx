@@ -55,7 +55,8 @@ export default function SettingsPage() {
         const { data: { session } } = await supabase.auth.getSession();
         const res = await fetch("/api/settings", {
           headers: {
-            'Authorization': `Bearer ${session?.access_token}`
+            'Authorization': `Bearer ${session?.access_token}`,
+            'X-Authorization': `Bearer ${session?.access_token}`
           }
         });
         
@@ -109,7 +110,8 @@ export default function SettingsPage() {
         method: "POST",
         headers: { 
           "Content-Type": "application/json",
-          "Authorization": `Bearer ${session.access_token}`
+          "Authorization": `Bearer ${session.access_token}`,
+          "X-Authorization": `Bearer ${session.access_token}`
         },
         body: JSON.stringify({ facebook, instagram, linkedin, tiktok, x, stock, brevo, security, hero, company, theme })
       });

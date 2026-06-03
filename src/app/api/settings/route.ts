@@ -155,9 +155,9 @@ function getSettings() {
 export async function GET(request: NextRequest) {
   const settings = getSettings();
   
-  const authHeader = request.headers.get("authorization");
+  const authHeader = request.headers.get("authorization") || request.headers.get("x-authorization");
   
-  if (authHeader?.startsWith("Bearer ")) {
+  if (authHeader) {
     // check for Admin/Editor role
     const auth = await requireRole(request, ['Admin', 'Editor', 'Redaktör']);
     if (auth.authorized) {
