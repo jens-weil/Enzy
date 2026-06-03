@@ -26,6 +26,7 @@ export type PublicSettings = {
   company: {
     name: string;
     logoUrl: string;
+    showNameInHeader?: boolean;
     description: string;
     address?: string;
     email?: string;

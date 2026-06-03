@@ -49,14 +49,15 @@ export default function Navbar() {
   const [showAdminMenu, setShowAdminMenu] = useState(false);
   const [tickerSymbol, setTickerSymbol] = useState("ENZY.ST");
   const [isTickerActive, setIsTickerActive] = useState(true);
-  const [company, setCompany] = useState({ name: "Enzymatica", logoUrl: "/media/logo.png" });
+  const [company, setCompany] = useState({ name: "Enzymatica", logoUrl: "/media/logo.png", showNameInHeader: true });
 
   const loadSettings = () => {
     fetchSettingsOnce().then(data => {
       if (data?.company) {
         setCompany({
           name: data.company.name || "Enzymatica",
-          logoUrl: data.company.logoUrl || "/media/logo.png"
+          logoUrl: data.company.logoUrl || "/media/logo.png",
+          showNameInHeader: data.company.showNameInHeader ?? true
         });
       }
       if (data?.stock?.ticker) {
@@ -80,7 +81,8 @@ export default function Navbar() {
         if (data?.company) {
           setCompany({
             name: data.company.name || "Enzymatica",
-            logoUrl: data.company.logoUrl || "/media/logo.png"
+            logoUrl: data.company.logoUrl || "/media/logo.png",
+            showNameInHeader: data.company.showNameInHeader ?? true
           });
         }
       });
@@ -229,9 +231,11 @@ export default function Navbar() {
                     {company.name.charAt(0)}
                   </div>
                 )}
-                <span className="text-xl font-bold text-brand-dark dark:text-white tracking-tight">
-                  {company.name}
-                </span>
+                {company.showNameInHeader !== false && (
+                  <span className="text-xl font-bold text-brand-dark dark:text-white tracking-tight">
+                    {company.name}
+                  </span>
+                )}
               </Link>
             </div>
 

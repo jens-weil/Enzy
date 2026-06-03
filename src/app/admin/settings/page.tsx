@@ -359,6 +359,18 @@ export default function SettingsPage() {
                                     />
                                   </label>
 
+                                  <label className="flex items-center gap-3 cursor-pointer select-none ml-2">
+                                    <input 
+                                      type="checkbox" 
+                                      checked={company.showNameInHeader ?? true} 
+                                      onChange={e => setCompany((p: any) => ({ ...p, showNameInHeader: e.target.checked }))} 
+                                      className="w-5 h-5 rounded-lg border-gray-300 dark:border-slate-800 bg-white dark:bg-slate-950 text-brand-teal focus:ring-brand-teal"
+                                    />
+                                    <span className="text-xs font-black text-gray-500 uppercase tracking-wider">
+                                      Visa företagsnamn i topnav
+                                    </span>
+                                  </label>
+
                                   <label className="space-y-3 block">
                                     <span className="text-[10px] font-black text-gray-400 uppercase tracking-widest ml-2">Besöksadress</span>
                                     <input 
