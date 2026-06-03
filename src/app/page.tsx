@@ -160,7 +160,7 @@ export default function Home() {
             <a href="https://www.coldzyme.se/" target="_blank" rel="noopener noreferrer" className="bg-brand-teal hover:bg-white text-white hover:text-brand-dark text-xl px-10 py-4 rounded-full font-bold transition-all shadow-2xl inline-block text-center">
               Läs mer om ColdZyme®
             </a>
-            <Link href="/articles" className="glassmorphism hover:bg-white text-white hover:text-brand-dark text-xl px-10 py-4 rounded-full font-bold transition-all shadow-xl text-center">
+            <Link href="/articles" className="bg-red-600 hover:bg-red-700 text-white text-xl px-10 py-4 rounded-full font-bold transition-all shadow-xl text-center">
               Våra Nyheter
             </Link>
           </div>
