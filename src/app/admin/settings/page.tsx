@@ -346,7 +346,7 @@ export default function SettingsPage() {
                         {channel.id === 'company_info' && (
                           <div className="space-y-10 mt-10">
                             <div className="grid grid-cols-1 md:grid-cols-2 gap-10">
-                              {/* --- VÄNSTER KOLUMN: FÖRETAGSINFO & ADRESS & BESKRIVNING --- */}
+                              {/* --- VÄNSTER KOLUMN: FÖRETAGSINFO & LOGOTYP --- */}
                               <div className="space-y-6">
                                   <label className="space-y-3 block">
                                     <span className="text-[10px] font-black text-gray-400 uppercase tracking-widest ml-2">Företagsnamn</span>
@@ -371,6 +371,30 @@ export default function SettingsPage() {
                                     </span>
                                   </label>
 
+                                  <div className="p-8 bg-white dark:bg-slate-900 rounded-[2.5rem] border border-gray-100 dark:border-slate-800 shadow-xl flex flex-col items-center justify-center space-y-6">
+                                    <div className="text-[10px] font-black text-gray-400 uppercase tracking-widest self-start">Logotyp</div>
+                                    <div className="relative group w-32 h-32 rounded-2xl bg-gray-50 dark:bg-slate-950 flex items-center justify-center p-4 border border-dashed border-gray-200 dark:border-slate-700">
+                                      {company.logoUrl ? (
+                                        <Image src={company.logoUrl} alt="Logo Preview" width={80} height={80} className="object-contain" />
+                                      ) : (
+                                        <span className="text-3xl">🖼️</span>
+                                      )}
+                                      <button 
+                                        onClick={() => { setActiveSlideIndex(-1); setShowMediaPicker(true); }}
+                                        className="absolute inset-0 bg-brand-teal/80 opacity-0 group-hover:opacity-100 transition-all rounded-2xl flex flex-col items-center justify-center text-white gap-2"
+                                      >
+                                        <span className="text-2xl">📸</span>
+                                        <span className="text-[8px] font-black uppercase tracking-widest">Byt Logga</span>
+                                      </button>
+                                    </div>
+                                    <p className="text-[9px] text-gray-400 font-bold uppercase tracking-widest text-center">
+                                      Logotypen används i Navbaren och i huvudet på alla dialogfönster.
+                                    </p>
+                                  </div>
+                              </div>
+
+                              {/* --- HÖGER KOLUMN: KONTAKTUPPGIFTER, ADRESS & BESKRIVNING --- */}
+                              <div className="space-y-6 flex flex-col">
                                   <label className="space-y-3 block">
                                     <span className="text-[10px] font-black text-gray-400 uppercase tracking-widest ml-2">Besöksadress</span>
                                     <input 
@@ -379,6 +403,28 @@ export default function SettingsPage() {
                                       onChange={e => setCompany((p: any) => ({ ...p, address: e.target.value }))} 
                                       className="w-full px-6 py-5 rounded-2xl border border-gray-100 dark:border-slate-800 bg-white dark:bg-slate-950 focus:border-brand-teal outline-none font-bold text-sm dark:text-white transition-all shadow-sm" 
                                       placeholder="Gata, Postnummer, Ort"
+                                    />
+                                  </label>
+
+                                  <label className="space-y-3 block">
+                                    <span className="text-[10px] font-black text-gray-400 uppercase tracking-widest ml-2">Kontakt-epost</span>
+                                    <input 
+                                      type="email" 
+                                      value={company.email || ""} 
+                                      onChange={e => setCompany((p: any) => ({ ...p, email: e.target.value }))} 
+                                      className="w-full px-6 py-5 rounded-2xl border border-gray-100 dark:border-slate-800 bg-white dark:bg-slate-950 focus:border-brand-teal outline-none font-bold text-sm dark:text-white transition-all shadow-sm" 
+                                      placeholder="info@foretag.se"
+                                    />
+                                  </label>
+
+                                  <label className="space-y-3 block">
+                                    <span className="text-[10px] font-black text-gray-400 uppercase tracking-widest ml-2">Telefonnummer</span>
+                                    <input 
+                                      type="text" 
+                                      value={company.phone || ""} 
+                                      onChange={e => setCompany((p: any) => ({ ...p, phone: e.target.value }))} 
+                                      className="w-full px-6 py-5 rounded-2xl border border-gray-100 dark:border-slate-800 bg-white dark:bg-slate-950 focus:border-brand-teal outline-none font-bold text-sm dark:text-white transition-all shadow-sm" 
+                                      placeholder="+46 (0)00 000 00 00"
                                     />
                                   </label>
                                   
@@ -392,52 +438,6 @@ export default function SettingsPage() {
                                       placeholder="Skriv en kort text om företaget..."
                                     />
                                   </label>
-                              </div>
-
-                              {/* --- HÖGER KOLUMN: KONTAKTUPPGIFTER & LOGOTYP --- */}
-                              <div className="space-y-6 flex flex-col">
-                                <label className="space-y-3 block">
-                                  <span className="text-[10px] font-black text-gray-400 uppercase tracking-widest ml-2">Kontakt-epost</span>
-                                  <input 
-                                    type="email" 
-                                    value={company.email || ""} 
-                                    onChange={e => setCompany((p: any) => ({ ...p, email: e.target.value }))} 
-                                    className="w-full px-6 py-5 rounded-2xl border border-gray-100 dark:border-slate-800 bg-white dark:bg-slate-950 focus:border-brand-teal outline-none font-bold text-sm dark:text-white transition-all shadow-sm" 
-                                    placeholder="info@foretag.se"
-                                  />
-                                </label>
-
-                                <label className="space-y-3 block">
-                                  <span className="text-[10px] font-black text-gray-400 uppercase tracking-widest ml-2">Telefonnummer</span>
-                                  <input 
-                                    type="text" 
-                                    value={company.phone || ""} 
-                                    onChange={e => setCompany((p: any) => ({ ...p, phone: e.target.value }))} 
-                                    className="w-full px-6 py-5 rounded-2xl border border-gray-100 dark:border-slate-800 bg-white dark:bg-slate-950 focus:border-brand-teal outline-none font-bold text-sm dark:text-white transition-all shadow-sm" 
-                                    placeholder="+46 (0)00 000 00 00"
-                                  />
-                                </label>
-
-                                <div className="p-8 bg-white dark:bg-slate-900 rounded-[2.5rem] border border-gray-100 dark:border-slate-800 shadow-xl flex flex-col items-center justify-center space-y-6 flex-1 min-h-[300px]">
-                                  <div className="text-[10px] font-black text-gray-400 uppercase tracking-widest self-start">Logotyp</div>
-                                  <div className="relative group w-32 h-32 rounded-2xl bg-gray-50 dark:bg-slate-800 flex items-center justify-center p-4 border border-dashed border-gray-200 dark:border-slate-700">
-                                    {company.logoUrl ? (
-                                      <Image src={company.logoUrl} alt="Logo Preview" width={80} height={80} className="object-contain" />
-                                    ) : (
-                                      <span className="text-3xl">🖼️</span>
-                                    )}
-                                    <button 
-                                      onClick={() => { setActiveSlideIndex(-1); setShowMediaPicker(true); }}
-                                      className="absolute inset-0 bg-brand-teal/80 opacity-0 group-hover:opacity-100 transition-all rounded-2xl flex flex-col items-center justify-center text-white gap-2"
-                                    >
-                                      <span className="text-2xl">📸</span>
-                                      <span className="text-[8px] font-black uppercase tracking-widest">Byt Logga</span>
-                                    </button>
-                                  </div>
-                                  <p className="text-[9px] text-gray-400 font-bold uppercase tracking-widest text-center">
-                                    Logotypen används i Navbaren och i huvudet på alla dialogfönster.
-                                  </p>
-                                </div>
                               </div>
                             </div>
                           </div>
