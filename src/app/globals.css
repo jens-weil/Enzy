@@ -77,22 +77,19 @@
   */
 
   /* 1. Primary Teal Backgrounds (bg-brand-teal or similar) -> Shifts to dark brand color */
-  [class*="bg-brand-teal"]:hover,
-  [class*="bg-teal-"]:hover {
+  :is(button, a, [role="button"], .clickable, .cursor-pointer, [class*="cursor-pointer"]):is([class*="bg-brand-teal"], [class*="bg-teal-"]):hover {
     background-color: var(--brand-dark) !important;
     color: #ffffff !important;
   }
 
   /* 2. Secondary Cyan Backgrounds (bg-brand-cyan or similar) -> Shifts to dark brand color */
-  [class*="bg-brand-cyan"]:hover,
-  [class*="bg-cyan-"]:hover {
+  :is(button, a, [role="button"], .clickable, .cursor-pointer, [class*="cursor-pointer"]):is([class*="bg-brand-cyan"], [class*="bg-cyan-"]):hover {
     background-color: var(--brand-dark) !important;
     color: #ffffff !important;
   }
 
   /* 3. Light Teal Backgrounds (bg-brand-light, bg-brand-teal/10, bg-brand-teal/5, bg-brand-light/50, etc.) -> Shifts to primary teal */
-  [class*="bg-brand-light"]:hover,
-  [class*="bg-brand-teal/"]:hover {
+  :is(button, a, [role="button"], .clickable, .cursor-pointer, [class*="cursor-pointer"]):is([class*="bg-brand-light"], [class*="bg-brand-teal/"]):hover {
     background-color: var(--brand-primary) !important;
     color: #ffffff !important;
   }
@@ -115,13 +112,13 @@
   }
 
   /* 5. Glassmorphism cards / buttons / links -> Shifts to solid teal or dark teal */
-  .glassmorphism:not(nav):hover {
+  :is(button, a, [role="button"], .clickable, .cursor-pointer, [class*="cursor-pointer"]).glassmorphism:not(nav):hover {
     background-color: var(--brand-primary) !important;
     color: #ffffff !important;
   }
 
   @media (prefers-color-scheme: dark) {
-    .glassmorphism:not(nav):hover {
+    :is(button, a, [role="button"], .clickable, .cursor-pointer, [class*="cursor-pointer"]).glassmorphism:not(nav):hover {
       background-color: var(--brand-dark) !important;
       color: #ffffff !important;
     }
@@ -159,15 +156,13 @@
   }
 
   /* 7. Slate/Gray Background elements -> Shifts to brand-light or brand-primary */
-  [class*="bg-slate-"]:hover,
-  [class*="bg-gray-"]:hover {
+  :is(button, a, [role="button"], .clickable, .cursor-pointer, [class*="cursor-pointer"]):is([class*="bg-slate-"], [class*="bg-gray-"]):hover {
     background-color: var(--brand-light) !important;
     border-color: var(--brand-primary) !important;
     color: var(--brand-dark) !important;
   }
   @media (prefers-color-scheme: dark) {
-    [class*="bg-slate-"]:hover,
-    [class*="bg-gray-"]:hover {
+    :is(button, a, [role="button"], .clickable, .cursor-pointer, [class*="cursor-pointer"]):is([class*="bg-slate-"], [class*="bg-gray-"]):hover {
       background-color: var(--brand-dark) !important;
       border-color: var(--brand-secondary) !important;
       color: #ffffff !important;
