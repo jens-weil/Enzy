@@ -38,7 +38,8 @@ export async function requireRole(
 
   if (authError || !user) {
     console.error("[requireRole] Token verification failed:", authError?.message || "No user found");
-    return { authorized: false, error: "Ogiltig session.", status: 401 };
+    const errMsg = authError ? authError.message : "Ingen användare funnen.";
+    return { authorized: false, error: `Ogiltig session: ${errMsg}`, status: 401 };
   }
 
   console.log("[requireRole] Token verified for user ID:", user.id);
@@ -90,7 +91,8 @@ export async function requireAuth(req: NextRequest): Promise<{ authorized: true;
 
   if (authError || !user) {
     console.error("[requireAuth] Token verification failed:", authError?.message || "No user found");
-    return { authorized: false, error: "Ogiltig session.", status: 401 };
+    const errMsg = authError ? authError.message : "Ingen användare funnen.";
+    return { authorized: false, error: `Ogiltig session: ${errMsg}`, status: 401 };
   }
 
   return { authorized: true, userId: user.id };
