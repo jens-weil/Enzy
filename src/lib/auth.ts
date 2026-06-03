@@ -7,11 +7,7 @@ export const supabaseAdmin = createClient(
   process.env.SUPABASE_SERVICE_ROLE_KEY || "dummy-key"
 );
 
-// Anon client — used only to verify caller JWTs
-const supabaseAnon = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL || "https://your-project.supabase.co",
-  process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || "dummy-key"
-);
+// Admin client is used to verify caller JWTs instead of supabaseAnon to prevent AuthSessionMissingError
 
 export type AuthResult =
   | { authorized: true; userId: string; role: string }
@@ -38,7 +34,7 @@ export async function requireRole(
   const {
     data: { user },
     error: authError,
-  } = await supabaseAnon.auth.getUser(token);
+  } = await supabaseAdmin.auth.getUser(token);
 
   if (authError || !user) {
     console.error("[requireRole] Token verification failed:", authError?.message || "No user found");
@@ -90,7 +86,7 @@ export async function requireAuth(req: NextRequest): Promise<{ authorized: true;
   const {
     data: { user },
     error: authError,
-  } = await supabaseAnon.auth.getUser(token);
+  } = await supabaseAdmin.auth.getUser(token);
 
   if (authError || !user) {
     console.error("[requireAuth] Token verification failed:", authError?.message || "No user found");

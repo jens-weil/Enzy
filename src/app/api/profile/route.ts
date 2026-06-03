@@ -9,11 +9,7 @@ const supabaseAdmin = createClient(
   process.env.SUPABASE_SERVICE_ROLE_KEY || "dummy-key"
 );
 
-// Anon client — used only to verify the caller's JWT
-const supabaseAnon = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL || "https://your-project.supabase.co",
-  process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || "dummy-key"
-);
+// Verify with admin client directly to prevent AuthSessionMissingError
 
 export async function POST(req: NextRequest) {
   try {
@@ -25,7 +21,7 @@ export async function POST(req: NextRequest) {
     const token = authHeader.startsWith("Bearer ") ? authHeader.replace("Bearer ", "") : authHeader;
 
     // 2. Verify the token and get the user
-    const { data: { user }, error: authError } = await supabaseAnon.auth.getUser(token);
+    const { data: { user }, error: authError } = await supabaseAdmin.auth.getUser(token);
     if (authError || !user) {
       return NextResponse.json({ error: "Invalid session" }, { status: 401 });
     }
@@ -68,7 +64,7 @@ export async function PATCH(req: NextRequest) {
     const token = authHeader.startsWith("Bearer ") ? authHeader.replace("Bearer ", "") : authHeader;
 
     // 2. Verify the token and get the user
-    const { data: { user }, error: authError } = await supabaseAnon.auth.getUser(token);
+    const { data: { user }, error: authError } = await supabaseAdmin.auth.getUser(token);
     if (authError || !user) {
       return NextResponse.json({ error: "Invalid session" }, { status: 401 });
     }
