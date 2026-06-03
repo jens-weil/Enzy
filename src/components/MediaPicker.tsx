@@ -433,7 +433,7 @@ export default function MediaPicker({
                   </motion.div>
 
                   {/* Actions (Floating) */}
-                  <div className="absolute top-3 right-3 flex flex-col gap-2 opacity-0 group-hover:opacity-100 transition-all translate-x-4 group-hover:translate-x-0 duration-300 z-20">
+                  <div className="absolute top-3 right-3 flex flex-col gap-2 transition-all z-20">
                     <button 
                       onClick={(e) => { e.stopPropagation(); setDeletingImage(img.url); }}
                       className="w-8 h-8 rounded-full bg-white/95 dark:bg-slate-900/95 text-red-500 shadow-xl flex items-center justify-center hover:bg-red-500 hover:text-white transition-all scale-90 hover:scale-100"
