@@ -308,4 +308,35 @@
   .ProseMirror .layout-column.ProseMirror-selectednode {
     @apply border-brand-teal ring-4 ring-brand-teal/10;
   }
+
+  /* Top navigation menu items custom hover override */
+  .nav-menu-item {
+    transition: color 0.2s ease-in-out !important;
+  }
+
+  .nav-menu-item:not(.active-nav-item):hover {
+    background-color: transparent !important;
+    box-shadow: none !important;
+    transform: none !important;
+    filter: none !important;
+    text-decoration: underline !important;
+    text-decoration-thickness: 2px !important;
+    text-underline-offset: 6px !important;
+    color: var(--brand-primary) !important;
+  }
+
+  @media (prefers-color-scheme: dark) {
+    .nav-menu-item:not(.active-nav-item):hover {
+      color: var(--brand-secondary) !important;
+    }
+  }
+
+  /* Active navigation items (have colored background) -> no hover change */
+  .active-nav-item:hover {
+    background-color: var(--brand-primary) !important;
+    color: #ffffff !important;
+    box-shadow: 0 10px 15px -3px rgba(0, 124, 145, 0.3) !important;
+    transform: none !important;
+    filter: none !important;
+  }
 }

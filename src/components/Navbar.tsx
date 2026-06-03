@@ -239,43 +239,44 @@ export default function Navbar() {
             <div className="hidden lg:flex items-center space-x-2">
               <Link
                 href="/"
-                className={`px-5 py-2.5 rounded-full font-bold transition-all text-sm uppercase tracking-widest ${pathname === "/" ? "bg-brand-teal text-white shadow-lg shadow-brand-teal/20" : "text-gray-600 dark:text-gray-300 hover:bg-brand-teal hover:text-white"}`}
+                className={`nav-menu-item px-5 py-2.5 rounded-full font-bold text-sm uppercase tracking-widest ${pathname === "/" ? "active-nav-item bg-brand-teal text-white shadow-lg shadow-brand-teal/20" : "text-gray-600 dark:text-gray-300"}`}
               >
                 Hem
               </Link>
               <Link
                 href="/articles"
-                className={`px-5 py-2.5 rounded-full font-bold transition-all text-sm uppercase tracking-widest ${pathname.startsWith("/articles") ? "bg-brand-teal text-white shadow-lg shadow-brand-teal/20" : "text-gray-600 dark:text-gray-300 hover:bg-brand-teal hover:text-white"}`}
+                className={`nav-menu-item px-5 py-2.5 rounded-full font-bold text-sm uppercase tracking-widest ${pathname.startsWith("/articles") ? "active-nav-item bg-brand-teal text-white shadow-lg shadow-brand-teal/20" : "text-gray-600 dark:text-gray-300"}`}
               >
                 Nyheter
               </Link>
               <Link
                 href="/investerare"
-                className={`px-5 py-2.5 rounded-full font-bold transition-all text-sm uppercase tracking-widest ${pathname.startsWith("/investerare") ? "bg-brand-teal text-white shadow-lg shadow-brand-teal/20" : "text-gray-600 dark:text-gray-300 hover:bg-brand-teal hover:text-white"}`}
+                className={`nav-menu-item px-5 py-2.5 rounded-full font-bold text-sm uppercase tracking-widest ${pathname.startsWith("/investerare") ? "active-nav-item bg-brand-teal text-white shadow-lg shadow-brand-teal/20" : "text-gray-600 dark:text-gray-300"}`}
               >
                 Investerare
               </Link>
+
+              {isLoggedIn && (profile?.role === "Partner" || profile?.role === "Admin" || profile?.role === "Editor" || profile?.role === "Redaktör") && (
+                <Link
+                  href="/partner"
+                  className={`nav-menu-item px-5 py-2.5 rounded-full font-bold text-sm uppercase tracking-widest ${pathname.startsWith("/partner") ? "active-nav-item bg-brand-teal text-white shadow-lg shadow-brand-teal/20" : "text-gray-600 dark:text-gray-300"}`}
+                >
+                  Partner
+                </Link>
+              )}
+
               <button
                 onClick={() => setShowContactModal(true)}
-                className={`px-5 py-2.5 rounded-full font-bold transition-all text-sm uppercase tracking-widest ${showContactModal ? "bg-brand-teal text-white shadow-lg shadow-brand-teal/20" : "text-gray-600 dark:text-gray-300 hover:bg-brand-teal hover:text-white"}`}
+                className={`nav-menu-item px-5 py-2.5 rounded-full font-bold text-sm uppercase tracking-widest ${showContactModal ? "active-nav-item bg-brand-teal text-white shadow-lg shadow-brand-teal/20" : "text-gray-600 dark:text-gray-300"}`}
               >
                 Kontakt
               </button>
               <button
                 onClick={() => setShowQRModal(true)}
-                className={`px-5 py-2.5 rounded-full font-bold transition-all text-sm uppercase tracking-widest ${showQRModal ? "bg-brand-teal text-white shadow-lg shadow-brand-teal/20" : "text-gray-600 dark:text-gray-300 hover:bg-brand-teal hover:text-white"}`}
+                className={`nav-menu-item px-5 py-2.5 rounded-full font-bold text-sm uppercase tracking-widest ${showQRModal ? "active-nav-item bg-brand-teal text-white shadow-lg shadow-brand-teal/20" : "text-gray-600 dark:text-gray-300"}`}
               >
                 Dela
               </button>
-
-              {isLoggedIn && (profile?.role === "Partner" || profile?.role === "Admin" || profile?.role === "Editor" || profile?.role === "Redaktör") && (
-                <Link
-                  href="/partner"
-                  className={`px-5 py-2.5 rounded-full font-bold transition-all text-sm uppercase tracking-widest ${pathname.startsWith("/partner") ? "bg-brand-teal text-white shadow-lg shadow-brand-teal/20" : "text-brand-teal bg-brand-teal/10 hover:bg-brand-teal hover:text-white"}`}
-                >
-                  Partner Portal
-                </Link>
-              )}
 
               <div className="pl-4 border-l border-gray-200 dark:border-gray-800 ml-2 flex items-center gap-2">
                 {isLoggedIn && (profile?.role === "Admin" || profile?.role === "Editor" || profile?.role === "Redaktör") && (
@@ -333,12 +334,10 @@ export default function Navbar() {
                   <div className="flex items-center gap-1 group/nav">
                     <button
                       onClick={openProfile}
-                      className="bg-brand-teal/10 hover:bg-brand-teal/20 text-brand-teal px-4 py-2.5 rounded-full font-bold transition-all text-sm uppercase tracking-widest flex items-center gap-2"
+                      className="w-10 h-10 rounded-full bg-brand-teal/10 hover:bg-brand-teal/20 text-brand-teal border border-brand-teal/20 font-black text-sm flex items-center justify-center transition-all"
+                      title={`Inloggad som: ${username}`}
                     >
-                      <span className="w-5 h-5 rounded-full bg-brand-teal text-white text-[10px] font-black flex items-center justify-center">
-                        {username.charAt(0).toUpperCase()}
-                      </span>
-                      {username}
+                      {username.charAt(0).toUpperCase()}
                     </button>
                     <button
                       onClick={handleLogout}
@@ -409,6 +408,17 @@ export default function Navbar() {
               >
                 Investerare
               </Link>
+
+              {isLoggedIn && (profile?.role === "Partner" || profile?.role === "Admin" || profile?.role === "Editor" || profile?.role === "Redaktör") && (
+                <Link
+                  href="/partner"
+                  onClick={() => setIsMobileMenuOpen(false)}
+                  className={`p-4 rounded-2xl text-lg font-bold transition-all flex items-center gap-4 ${pathname.startsWith("/partner") ? "bg-brand-light text-brand-teal" : "text-gray-800 dark:text-white hover:bg-gray-50 dark:hover:bg-slate-800"}`}
+                >
+                  Partner
+                </Link>
+              )}
+
               <button
                 onClick={() => { setShowContactModal(true); setIsMobileMenuOpen(false); }}
                 className={`p-4 rounded-2xl text-lg font-bold transition-all flex items-center gap-4 text-left ${showContactModal ? "bg-brand-light text-brand-teal" : "text-gray-800 dark:text-white hover:bg-gray-50 dark:hover:bg-slate-800"}`}
@@ -421,16 +431,6 @@ export default function Navbar() {
               >
                 Dela
               </button>
-
-              {isLoggedIn && (profile?.role === "Partner" || profile?.role === "Admin" || profile?.role === "Editor" || profile?.role === "Redaktör") && (
-                <Link
-                  href="/partner"
-                  onClick={() => setIsMobileMenuOpen(false)}
-                  className={`p-4 rounded-2xl text-lg font-bold transition-all flex items-center gap-4 ${pathname.startsWith("/partner") ? "bg-brand-light text-brand-teal" : "text-gray-800 dark:text-white hover:bg-gray-50 dark:hover:bg-slate-800"}`}
-                >
-                  Partner Portal
-                </Link>
-              )}
 
               {/* StockTicker hidden on mobile per request */}
             </div>
