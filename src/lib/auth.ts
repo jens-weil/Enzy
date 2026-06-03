@@ -34,18 +34,20 @@ export type AuthResult =
 async function verifyToken(token: string) {
   // Try verifying with supabaseAnon first
   try {
-    const { data: { user }, error } = await supabaseAnon.auth.getUser(token);
-    if (user && !error) return { user, error: null };
-  } catch (e) {
-    console.warn("[verifyToken] supabaseAnon failed:", e);
+    const { data, error } = await supabaseAnon.auth.getUser(token);
+    console.log("[verifyToken] supabaseAnon result:", { hasUser: !!data?.user, error: error?.message || error });
+    if (data?.user && !error) return { user: data.user, error: null };
+  } catch (e: any) {
+    console.warn("[verifyToken] supabaseAnon threw exception:", e.message || e);
   }
 
   // Fallback to verifying with supabaseAdmin
   try {
-    const { data: { user }, error } = await supabaseAdmin.auth.getUser(token);
-    return { user, error };
+    const { data, error } = await supabaseAdmin.auth.getUser(token);
+    console.log("[verifyToken] supabaseAdmin result:", { hasUser: !!data?.user, error: error?.message || error });
+    return { user: data?.user, error };
   } catch (e: any) {
-    console.error("[verifyToken] supabaseAdmin failed:", e);
+    console.error("[verifyToken] supabaseAdmin threw exception:", e.message || e);
     return { user: null, error: e };
   }
 }
