@@ -195,7 +195,7 @@ export default function ArticleEditModal({ editingArticle, accessToken, onClose,
   };
 
   return (
-    <div className="fixed inset-0 z-[150] bg-black/70 backdrop-blur-md flex items-center justify-center p-2 md:p-8" onClick={onClose}>
+    <div className="fixed inset-0 z-[150] bg-black/60 backdrop-blur-md flex items-center justify-center p-2 md:p-8" onClick={onClose}>
       <motion.div
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}

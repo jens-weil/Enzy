@@ -44,7 +44,7 @@ export default function QRModal({ isOpen, onClose }: QRModalProps) {
     <AnimatePresence>
       {isOpen && (
         <div 
-          className={`fixed inset-0 z-[250] bg-black/60 backdrop-blur-sm flex items-center justify-center ${isMaximized ? 'p-0' : 'p-4'}`}
+          className={`fixed inset-0 z-[250] bg-black/60 backdrop-blur-md flex items-center justify-center ${isMaximized ? 'p-0' : 'p-4'}`}
           onClick={(e) => { if (e.target === e.currentTarget) onClose(); }}
         >
           <motion.div

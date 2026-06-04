@@ -123,7 +123,7 @@ export default function ArticleModal({ article, isAdmin, onClose, onDelete, onEd
 
   return (
     <div
-      className="fixed inset-0 z-[100] bg-brand-dark/80 backdrop-blur-md flex items-center justify-center p-2 md:p-4 lg:p-8"
+      className="fixed inset-0 z-[100] bg-black/60 backdrop-blur-md flex items-center justify-center p-2 md:p-4 lg:p-8"
       onClick={(e) => { if (e.target === e.currentTarget) onClose(); }}
     >
       <div

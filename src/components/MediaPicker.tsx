@@ -229,7 +229,7 @@ export default function MediaPicker({
 
   return (
     <div className="fixed inset-0 z-[1000] flex items-center justify-center p-6 md:p-12 animate-in fade-in duration-300">
-      <div className="absolute inset-0 bg-brand-dark/95 backdrop-blur-2xl" onClick={onClose} />
+      <div className="absolute inset-0 bg-black/60 backdrop-blur-md" onClick={onClose} />
       
       {/* Error Toast */}
       <AnimatePresence>

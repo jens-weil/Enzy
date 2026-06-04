@@ -343,7 +343,7 @@ export default function StockChartModal({ isOpen, onClose, ticker = 'ENZY.ST' }:
 
   return (
     <div 
-      className={`fixed inset-0 z-[200] bg-black/40 backdrop-blur-sm flex items-center justify-center animate-in fade-in duration-300 ${isMaximized ? 'p-0' : 'p-4 md:p-10'}`}
+      className={`fixed inset-0 z-[200] bg-black/60 backdrop-blur-md flex items-center justify-center animate-in fade-in duration-300 ${isMaximized ? 'p-0' : 'p-4 md:p-10'}`}
       onClick={(e) => { if (e.target === e.currentTarget) onClose(); }}
     >
       <motion.div 

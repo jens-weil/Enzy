@@ -503,7 +503,7 @@ export default function Navbar() {
       {/* ── Login Lightbox ── */}
       {showLoginModal && (
         <div
-          className="fixed inset-0 z-[200] bg-black/60 backdrop-blur-sm flex items-center justify-center p-4 animate-in fade-in duration-300"
+          className="fixed inset-0 z-[200] bg-black/60 backdrop-blur-md flex items-center justify-center p-4 animate-in fade-in duration-300"
           onClick={(e) => { if (e.target === e.currentTarget) setShowLoginModal(false); }}
         >
           <div
