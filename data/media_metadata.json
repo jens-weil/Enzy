@@ -1,10 +1,4 @@
 {
-  "/media/1773422424396-enzylogo.png": {
-    "tags": [
-      "Logo",
-      "Enzymatica"
-    ]
-  },
   "/media/article_1773426972282_0.png": {
     "tags": [
       "Sana",
@@ -54,6 +48,11 @@
   "/media/article_1773426974275_5.png": {
     "tags": [
       "enzy"
+    ]
+  },
+  "https://ovbydssywyfeuxyxwfss.supabase.co/storage/v1/object/public/media/1780513836111-article_1773426973538_1.jpg": {
+    "tags": [
+      "test"
     ]
   }
 }

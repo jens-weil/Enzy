@@ -369,8 +369,15 @@ export default function ArticleFeed({ initialArticles }: ArticleFeedProps) {
       <style jsx global>{`
         .article-rich-content a { color: #008080; text-decoration: underline; font-weight: 700; }
         .article-rich-content img { border-radius: 1rem; margin: 2rem 0; max-width: 100%; height: auto; }
-        .article-rich-content h2, .article-rich-content h3 { font-weight: 900; color: #1a202c; text-transform: uppercase; margin-top: 3rem; margin-bottom: 1rem; }
-        .dark .article-rich-content h2, .dark .article-rich-content h3 { color: #fff; }
+        .article-rich-content h1, .article-rich-content h2, .article-rich-content h3, .article-rich-content h4, .article-rich-content h5, .article-rich-content h6 { font-weight: 900; color: #1a202c; text-transform: uppercase; margin-top: 3rem; margin-bottom: 1rem; }
+        .article-rich-content .tight-heading { margin-bottom: 0.25rem !important; }
+        .dark .article-rich-content h1, .dark .article-rich-content h2, .dark .article-rich-content h3, .dark .article-rich-content h4, .dark .article-rich-content h5, .dark .article-rich-content h6 { color: #fff; }
+        .article-rich-content h1 { font-size: 2.25rem; }
+        .article-rich-content h2 { font-size: 1.75rem; }
+        .article-rich-content h3 { font-size: 1.5rem; }
+        .article-rich-content h4 { font-size: 1.25rem; }
+        .article-rich-content h5 { font-size: 1.1rem; }
+        .article-rich-content h6 { font-size: 0.95rem; }
       `}</style>
     </div>
   );

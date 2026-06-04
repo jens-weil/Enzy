@@ -6,8 +6,9 @@ import { motion, AnimatePresence } from "framer-motion";
 import { supabase } from "@/lib/supabase";
 import { SOCIAL_ICONS } from "./SocialShare";
 import RichTextEditor from "./RichTextEditor";
-import { Share2, ChevronDown, ChevronUp, Globe, FileText, Calendar, Type, Image as ImageIcon, Loader2 } from "lucide-react";
+import { Share2, ChevronDown, ChevronUp, Globe, FileText, Calendar, Type, Image as ImageIcon, Loader2, Maximize2, Minimize2 } from "lucide-react";
 import MediaPicker from "./MediaPicker";
+import StreamingPicker from "./StreamingPicker";
 
 type Article = {
   id: string;
@@ -107,6 +108,7 @@ export default function ArticleEditModal({ editingArticle, accessToken, onClose,
   const [mediaInsertMode, setMediaInsertMode] = useState(false);
   const [editorRef, setEditorRef] = useState<any>(null);
   const [showSocialDropdown, setShowSocialDropdown] = useState(false);
+  const [editorMaximized, setEditorMaximized] = useState(false);
 
   // New state for channel visibility (from global settings)
   const [channelSettings, setChannelSettings] = useState<any>(null);
@@ -194,6 +196,21 @@ export default function ArticleEditModal({ editingArticle, accessToken, onClose,
     setShowMediaPicker(false);
   };
 
+  const handleVideoSelect = (url: string) => {
+    if (editorRef) {
+      if (url.includes("youtube.com") || url.includes("youtu.be")) {
+        editorRef.chain().focus().setYoutubeVideo({ src: url }).run();
+      } else {
+        editorRef.chain().focus().insertContent({
+          type: "iframe",
+          attrs: { src: url }
+        }).run();
+      }
+    }
+    setShowStreamingPicker(false);
+    setMediaInsertMode(false);
+  };
+
   return (
     <div className="fixed inset-0 z-[150] bg-black/60 backdrop-blur-md flex items-center justify-center p-2 md:p-8" onClick={onClose}>
       <motion.div
@@ -238,10 +255,11 @@ export default function ArticleEditModal({ editingArticle, accessToken, onClose,
         </div>
 
         {/* Scrollable Form Content */}
-        <form onSubmit={handleSubmit} className="p-6 md:p-10 space-y-8 md:space-y-10 overflow-y-auto flex-1 scroll-smooth">
+        <form onSubmit={handleSubmit} className={`p-6 md:p-10 flex-1 flex flex-col scroll-smooth ${editorMaximized ? "overflow-hidden space-y-4" : "overflow-y-auto space-y-8 md:space-y-10"}`}>
           
           {/* 1. TOP BAR: SOCIAL DROPDOWN */}
-          <div className="relative z-[155]">
+          {!editorMaximized && (
+            <div className="relative z-[155]">
             <button
               type="button"
               onClick={() => setShowSocialDropdown(!showSocialDropdown)}
@@ -335,9 +353,11 @@ export default function ArticleEditModal({ editingArticle, accessToken, onClose,
               )}
             </AnimatePresence>
           </div>
+          )}
 
           {/* 2. METADATA SECTION */}
-          <div className="grid grid-cols-1 lg:grid-cols-12 gap-10">
+          {!editorMaximized && (
+            <div className="grid grid-cols-1 lg:grid-cols-12 gap-10">
             {/* Left: Metadata */}
             <div className="lg:col-span-8 space-y-8">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -410,16 +430,47 @@ export default function ArticleEditModal({ editingArticle, accessToken, onClose,
               </div>
             </div>
           </div>
+          )}
 
           {/* 4. MAIN BODY EDITOR */}
-          <div className="space-y-4">
-            <label className="flex items-center gap-2 text-[10px] font-black text-brand-teal uppercase tracking-widest ml-1"><FileText size={12}/> Brödtext (Artikelinnehåll)</label>
-            <div className="rounded-xl bg-gray-50/50 dark:bg-slate-800/30 p-1 border border-gray-100 dark:border-slate-800">
+          <div className={`space-y-4 ${editorMaximized ? "flex-1 flex flex-col min-h-0" : ""}`}>
+            {editorMaximized ? (
+              <div className="flex justify-between items-center mb-1 animate-in fade-in duration-300">
+                <span className="flex items-center gap-2 text-[10px] font-black text-brand-teal uppercase tracking-widest ml-1">
+                  <FileText size={12}/> Fullskärmsläge (Brödtext)
+                </span>
+                <button
+                  type="button"
+                  onClick={() => setEditorMaximized(false)}
+                  className="px-4 py-2 rounded-xl bg-brand-teal text-white hover:bg-brand-dark transition-all text-[10px] font-black uppercase tracking-widest flex items-center gap-1.5 shadow-md shadow-brand-teal/20"
+                >
+                  <Minimize2 size={12} />
+                  <span>Återgå till normalläget</span>
+                </button>
+              </div>
+            ) : (
+              <div className="flex justify-between items-center">
+                <label className="flex items-center gap-2 text-[10px] font-black text-brand-teal uppercase tracking-widest ml-1">
+                  <FileText size={12}/> Brödtext (Artikelinnehåll)
+                </label>
+                <button
+                  type="button"
+                  onClick={() => setEditorMaximized(true)}
+                  className="px-3 py-1.5 rounded-lg bg-brand-teal/10 hover:bg-brand-teal text-brand-teal hover:text-white transition-all text-[9px] font-black uppercase tracking-widest flex items-center gap-1.5"
+                >
+                  <Maximize2 size={12} />
+                  <span>Maximera</span>
+                </button>
+              </div>
+            )}
+            
+            <div className={`rounded-xl bg-gray-50/50 dark:bg-slate-800/30 p-1 border border-gray-100 dark:border-slate-800 ${editorMaximized ? "flex-grow flex flex-col min-h-0" : ""}`}>
               <RichTextEditor 
                 content={formData.content} 
                 onChange={(html) => setFormData(prev => ({ ...prev, content: html }))}
                 onMediaClick={() => { setMediaInsertMode(true); setShowMediaPicker(true); }}
                 onVideoClick={() => { setMediaInsertMode(true); setShowStreamingPicker(true); }}
+                maximized={editorMaximized}
                 //@ts-ignore
                 ref={(r) => { if (r?.editor) setEditorRef(r.editor); }}
               />
@@ -427,7 +478,7 @@ export default function ArticleEditModal({ editingArticle, accessToken, onClose,
           </div>
 
           {/* Action Buttons */}
-          <div className="flex gap-4 pt-10 border-t border-gray-100 dark:border-slate-800">
+          <div className={`flex gap-4 border-t border-gray-100 dark:border-slate-800 ${editorMaximized ? "pt-4" : "pt-10"}`}>
             <button
               type="submit"
               disabled={loading}
@@ -473,6 +524,14 @@ export default function ArticleEditModal({ editingArticle, accessToken, onClose,
         onSelect={handleMediaSelect}
         title="Mediebibliotek"
         description={mediaInsertMode ? "Välj en bild att infoga i artikeln" : "Välj huvudbild för artikeln"}
+      />
+
+      <StreamingPicker 
+        isOpen={showStreamingPicker}
+        onClose={() => { setShowStreamingPicker(false); setMediaInsertMode(false); }}
+        onSelect={handleVideoSelect}
+        title="Videobibliotek"
+        description="Välj en video att infoga i artikeln"
       />
     </div>
   );

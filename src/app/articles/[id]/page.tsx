@@ -103,10 +103,15 @@ export default async function ArticlePage({ params }: { params: Promise<{ id: st
         .article-rich-content a { color: #007c91; text-decoration: underline; font-weight: 800; }
         .article-rich-content b, .article-rich-content strong { color: inherit; font-weight: 900; }
         .article-rich-content img { border-radius: 2rem; margin: 3rem 0; box-shadow: 0 25px 50px -12px rgba(0,0,0,0.25); max-width: 100%; height: auto; }
-        .article-rich-content h2, .article-rich-content h3 { font-weight: 900; color: #003a4d; text-transform: uppercase; margin-top: 4rem; margin-bottom: 1.5rem; line-height: 1.2; }
-        .dark .article-rich-content h2, .dark .article-rich-content h3 { color: #fff; }
-        .article-rich-content h2 { font-size: 2rem; }
+        .article-rich-content h1, .article-rich-content h2, .article-rich-content h3, .article-rich-content h4, .article-rich-content h5, .article-rich-content h6 { font-weight: 900; color: #003a4d; text-transform: uppercase; margin-top: 3.5rem; margin-bottom: 1.25rem; line-height: 1.2; }
+        .article-rich-content .tight-heading { margin-bottom: 0.25rem !important; }
+        .dark .article-rich-content h1, .dark .article-rich-content h2, .dark .article-rich-content h3, .dark .article-rich-content h4, .dark .article-rich-content h5, .dark .article-rich-content h6 { color: #fff; }
+        .article-rich-content h1 { font-size: 2.25rem; }
+        .article-rich-content h2 { font-size: 1.75rem; }
         .article-rich-content h3 { font-size: 1.5rem; }
+        .article-rich-content h4 { font-size: 1.25rem; }
+        .article-rich-content h5 { font-size: 1.1rem; }
+        .article-rich-content h6 { font-size: 0.95rem; }
         .article-rich-content ul { list-style-type: none; padding-left: 1.5rem; }
         .article-rich-content li { position: relative; margin-bottom: 1rem; }
         .article-rich-content li::before { content: "→"; position: absolute; left: -1.5rem; color: #007c91; font-weight: 900; }

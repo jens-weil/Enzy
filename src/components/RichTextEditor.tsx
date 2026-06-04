@@ -19,7 +19,7 @@ import {
   AlignLeft, AlignCenter, AlignRight, 
   PlayCircle, Indent, Outdent, Palette,
   Eraser, Maximize2, Loader2, Columns2, Columns3,
-  Trash2, Plus, GripVertical
+  Trash2, Plus, GripVertical, Code, Minimize2
 } from "lucide-react";
 import { forwardRef, useImperativeHandle, useState, useCallback, useRef, useEffect, useMemo } from "react";
 
@@ -30,6 +30,61 @@ const getYoutubeId = (url: string) => {
     const regExp = /^.*(youtu.be\/|v\/|u\/\w\/|embed\/|watch\?v=|\&v=)([^#\&\?]*).*/;
     const match = url.match(regExp);
     return (match && match[2].length === 11) ? match[2] : url;
+};
+
+const formatHtml = (html: string): string => {
+  let result = '';
+  let indent = 0;
+  
+  const cleanHtml = html
+    .replace(/\s+/g, ' ')
+    .replace(/>\s+</g, '><')
+    .trim();
+    
+  const blockElements = [
+    'p', 'h1', 'h2', 'h3', 'ul', 'ol', 'li', 'blockquote', 'pre', 
+    'div', 'iframe', 'table', 'thead', 'tbody', 'tr', 'td', 'th', 
+    'section', 'article', 'aside', 'header', 'footer', 'resizableimage', 'resizableyoutube'
+  ];
+  
+  const tokens = cleanHtml.split(/(<\/?[a-zA-Z0-9_-]+[^>]*>)/);
+  
+  for (let i = 0; i < tokens.length; i++) {
+    const token = tokens[i];
+    if (!token) continue;
+    
+    if (token.startsWith('<') && token.endsWith('>')) {
+      const isClosing = token.startsWith('</');
+      const isSelfClosing = token.endsWith('/>') || token.startsWith('<img') || token.startsWith('<br') || token.startsWith('<hr');
+      
+      const tagNameMatch = token.match(/<\/?([a-zA-Z0-9_-]+)/);
+      const tagName = tagNameMatch ? tagNameMatch[1].toLowerCase() : '';
+      
+      const isBlock = blockElements.includes(tagName);
+      
+      if (isBlock) {
+        if (isClosing) {
+          indent = Math.max(0, indent - 1);
+          result = result.trimEnd() + '\n' + '  '.repeat(indent) + token + '\n';
+        } else if (isSelfClosing) {
+          result = result.trimEnd() + '\n' + '  '.repeat(indent) + token + '\n';
+        } else {
+          result = result.trimEnd() + '\n' + '  '.repeat(indent) + token + '\n';
+          indent++;
+        }
+      } else {
+        result += token;
+      }
+    } else {
+      result += token;
+    }
+  }
+  
+  return result
+    .split('\n')
+    .map(line => line.trimEnd())
+    .filter(line => line.trim() !== '')
+    .join('\n');
 };
 
 // --- RESIZABLE MEDIA COMPONENT ---
@@ -485,6 +540,17 @@ const CustomHeading = Heading.extend({
         }),
         parseHTML: element => (element.style.marginLeft ? parseInt(element.style.marginLeft) / 2 : 0),
       },
+      tight: {
+        default: false,
+        parseHTML: element => element.classList.contains('tight-heading') || element.getAttribute('data-tight') === 'true',
+        renderHTML: attributes => {
+          if (!attributes.tight) return {};
+          return {
+            'data-tight': 'true',
+            class: 'tight-heading',
+          };
+        },
+      },
     };
   },
 });
@@ -509,6 +575,7 @@ interface RichTextEditorProps {
   onMediaClick: () => void;
   onVideoClick: () => void;
   placeholder?: string;
+  maximized?: boolean;
 }
 
 const RichTextEditor = forwardRef<any, RichTextEditorProps>(({ 
@@ -516,9 +583,49 @@ const RichTextEditor = forwardRef<any, RichTextEditorProps>(({
   onChange, 
   onMediaClick, 
   onVideoClick, 
-  placeholder = "Skriv artikeln här..." 
+  placeholder = "Skriv artikeln här...",
+  maximized = false
 }, ref) => {
   const [showColorPicker, setShowColorPicker] = useState(false);
+  const [isHtmlMode, setIsHtmlMode] = useState(false);
+  const [htmlValue, setHtmlValue] = useState("");
+  const [headingValue, setHeadingValue] = useState("p");
+  const [fontSizeValue, setFontSizeValue] = useState("16px");
+  const [selectionTick, setSelectionTick] = useState(0);
+
+  const toggleHtmlMode = () => {
+    if (!editor) return;
+    if (isHtmlMode) {
+      setIsHtmlMode(false);
+    } else {
+      setHtmlValue(formatHtml(editor.getHTML()));
+      setIsHtmlMode(true);
+    }
+  };
+
+  const handleHtmlChange = (val: string) => {
+    if (!editor) return;
+    setHtmlValue(val);
+    onChange(val);
+    editor.commands.setContent(val, { emitUpdate: false });
+  };
+
+  const updateToolbarStates = useCallback((editorInstance: any) => {
+    if (!editorInstance) return;
+    
+    if (editorInstance.isActive("heading", { level: 1 })) setHeadingValue("h1");
+    else if (editorInstance.isActive("heading", { level: 2 })) setHeadingValue("h2");
+    else if (editorInstance.isActive("heading", { level: 3 })) setHeadingValue("h3");
+    else if (editorInstance.isActive("heading", { level: 4 })) setHeadingValue("h4");
+    else if (editorInstance.isActive("heading", { level: 5 })) setHeadingValue("h5");
+    else if (editorInstance.isActive("heading", { level: 6 })) setHeadingValue("h6");
+    else setHeadingValue("p");
+
+    const fs = editorInstance.getAttributes("textStyle").fontSize || "16px";
+    setFontSizeValue(fs);
+
+    setSelectionTick(t => t + 1);
+  }, []);
 
   const editor = useEditor({
     extensions: [
@@ -531,7 +638,7 @@ const RichTextEditor = forwardRef<any, RichTextEditorProps>(({
       FontSize,
       CustomParagraph,
       CustomHeading.configure({
-        levels: [1, 2, 3],
+        levels: [1, 2, 3, 4, 5, 6],
       }),
       TextAlign.configure({
         types: ["heading", "paragraph", "resizableImage", "resizableYoutube", "iframe"],
@@ -559,9 +666,19 @@ const RichTextEditor = forwardRef<any, RichTextEditorProps>(({
     content,
     onUpdate: ({ editor }) => {
       onChange(editor.getHTML());
+      updateToolbarStates(editor);
+    },
+    onSelectionUpdate: ({ editor }) => {
+      updateToolbarStates(editor);
     },
     immediatelyRender: false,
   });
+
+  useEffect(() => {
+    if (editor) {
+      updateToolbarStates(editor);
+    }
+  }, [editor, updateToolbarStates]);
 
   useImperativeHandle(ref, () => ({
     editor
@@ -588,28 +705,66 @@ const RichTextEditor = forwardRef<any, RichTextEditorProps>(({
 
   const currentFontSize = editor.getAttributes("textStyle").fontSize || "16px";
   const currentColor = editor.getAttributes("textStyle").color || "inherit";
+  
+  const isTightHeading = editor ? (editor.isActive("heading") && editor.getAttributes("heading").tight === true) : false;
+
+  const toggleTightHeading = () => {
+    if (!editor) return;
+    const currentTight = editor.getAttributes("heading").tight;
+    editor.chain().focus().updateAttributes("heading", { tight: !currentTight }).run();
+  };
+
+  const handleHeadingChange = (value: string) => {
+    if (!editor) return;
+    if (value === "p") {
+      editor.chain().focus().setParagraph().run();
+    } else {
+      const level = parseInt(value.replace("h", "")) as 1 | 2 | 3 | 4 | 5 | 6;
+      editor.chain().focus().toggleHeading({ level }).run();
+    }
+    setHeadingValue(value);
+  };
+
+  const handleFontSizeChange = (value: string) => {
+    if (!editor) return;
+    //@ts-ignore
+    editor.chain().focus().setFontSize(value).run();
+    setFontSizeValue(value);
+  };
 
   return (
-    <div className="w-full border-2 border-gray-100 dark:border-slate-800 rounded-[1.25rem] bg-white dark:bg-slate-900 overflow-hidden focus-within:border-brand-teal/30 transition-all">
+    <div className={`w-full border-2 border-gray-100 dark:border-slate-800 rounded-[1.25rem] bg-white dark:bg-slate-900 overflow-hidden focus-within:border-brand-teal/30 transition-all ${maximized ? "h-full flex flex-col min-h-0" : ""}`}>
       <div className="flex flex-wrap items-center gap-1 p-2 bg-gray-50/50 dark:bg-slate-800/50 border-b border-gray-100 dark:border-slate-800 sticky top-0 z-10 backdrop-blur-md rounded-t-[1.1rem]">
         
         {/* Formatting groups */}
         <div className="flex items-center gap-1 pr-2 border-r border-gray-200 dark:border-slate-700">
-          <ToolbarButton title="Rubrik 1" onClick={() => editor.chain().focus().toggleHeading({ level: 1 }).run()} active={editor.isActive("heading", { level: 1 })}><Heading1 size={18} /></ToolbarButton>
-          <ToolbarButton title="Rubrik 2" onClick={() => editor.chain().focus().toggleHeading({ level: 2 }).run()} active={editor.isActive("heading", { level: 2 })}><Heading2 size={18} /></ToolbarButton>
+          <select
+            className="bg-transparent border-none outline-none text-[10px] font-black uppercase tracking-widest text-gray-500 hover:text-brand-teal cursor-pointer appearance-none px-2"
+            value={headingValue}
+            disabled={isHtmlMode}
+            onChange={(e) => handleHeadingChange(e.target.value)}
+          >
+            <option value="p">Normal text</option>
+            <option value="h1">Rubrik 1 (H1)</option>
+            <option value="h2">Rubrik 2 (H2)</option>
+            <option value="h3">Rubrik 3 (H3)</option>
+            <option value="h4">Rubrik 4 (H4)</option>
+            <option value="h5">Rubrik 5 (H5)</option>
+            <option value="h6">Rubrik 6 (H6)</option>
+          </select>
         </div>
 
         <div className="flex items-center gap-1 px-2 border-r border-gray-200 dark:border-slate-700">
-          <ToolbarButton title="Fetstil" onClick={() => editor.chain().focus().toggleBold().run()} active={editor.isActive("bold")}><Bold size={18} /></ToolbarButton>
-          <ToolbarButton title="Kursiv" onClick={() => editor.chain().focus().toggleItalic().run()} active={editor.isActive("italic")}><Italic size={18} /></ToolbarButton>
+          <ToolbarButton title="Fetstil" onClick={() => editor.chain().focus().toggleBold().run()} active={editor.isActive("bold")} disabled={isHtmlMode}><Bold size={18} /></ToolbarButton>
+          <ToolbarButton title="Kursiv" onClick={() => editor.chain().focus().toggleItalic().run()} active={editor.isActive("italic")} disabled={isHtmlMode}><Italic size={18} /></ToolbarButton>
         </div>
 
         <div className="flex items-center gap-1 px-2 border-r border-gray-200 dark:border-slate-700">
           <select 
             className="bg-transparent border-none outline-none text-[10px] font-black uppercase tracking-widest text-gray-400 hover:text-brand-teal cursor-pointer appearance-none px-2"
-            value={currentFontSize}
-            //@ts-ignore
-            onChange={(e) => editor.chain().focus().setFontSize(e.target.value).run()}
+            value={fontSizeValue}
+            disabled={isHtmlMode}
+            onChange={(e) => handleFontSizeChange(e.target.value)}
           >
             {FONT_SIZES.map(size => (
               <option key={size} value={size}>{size.replace('px', '')}</option>
@@ -617,30 +772,30 @@ const RichTextEditor = forwardRef<any, RichTextEditorProps>(({
           </select>
           
           <div className="relative">
-            <ToolbarButton title="Textfärg" onClick={() => setShowColorPicker(!showColorPicker)} active={currentColor !== "inherit"}>
+            <ToolbarButton title="Textfärg" onClick={() => setShowColorPicker(!showColorPicker)} active={currentColor !== "inherit"} disabled={isHtmlMode}>
               <Palette size={18} style={{ color: currentColor !== "inherit" ? currentColor : undefined }} />
             </ToolbarButton>
             {showColorPicker && (
               <div className="absolute top-full left-0 mt-2 p-2 bg-white dark:bg-slate-800 rounded-2xl shadow-2xl border border-gray-100 dark:border-slate-700 z-[100] flex gap-2">
                 {COLORS.map(c => (
-                  <button key={c.color} onClick={() => { editor.chain().focus().setColor(c.color).run(); setShowColorPicker(false); }} className="w-6 h-6 rounded-full border border-gray-200 transition-transform hover:scale-125" style={{ backgroundColor: c.color }} title={c.name} />
+                  <button key={c.color} onClick={() => { editor.chain().focus().setColor(c.color).run(); setShowColorPicker(false); }} className="w-6 h-6 rounded-full border border-gray-200 transition-transform hover:scale-125" style={{ backgroundColor: c.color }} title={c.name} disabled={isHtmlMode} />
                 ))}
-                <button onClick={() => { editor.chain().focus().unsetColor().run(); setShowColorPicker(false); }} className="w-6 h-6 rounded-full border border-gray-200 flex items-center justify-center text-[10px] font-black hover:bg-gray-100 dark:hover:bg-slate-700">&times;</button>
+                <button onClick={() => { editor.chain().focus().unsetColor().run(); setShowColorPicker(false); }} className="w-6 h-6 rounded-full border border-gray-200 flex items-center justify-center text-[10px] font-black hover:bg-gray-100 dark:hover:bg-slate-700" disabled={isHtmlMode}>&times;</button>
               </div>
             )}
           </div>
-          <ToolbarButton title="Rensa formatering" onClick={() => editor.chain().focus().unsetAllMarks().run()}><Eraser size={18} /></ToolbarButton>
+          <ToolbarButton title="Rensa formatering" onClick={() => editor.chain().focus().unsetAllMarks().run()} disabled={isHtmlMode}><Eraser size={18} /></ToolbarButton>
         </div>
 
         <div className="flex items-center gap-1 px-2 border-r border-gray-200 dark:border-slate-700">
-          <ToolbarButton title="Vänster" onClick={() => editor.chain().focus().setTextAlign("left").run()} active={editor.isActive({ textAlign: "left" })}><AlignLeft size={18} /></ToolbarButton>
-          <ToolbarButton title="Centrera" onClick={() => editor.chain().focus().setTextAlign("center").run()} active={editor.isActive({ textAlign: "center" })}><AlignCenter size={18} /></ToolbarButton>
-          <ToolbarButton title="Höger" onClick={() => editor.chain().focus().setTextAlign("right").run()} active={editor.isActive({ textAlign: "right" })}><AlignRight size={18} /></ToolbarButton>
+          <ToolbarButton title="Vänster" onClick={() => editor.chain().focus().setTextAlign("left").run()} active={editor.isActive({ textAlign: "left" })} disabled={isHtmlMode}><AlignLeft size={18} /></ToolbarButton>
+          <ToolbarButton title="Centrera" onClick={() => editor.chain().focus().setTextAlign("center").run()} active={editor.isActive({ textAlign: "center" })} disabled={isHtmlMode}><AlignCenter size={18} /></ToolbarButton>
+          <ToolbarButton title="Höger" onClick={() => editor.chain().focus().setTextAlign("right").run()} active={editor.isActive({ textAlign: "right" })} disabled={isHtmlMode}><AlignRight size={18} /></ToolbarButton>
         </div>
 
         <div className="flex items-center gap-1 px-2 border-r border-gray-200 dark:border-slate-700">
-          <ToolbarButton title="Ut" onClick={() => setIndent(-1)}><Outdent size={18} /></ToolbarButton>
-          <ToolbarButton title="In" onClick={() => setIndent(1)}><Indent size={18} /></ToolbarButton>
+          <ToolbarButton title="Ut" onClick={() => setIndent(-1)} disabled={isHtmlMode}><Outdent size={18} /></ToolbarButton>
+          <ToolbarButton title="In" onClick={() => setIndent(1)} disabled={isHtmlMode}><Indent size={18} /></ToolbarButton>
         </div>
 
         <div className="flex items-center gap-1 px-2 border-r border-gray-200 dark:border-slate-700">
@@ -648,6 +803,7 @@ const RichTextEditor = forwardRef<any, RichTextEditorProps>(({
             title="2 Kolumner" 
             onClick={() => (editor.commands as any).setLayout(2)} 
             active={editor.isActive('layoutSection', { columns: 2 })}
+            disabled={isHtmlMode}
           >
             <Columns2 size={18} />
           </ToolbarButton>
@@ -655,24 +811,40 @@ const RichTextEditor = forwardRef<any, RichTextEditorProps>(({
             title="3 Kolumner" 
             onClick={() => (editor.commands as any).setLayout(3)} 
             active={editor.isActive('layoutSection', { columns: 3 })}
+            disabled={isHtmlMode}
           >
             <Columns3 size={18} />
           </ToolbarButton>
         </div>
 
         <div className="flex items-center gap-1 px-2 border-r border-gray-200 dark:border-slate-700">
-          <ToolbarButton title="Bild" onClick={() => { editor.chain().focus().run(); onMediaClick(); }}><ImageIcon size={18} /></ToolbarButton>
-          <ToolbarButton title="Video" onClick={() => { editor.chain().focus().run(); onVideoClick(); }}><PlayCircle size={18} /></ToolbarButton>
+          <ToolbarButton title="Bild" onClick={() => { editor.chain().focus().run(); onMediaClick(); }} disabled={isHtmlMode}><ImageIcon size={18} /></ToolbarButton>
+          <ToolbarButton title="Video" onClick={() => { editor.chain().focus().run(); onVideoClick(); }} disabled={isHtmlMode}><PlayCircle size={18} /></ToolbarButton>
+        </div>
+
+        <div className="flex items-center gap-1 px-2 border-r border-gray-200 dark:border-slate-700">
+          <ToolbarButton title={isHtmlMode ? "Visa text" : "Visa HTML-kod"} onClick={toggleHtmlMode} active={isHtmlMode}>
+            <Code size={18} />
+          </ToolbarButton>
         </div>
 
         <div className="flex items-center gap-1 pl-2 ml-auto">
-          <ToolbarButton title="Ångra" onClick={() => editor.chain().focus().undo().run()} disabled={!editor.can().undo()}><Undo size={18} /></ToolbarButton>
-          <ToolbarButton title="Gör om" onClick={() => editor.chain().focus().redo().run()} disabled={!editor.can().redo()}><Redo size={18} /></ToolbarButton>
+          <ToolbarButton title="Ångra" onClick={() => editor.chain().focus().undo().run()} disabled={isHtmlMode || !editor.can().undo()}><Undo size={18} /></ToolbarButton>
+          <ToolbarButton title="Gör om" onClick={() => editor.chain().focus().redo().run()} disabled={isHtmlMode || !editor.can().redo()}><Redo size={18} /></ToolbarButton>
         </div>
       </div>
 
-      <div className="p-8 prose dark:prose-invert max-w-none min-h-[400px]">
-        <EditorContent editor={editor} />
+      <div className={`p-8 prose dark:prose-invert max-w-none custom-scrollbar ${maximized ? "flex-1 overflow-y-auto min-h-0" : "min-h-[400px]"} flex flex-col`}>
+        {isHtmlMode ? (
+          <textarea
+            value={htmlValue}
+            onChange={(e) => handleHtmlChange(e.target.value)}
+            className={`w-full p-6 font-mono text-xs border border-gray-200 dark:border-slate-700 bg-gray-50 dark:bg-slate-950 rounded-2xl outline-none focus:border-brand-teal focus:ring-4 focus:ring-brand-teal/5 transition-all text-gray-700 dark:text-gray-300 resize-none ${maximized ? "flex-grow h-full min-h-0" : "min-h-[400px]"}`}
+            placeholder="Skriv HTML-kod här..."
+          />
+        ) : (
+          <EditorContent editor={editor} className={maximized ? "h-full" : ""} />
+        )}
       </div>
 
       <div className="px-8 py-3 bg-gray-50/30 dark:bg-slate-800/30 border-t border-gray-100 flex justify-end items-center">
@@ -680,6 +852,11 @@ const RichTextEditor = forwardRef<any, RichTextEditorProps>(({
           {editor.storage.characterCount.characters()} tecken
         </span>
       </div>
+      <style dangerouslySetInnerHTML={{ __html: `
+        .ProseMirror .tight-heading {
+          margin-bottom: 0.25rem !important;
+        }
+      `}} />
     </div>
   );
 });
