@@ -8,6 +8,7 @@ import { motion, AnimatePresence, LayoutGroup } from 'framer-motion';
 import { useAuth } from '@/components/AuthContext';
 import { Lock, ArrowRight, Maximize2, Minimize2 } from 'lucide-react';
 import MembershipModal from './MembershipModal';
+import Image from 'next/image';
 
 interface StockChartModalProps {
   isOpen: boolean;
@@ -33,6 +34,19 @@ const timeframes: TimeframeOption[] = [
 ];
 
 export default function StockChartModal({ isOpen, onClose, ticker = 'ENZY.ST' }: StockChartModalProps) {
+  const [company, setCompany] = useState({ name: "Enzymatica", logoUrl: "/media/logo.png" });
+
+  useEffect(() => {
+    import("@/lib/settingsCache").then(m => m.fetchSettingsOnce()).then(data => {
+      if (data?.company) {
+        setCompany({
+          name: data.company.name || "Enzymatica",
+          logoUrl: data.company.logoUrl || "/media/logo.png"
+        });
+      }
+    });
+  }, []);
+
   useEffect(() => {
     if (isOpen) {
       document.body.style.overflow = "hidden";
@@ -353,8 +367,18 @@ export default function StockChartModal({ isOpen, onClose, ticker = 'ENZY.ST' }:
           
           <div className="relative z-10 flex flex-col md:flex-row md:items-center justify-between gap-4">
             <div className="flex items-center gap-4">
-              <div className="w-12 h-12 bg-white/10 backdrop-blur-md rounded-xl flex items-center justify-center border border-white/20 shrink-0">
-                <span className="text-2xl">📈</span>
+              <div className="w-12 h-12 bg-white/10 backdrop-blur-md rounded-xl flex items-center justify-center border border-white/20 shrink-0 p-2">
+                {company.logoUrl && company.logoUrl.trim() !== "" ? (
+                  <Image 
+                    src={company.logoUrl} 
+                    alt={company.name} 
+                    width={30} 
+                    height={30} 
+                    className="object-contain brightness-0 invert" 
+                  />
+                ) : (
+                  <div className="text-xl font-black text-white/40">{company.name.charAt(0)}</div>
+                )}
               </div>
               <div className="text-left">
                 <h2 className="text-xl font-black text-white italic uppercase tracking-tighter leading-none mb-1">

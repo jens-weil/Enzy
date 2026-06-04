@@ -61,6 +61,19 @@ export default function ArticleModal({ article, isAdmin, onClose, onDelete, onEd
   const [isScrolling, setIsScrolling] = useState(false);
   const scrollRequestRef = useRef<number | null>(null);
 
+  const [company, setCompany] = useState({ name: "Enzymatica", logoUrl: "/media/logo.png" });
+
+  useEffect(() => {
+    import("@/lib/settingsCache").then(m => m.fetchSettingsOnce()).then(data => {
+      if (data?.company) {
+        setCompany({
+          name: data.company.name || "Enzymatica",
+          logoUrl: data.company.logoUrl || "/media/logo.png"
+        });
+      }
+    });
+  }, []);
+
   const checkScrollLimit = useCallback(() => {
     if (!containerRef.current) return;
     const { scrollTop, scrollHeight, clientHeight } = containerRef.current;
@@ -127,8 +140,18 @@ export default function ArticleModal({ article, isAdmin, onClose, onDelete, onEd
           </button>
           
           <div className="flex items-center gap-4 relative z-10 animate-in fade-in duration-300">
-            <div className="w-12 h-12 bg-white/10 backdrop-blur-md rounded-xl flex items-center justify-center border border-white/20 shrink-0">
-              <span className="text-2xl">📰</span>
+            <div className="w-12 h-12 bg-white/10 backdrop-blur-md rounded-xl flex items-center justify-center border border-white/20 shrink-0 p-2">
+              {company.logoUrl && company.logoUrl.trim() !== "" ? (
+                <Image 
+                  src={company.logoUrl} 
+                  alt={company.name} 
+                  width={30} 
+                  height={30} 
+                  className="object-contain brightness-0 invert" 
+                />
+              ) : (
+                <div className="text-xl font-black text-white/40">{company.name.charAt(0)}</div>
+              )}
             </div>
             <div className="text-left">
               <span className={`px-3 py-1 rounded-lg text-[9px] font-black tracking-widest ${getTypeColor(article.type)} border border-transparent`}>

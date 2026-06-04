@@ -23,6 +23,18 @@ export default function MediaPicker({
   description = "Välj en bild eller ladda upp en ny"
 }: MediaPickerProps) {
   const { session } = useAuth();
+  const [company, setCompany] = useState({ name: "Enzymatica", logoUrl: "/media/logo.png" });
+
+  useEffect(() => {
+    import("@/lib/settingsCache").then(m => m.fetchSettingsOnce()).then(data => {
+      if (data?.company) {
+        setCompany({
+          name: data.company.name || "Enzymatica",
+          logoUrl: data.company.logoUrl || "/media/logo.png"
+        });
+      }
+    });
+  }, []);
   const [availableImages, setAvailableImages] = useState<{url: string, tags: string[]}[]>([]);
   const [systemTags, setSystemTags] = useState<string[]>([]);
   const [uploading, setUploading] = useState(false);
@@ -246,8 +258,18 @@ export default function MediaPicker({
           </button>
 
           <div className="flex gap-4 items-center relative z-10 animate-in fade-in duration-300">
-            <div className="w-12 h-12 bg-white/10 backdrop-blur-md rounded-xl flex items-center justify-center border border-white/20 shrink-0 text-white animate-pulse">
-              <span className="text-2xl">🖼️</span>
+            <div className="w-12 h-12 bg-white/10 backdrop-blur-md rounded-xl flex items-center justify-center border border-white/20 shrink-0 p-2 text-white animate-pulse">
+              {company.logoUrl && company.logoUrl.trim() !== "" ? (
+                <Image 
+                  src={company.logoUrl} 
+                  alt={company.name} 
+                  width={30} 
+                  height={30} 
+                  className="object-contain brightness-0 invert" 
+                />
+              ) : (
+                <div className="text-xl font-black text-white/40">{company.name.charAt(0)}</div>
+              )}
             </div>
             <div className="text-left">
               <h3 className="text-xl font-black text-white uppercase italic tracking-tighter leading-none">{title}</h3>

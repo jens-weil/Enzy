@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { supabase } from "@/lib/supabase";
+import Image from "next/image";
 
 interface MembershipModalProps {
   isOpen: boolean;
@@ -10,6 +11,19 @@ interface MembershipModalProps {
 }
 
 export default function MembershipModal({ isOpen, onClose, initialRole }: MembershipModalProps) {
+  const [brandCompany, setBrandCompany] = useState({ name: "Enzymatica", logoUrl: "/media/logo.png" });
+
+  useEffect(() => {
+    import("@/lib/settingsCache").then(m => m.fetchSettingsOnce()).then(data => {
+      if (data?.company) {
+        setBrandCompany({
+          name: data.company.name || "Enzymatica",
+          logoUrl: data.company.logoUrl || "/media/logo.png"
+        });
+      }
+    });
+  }, []);
+
   useEffect(() => {
     if (isOpen) {
       document.body.style.overflow = "hidden";
@@ -111,7 +125,7 @@ export default function MembershipModal({ isOpen, onClose, initialRole }: Member
         onClick={e => e.stopPropagation()}
       >
         {/* Header Section */}
-        <div className="bg-brand-dark px-8 py-6 text-center relative overflow-hidden border-b border-white/10">
+        <div className="bg-brand-dark px-8 py-6 relative overflow-hidden border-b border-white/10">
           <div className="absolute top-0 right-0 w-24 h-24 bg-brand-teal/20 rounded-full blur-3xl -mr-8 -mt-8"></div>
           <button 
             onClick={onClose} 
@@ -119,13 +133,28 @@ export default function MembershipModal({ isOpen, onClose, initialRole }: Member
           >
             &times;
           </button>
-          <div className="flex flex-col items-center justify-center gap-1 relative z-10">
-            <h2 className="text-xl font-black text-white italic uppercase tracking-tighter leading-none">
-              Ansök om medlemskap
-            </h2>
-            <p className="text-brand-light/60 text-[10px] font-black uppercase tracking-widest mt-2 leading-none">
-              Fyll i dina uppgifter nedan
-            </p>
+          <div className="flex items-center gap-4 relative z-10 animate-in fade-in duration-300">
+            <div className="w-12 h-12 bg-white/10 backdrop-blur-md rounded-xl flex items-center justify-center border border-white/20 shrink-0 p-2">
+              {brandCompany.logoUrl && brandCompany.logoUrl.trim() !== "" ? (
+                <Image 
+                  src={brandCompany.logoUrl} 
+                  alt={brandCompany.name} 
+                  width={30} 
+                  height={30} 
+                  className="object-contain brightness-0 invert" 
+                />
+              ) : (
+                <div className="text-xl font-black text-white/40">{brandCompany.name.charAt(0)}</div>
+              )}
+            </div>
+            <div className="text-left">
+              <h2 className="text-xl font-black text-white italic uppercase tracking-tighter leading-none mb-1">
+                Ansök om medlemskap
+              </h2>
+              <p className="text-brand-light/60 text-[10px] font-black uppercase tracking-widest leading-none">
+                Fyll i dina uppgifter nedan
+              </p>
+            </div>
           </div>
         </div>
 

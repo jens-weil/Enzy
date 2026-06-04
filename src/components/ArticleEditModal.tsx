@@ -110,11 +110,20 @@ export default function ArticleEditModal({ editingArticle, accessToken, onClose,
 
   // New state for channel visibility (from global settings)
   const [channelSettings, setChannelSettings] = useState<any>(null);
+  const [company, setCompany] = useState({ name: "Enzymatica", logoUrl: "/media/logo.png" });
 
   useEffect(() => {
     import("@/lib/settingsCache").then(({ fetchSettingsOnce }) => {
       fetchSettingsOnce().then(data => {
-        if (data) setChannelSettings(data);
+        if (data) {
+          setChannelSettings(data);
+          if (data.company) {
+            setCompany({
+              name: data.company.name || "Enzymatica",
+              logoUrl: data.company.logoUrl || "/media/logo.png"
+            });
+          }
+        }
       });
     });
   }, []);
@@ -204,8 +213,18 @@ export default function ArticleEditModal({ editingArticle, accessToken, onClose,
           </button>
           
           <div className="flex items-center gap-3 md:gap-4 relative z-10 animate-in fade-in duration-300">
-            <div className="w-10 h-10 md:w-12 md:h-12 rounded-xl bg-white/10 backdrop-blur-md flex items-center justify-center border border-white/20 shrink-0 text-white">
-              <FileText size={20} className="md:w-6 md:h-6 text-brand-teal" />
+            <div className="w-12 h-12 bg-white/10 backdrop-blur-md rounded-xl flex items-center justify-center border border-white/20 shrink-0 p-2 text-white">
+              {company.logoUrl && company.logoUrl.trim() !== "" ? (
+                <Image 
+                  src={company.logoUrl} 
+                  alt={company.name} 
+                  width={30} 
+                  height={30} 
+                  className="object-contain brightness-0 invert" 
+                />
+              ) : (
+                <div className="text-xl font-black text-white/40">{company.name.charAt(0)}</div>
+              )}
             </div>
             <div>
               <h2 className="text-lg md:text-2xl font-black text-white uppercase italic tracking-tight leading-none mb-1">

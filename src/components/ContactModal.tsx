@@ -38,6 +38,18 @@ export default function ContactModal({ isOpen, onClose, canEdit }: ContactModalP
   const [editContent, setEditContent] = useState("");
   const [editTitle, setEditTitle] = useState("");
   const [isLoading, setIsLoading] = useState(true);
+  const [company, setCompany] = useState({ name: "Enzymatica", logoUrl: "/media/logo.png" });
+
+  useEffect(() => {
+    import("@/lib/settingsCache").then(m => m.fetchSettingsOnce()).then(data => {
+      if (data?.company) {
+        setCompany({
+          name: data.company.name || "Enzymatica",
+          logoUrl: data.company.logoUrl || "/media/logo.png"
+        });
+      }
+    });
+  }, []);
 
   useEffect(() => {
     if (isOpen) {
@@ -133,9 +145,24 @@ export default function ContactModal({ isOpen, onClose, canEdit }: ContactModalP
         <div className="w-full md:w-72 bg-gray-50 dark:bg-slate-900/40 p-6 md:p-8 flex flex-col border-b md:border-b-0 md:border-r border-gray-100 dark:border-slate-800/60">
           <div className="mb-8 relative overflow-hidden bg-brand-dark -mx-6 -mt-6 md:-mx-8 md:-mt-8 p-6 md:p-8 border-b border-white/10 shrink-0">
             <div className="absolute top-0 right-0 w-24 h-24 bg-brand-teal/20 rounded-full blur-3xl -mr-8 -mt-8"></div>
-            <div className="relative z-10">
-              <h2 className="text-2xl font-black text-white italic uppercase tracking-tighter leading-none">Kontakt</h2>
-              <p className="text-brand-light/60 text-[10px] font-black uppercase tracking-widest mt-2 leading-none">Hur kan vi hjälpa dig?</p>
+            <div className="relative z-10 flex items-center gap-4 animate-in fade-in duration-300">
+              <div className="w-12 h-12 bg-white/10 backdrop-blur-md rounded-xl flex items-center justify-center border border-white/20 shrink-0 p-2 text-white">
+                {company.logoUrl && company.logoUrl.trim() !== "" ? (
+                  <Image 
+                    src={company.logoUrl} 
+                    alt={company.name} 
+                    width={30} 
+                    height={30} 
+                    className="object-contain brightness-0 invert" 
+                  />
+                ) : (
+                  <div className="text-xl font-black text-white/40">{company.name.charAt(0)}</div>
+                )}
+              </div>
+              <div className="text-left">
+                <h2 className="text-xl font-black text-white italic uppercase tracking-tighter leading-none mb-1">Kontakt</h2>
+                <p className="text-brand-light/60 text-[10px] font-black uppercase tracking-widest mt-1.5 leading-none">Hur kan vi hjälpa dig?</p>
+              </div>
             </div>
           </div>
 

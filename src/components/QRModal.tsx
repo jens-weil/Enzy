@@ -4,6 +4,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import { QRCodeSVG } from "qrcode.react";
 import { useState, useEffect } from "react";
 import { Share2, X, Copy, Check, Maximize2, Minimize2 } from "lucide-react";
+import Image from "next/image";
 
 interface QRModalProps {
   isOpen: boolean;
@@ -14,6 +15,18 @@ export default function QRModal({ isOpen, onClose }: QRModalProps) {
   const [currentUrl, setCurrentUrl] = useState("");
   const [copied, setCopied] = useState(false);
   const [isMaximized, setIsMaximized] = useState(false);
+  const [company, setCompany] = useState({ name: "Enzymatica", logoUrl: "/media/logo.png" });
+
+  useEffect(() => {
+    import("@/lib/settingsCache").then(m => m.fetchSettingsOnce()).then(data => {
+      if (data?.company) {
+        setCompany({
+          name: data.company.name || "Enzymatica",
+          logoUrl: data.company.logoUrl || "/media/logo.png"
+        });
+      }
+    });
+  }, []);
 
   useEffect(() => {
     if (typeof window !== "undefined" && isOpen) {
@@ -50,8 +63,18 @@ export default function QRModal({ isOpen, onClose }: QRModalProps) {
             <div className="bg-brand-dark px-8 py-6 text-center relative overflow-hidden border-b border-white/10">
               <div className="absolute top-0 right-0 w-24 h-24 bg-brand-teal/20 rounded-full blur-3xl -mr-8 -mt-8 z-0" />
               <div className="relative z-10 flex flex-col items-center gap-2 animate-in fade-in duration-300">
-                <div className="w-12 h-12 bg-white/10 backdrop-blur-md rounded-xl flex items-center justify-center border border-white/20 mb-2">
-                  <Share2 className="text-brand-teal" size={24} />
+                <div className="w-12 h-12 bg-white/10 backdrop-blur-md rounded-xl flex items-center justify-center border border-white/20 mb-2 p-2">
+                  {company.logoUrl && company.logoUrl.trim() !== "" ? (
+                    <Image 
+                      src={company.logoUrl} 
+                      alt={company.name} 
+                      width={30} 
+                      height={30} 
+                      className="object-contain brightness-0 invert" 
+                    />
+                  ) : (
+                    <div className="text-xl font-black text-white/40">{company.name.charAt(0)}</div>
+                  )}
                 </div>
                 <h2 className={`font-black text-white tracking-tight uppercase italic transition-all duration-500 ${isMaximized ? 'text-6xl mb-4' : 'text-xl'}`}>Dela appen</h2>
                 <p className={`text-brand-light/60 font-black uppercase tracking-widest leading-none transition-all duration-500 ${isMaximized ? 'text-xl' : 'text-[10px]'}`}>Skanna för mobilvy</p>
