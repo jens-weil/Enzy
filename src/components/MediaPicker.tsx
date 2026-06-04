@@ -251,7 +251,7 @@ export default function MediaPicker({
 
       <div className="bg-white dark:bg-slate-900 w-full max-w-6xl max-h-[90vh] rounded-[2.5rem] shadow-2xl flex flex-col overflow-hidden relative z-10 border border-white/10">
         
-        {/* Header */}        <div className="bg-brand-dark px-8 py-6 relative overflow-hidden border-b border-white/10 flex flex-col md:flex-row md:items-center justify-between gap-6 shrink-0">
+        {/* Header */}        <div className="bg-brand-dark px-8 py-6 relative z-20 border-b border-white/10 flex flex-col md:flex-row md:items-center justify-between gap-6 shrink-0">
           <div className="absolute top-0 right-0 w-24 h-24 bg-brand-teal/20 rounded-full blur-3xl -mr-8 -mt-8 z-0" />
           <button 
             onClick={onClose} 
