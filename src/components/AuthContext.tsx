@@ -69,7 +69,50 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         .eq("id", userId)
         .single();
 
-      if (error) throw error;
+      if (error) {
+        // If profile is missing in DB, try to recreate it from session user metadata
+        if (error.code === "PGRST116" || error.message?.includes("0 rows")) {
+          console.log("[AuthContext] Profile row missing in DB. Restoring from auth user metadata...");
+          const { data: { session: currentSession } } = await supabase.auth.getSession();
+          if (currentSession?.user) {
+            const meta = currentSession.user.user_metadata || {};
+            const role = meta.role || "Regular";
+            const res = await fetch("/api/profile", {
+              method: "POST",
+              headers: {
+                "Content-Type": "application/json",
+                "Authorization": `Bearer ${currentSession.access_token}`,
+                "X-Authorization": `Bearer ${currentSession.access_token}`
+              },
+              body: JSON.stringify({
+                role: role,
+                display_name: meta.display_name || currentSession.user.email?.split("@")[0] || "Användare",
+                full_name: meta.full_name || "",
+                phone: meta.phone || "",
+                company: meta.company || "",
+                linkedin_url: meta.linkedin_url || "",
+                membership_status: role === "Admin" || role === "Editor" || role === "Redaktör" ? "Approved" : "Pending"
+              })
+            });
+            if (res.ok) {
+              console.log("[AuthContext] Profile successfully restored!");
+              const { data: retryData, error: retryError } = await supabase
+                .from("profiles")
+                .select("*")
+                .eq("id", userId)
+                .single();
+              if (!retryError && retryData) {
+                setProfile(retryData);
+                return;
+              }
+            } else {
+              const errTxt = await res.text();
+              console.error("[AuthContext] Failed to restore profile:", errTxt);
+            }
+          }
+        }
+        throw error;
+      }
       setProfile(data);
     } catch (err: any) {
       console.error("Error fetching profile:", err?.message || err, err?.details || "", err?.hint || "");
