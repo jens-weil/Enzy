@@ -3,6 +3,9 @@ import fs from 'fs';
 import path from 'path';
 import { requireRole, supabaseAdmin } from '@/lib/auth';
 
+export const dynamic = 'force-dynamic';
+export const revalidate = 0;
+
 const metadataPath = path.join(process.cwd(), 'data', 'media_metadata.json');
 
 function getMetadata() {
