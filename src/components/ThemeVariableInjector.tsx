@@ -16,13 +16,13 @@ export default function ThemeVariableInjector({ initialColors }: { initialColors
   };
 
   useEffect(() => {
-    // Only fetch if we didn't get initial colors, or always listen for updates
-    if (!initialColors) {
-      applyColors();
-    }
+    // Always fetch the actual saved settings on mount to ensure client-side settings
+    // override any stale build-time initialColors from static SSR pages.
+    applyColors();
+    
     window.addEventListener('settingsUpdated', applyColors);
     return () => window.removeEventListener('settingsUpdated', applyColors);
-  }, [initialColors]);
+  }, []);
 
   if (!colors) return null;
 
