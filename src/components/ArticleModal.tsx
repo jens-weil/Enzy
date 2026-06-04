@@ -114,14 +114,27 @@ export default function ArticleModal({ article, isAdmin, onClose, onDelete, onEd
       onClick={(e) => { if (e.target === e.currentTarget) onClose(); }}
     >
       <div
-        className="bg-white dark:bg-slate-900 w-full max-w-4xl max-h-[calc(100vh-1rem)] md:max-h-[min(92vh,1200px)] rounded-[1.5rem] md:rounded-[2rem] shadow-2xl flex flex-col relative animate-in slide-in-from-bottom-5 duration-700 overflow-hidden"
+        className="bg-white dark:bg-slate-900 w-full max-w-4xl max-h-[calc(100vh-1rem)] md:max-h-[min(92vh,1200px)] rounded-[2.5rem] shadow-2xl border border-gray-100 dark:border-slate-800 flex flex-col relative animate-in slide-in-from-bottom-5 duration-700 overflow-hidden"
         onClick={e => e.stopPropagation()}
       >
-        <div className="sticky top-0 z-50 bg-white/95 dark:bg-slate-900/95 backdrop-blur-xl px-5 md:px-8 py-4 md:py-6 border-b border-gray-100 dark:border-slate-800 flex justify-between items-center shrink-0">
-          <div className="flex items-center gap-4">
-            <span className={`px-4 py-1.5 rounded-full text-[10px] font-black tracking-widest ${getTypeColor(article.type)}`}>
-              {article.type.toUpperCase()}
-            </span>
+        <div className="sticky top-0 z-50 bg-brand-dark px-8 py-5 border-b border-white/10 flex justify-between items-center shrink-0 overflow-hidden">
+          <div className="absolute top-0 right-0 w-24 h-24 bg-brand-teal/20 rounded-full blur-3xl -mr-8 -mt-8 z-0"></div>
+          <button 
+            onClick={onClose}
+            className="absolute top-4 right-5 w-8 h-8 rounded-full bg-white/10 flex items-center justify-center font-black text-white/60 hover:text-white hover:bg-brand-teal transition-all z-20 text-lg shadow-sm"
+          >
+            &times;
+          </button>
+          
+          <div className="flex items-center gap-4 relative z-10 animate-in fade-in duration-300">
+            <div className="w-12 h-12 bg-white/10 backdrop-blur-md rounded-xl flex items-center justify-center border border-white/20 shrink-0">
+              <span className="text-2xl">📰</span>
+            </div>
+            <div className="text-left">
+              <span className={`px-3 py-1 rounded-lg text-[9px] font-black tracking-widest ${getTypeColor(article.type)} border border-transparent`}>
+                {article.type.toUpperCase()}
+              </span>
+            </div>
           </div>
 
           {/* Up Arrow in Header */}
@@ -131,36 +144,30 @@ export default function ArticleModal({ article, isAdmin, onClose, onDelete, onEd
               onMouseLeave={stopScrolling}
               onMouseDown={() => { stopScrolling(); startScrolling("up", 8); }} 
               onMouseUp={() => { stopScrolling(); startScrolling("up", 1.5); }}
-              className={`pointer-events-auto p-2 rounded-full group transition-all duration-500 flex flex-col items-center justify-center ${isScrolling ? 'text-brand-teal scale-110' : 'text-brand-dark/60 dark:text-white/60 blur-[1px] hover:blur-0 hover:text-brand-dark dark:hover:text-white animate-gunga'}`}
+              className={`pointer-events-auto p-2 rounded-full group transition-all duration-500 flex flex-col items-center justify-center ${isScrolling ? 'text-brand-teal scale-110' : 'text-white/40 hover:text-white hover:bg-white/10 animate-gunga'}`}
             >
               <ChevronUp size={72} strokeWidth={4} />
               <span className="absolute -bottom-3 text-[9px] font-black uppercase tracking-widest opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap">Scrolla upp</span>
             </button>
           </div>
 
-          <div className="flex items-center gap-3">
+          <div className="flex items-center gap-3 relative z-10 mr-10">
             {isAdmin && (
               <>
                 <button
                   onClick={() => { onClose(); onEdit(article); }}
-                  className="px-3 md:px-5 py-2 rounded-xl bg-brand-teal text-white font-black text-[9px] md:text-[10px] uppercase tracking-widest shadow-md hover:bg-brand-teal/80 transition-all"
+                  className="px-3 md:px-5 py-2 rounded-xl bg-brand-teal text-white font-black text-[9px] md:text-[10px] uppercase tracking-widest shadow-md hover:bg-brand-dark border border-transparent hover:border-white/10 transition-all"
                 >
                   Redigera
                 </button>
                 <button
                   onClick={() => onDelete(article.id)}
-                  className="px-3 md:px-5 py-2 rounded-xl bg-red-500 text-white font-black text-[9px] md:text-[10px] uppercase tracking-widest shadow-md hover:bg-red-600 transition-all"
+                  className="px-3 md:px-5 py-2 rounded-xl bg-red-500 hover:bg-red-600 text-white font-black text-[9px] md:text-[10px] uppercase tracking-widest shadow-md transition-all"
                 >
                    Radera
                 </button>
               </>
             )}
-            <button
-              className="w-10 h-10 rounded-full bg-gray-100 dark:bg-slate-800 text-gray-500 dark:text-gray-400 flex items-center justify-center hover:bg-gray-200 dark:hover:bg-slate-700 transition-all text-2xl font-black"
-              onClick={onClose}
-            >
-              &times;
-            </button>
           </div>
         </div>
 

@@ -111,19 +111,22 @@ export default function MembershipModal({ isOpen, onClose, initialRole }: Member
         onClick={e => e.stopPropagation()}
       >
         {/* Header Section */}
-        <div className="p-5 pb-6 bg-gradient-to-br from-brand-teal/20 to-transparent relative border-b border-gray-50 dark:border-slate-800/50">
+        <div className="bg-brand-dark px-8 py-6 text-center relative overflow-hidden border-b border-white/10">
+          <div className="absolute top-0 right-0 w-24 h-24 bg-brand-teal/20 rounded-full blur-3xl -mr-8 -mt-8"></div>
           <button 
             onClick={onClose} 
-            className="absolute top-4 right-5 w-8 h-8 rounded-full bg-black/5 dark:bg-white/10 flex items-center justify-center font-black hover:bg-brand-teal hover:text-white transition-all z-10 text-lg shadow-sm"
+            className="absolute top-4 right-5 w-8 h-8 rounded-full bg-white/10 flex items-center justify-center font-black text-white/60 hover:text-white hover:bg-brand-teal transition-all z-10 text-lg shadow-sm"
           >
             &times;
           </button>
-          <h2 className="text-xl font-black text-brand-dark dark:text-white italic uppercase tracking-tighter mb-1">
-            Ansök om medlemskap
-          </h2>
-          <p className="text-gray-500 dark:text-gray-400 text-[10px] leading-relaxed max-w-sm font-medium uppercase tracking-widest">
-            Fyll i dina uppgifter nedan
-          </p>
+          <div className="flex flex-col items-center justify-center gap-1 relative z-10">
+            <h2 className="text-xl font-black text-white italic uppercase tracking-tighter leading-none">
+              Ansök om medlemskap
+            </h2>
+            <p className="text-brand-light/60 text-[10px] font-black uppercase tracking-widest mt-2 leading-none">
+              Fyll i dina uppgifter nedan
+            </p>
+          </div>
         </div>
 
         <div className="px-8 pt-8 pb-10">
@@ -133,7 +136,7 @@ export default function MembershipModal({ isOpen, onClose, initialRole }: Member
               <div className="w-20 h-20 bg-green-100 text-green-600 rounded-full flex items-center justify-center mx-auto text-4xl">✓</div>
               <h3 className="text-2xl font-black">Ansökan skickad!</h3>
               <p className="text-gray-600 dark:text-gray-400">Vi har tagit emot din ansökan och kommer att granska den. Kontrollera din e-post för att bekräfta ditt konto.</p>
-              <button onClick={onClose} className="w-full bg-brand-dark text-white py-4 rounded-2xl font-black uppercase tracking-widest transition-all">Stäng</button>
+              <button onClick={onClose} className="w-full bg-brand-dark text-white py-3.5 rounded-xl font-black uppercase tracking-widest transition-all">Stäng</button>
             </div>
           ) : (
             <form onSubmit={handleSubmit} className="space-y-4">
@@ -143,7 +146,7 @@ export default function MembershipModal({ isOpen, onClose, initialRole }: Member
                   <select 
                     value={role} 
                     onChange={e => setRole(e.target.value)}
-                    className="w-full px-5 py-3 rounded-2xl bg-gray-50 dark:bg-slate-800 border-none font-bold text-gray-900 dark:text-white appearance-none"
+                    className="w-full px-5 py-3 rounded-xl bg-gray-50 dark:bg-slate-800 border border-transparent focus:border-brand-teal focus:ring-4 focus:ring-brand-teal/10 outline-none transition-all text-sm font-bold text-gray-900 dark:text-white appearance-none"
                   >
                     <option value="Medlem">Medlem</option>
                     <option value="Investerare">Investerare</option>
@@ -152,13 +155,13 @@ export default function MembershipModal({ isOpen, onClose, initialRole }: Member
                 </div>
                 <div className="space-y-1.5">
                   <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest ml-1">E-post</label>
-                  <input required type="email" autoComplete="email" value={email} onChange={e => setEmail(e.target.value)} className="w-full px-5 py-3 rounded-2xl bg-gray-50 dark:bg-slate-800 border-none font-bold" />
+                  <input required type="email" autoComplete="email" value={email} onChange={e => setEmail(e.target.value)} className="w-full px-5 py-3 rounded-xl bg-gray-50 dark:bg-slate-800 border border-transparent focus:border-brand-teal focus:ring-4 focus:ring-brand-teal/10 outline-none transition-all text-sm font-bold text-gray-900 dark:text-white" />
                 </div>
               </div>
 
               <div className="space-y-1.5">
                 <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest ml-1">Lösenord</label>
-                <input required type="password" autoComplete="new-password" value={password} onChange={e => setPassword(e.target.value)} className="w-full px-5 py-3 rounded-2xl bg-gray-50 dark:bg-slate-800 border-none font-bold" />
+                <input required type="password" autoComplete="new-password" value={password} onChange={e => setPassword(e.target.value)} className="w-full px-5 py-3 rounded-xl bg-gray-50 dark:bg-slate-800 border border-transparent focus:border-brand-teal focus:ring-4 focus:ring-brand-teal/10 outline-none transition-all text-sm font-bold text-gray-900 dark:text-white" />
               </div>
 
               {role !== "Admin" && role !== "Editor" && (
@@ -166,21 +169,21 @@ export default function MembershipModal({ isOpen, onClose, initialRole }: Member
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div className="space-y-1.5">
                       <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest ml-1">Fullständigt namn</label>
-                      <input required value={fullName} onChange={e => setFullName(e.target.value)} className="w-full px-5 py-3 rounded-2xl bg-gray-50 dark:bg-slate-800 border-none font-bold" />
+                      <input required value={fullName} onChange={e => setFullName(e.target.value)} className="w-full px-5 py-3 rounded-xl bg-gray-50 dark:bg-slate-800 border border-transparent focus:border-brand-teal focus:ring-4 focus:ring-brand-teal/10 outline-none transition-all text-sm font-bold text-gray-900 dark:text-white" />
                     </div>
                     <div className="space-y-1.5">
                       <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest ml-1">Telefon</label>
-                      <input value={phone} onChange={e => setPhone(e.target.value)} className="w-full px-5 py-3 rounded-2xl bg-gray-50 dark:bg-slate-800 border-none font-bold" />
+                      <input value={phone} onChange={e => setPhone(e.target.value)} className="w-full px-5 py-3 rounded-xl bg-gray-50 dark:bg-slate-800 border border-transparent focus:border-brand-teal focus:ring-4 focus:ring-brand-teal/10 outline-none transition-all text-sm font-bold text-gray-900 dark:text-white" />
                     </div>
                   </div>
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div className="space-y-1.5">
                       <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest ml-1">Företag</label>
-                      <input value={company} onChange={e => setCompany(e.target.value)} className="w-full px-5 py-3 rounded-2xl bg-gray-50 dark:bg-slate-800 border-none font-bold" />
+                      <input value={company} onChange={e => setCompany(e.target.value)} className="w-full px-5 py-3 rounded-xl bg-gray-50 dark:bg-slate-800 border border-transparent focus:border-brand-teal focus:ring-4 focus:ring-brand-teal/10 outline-none transition-all text-sm font-bold text-gray-900 dark:text-white" />
                     </div>
                     <div className="space-y-1.5">
                       <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest ml-1">LinkedIn URL</label>
-                      <input value={linkedin} onChange={e => setLinkedin(e.target.value)} className="w-full px-5 py-3 rounded-2xl bg-gray-50 dark:bg-slate-800 border-none font-bold" placeholder="https://linkedin.com/in/..." />
+                      <input value={linkedin} onChange={e => setLinkedin(e.target.value)} className="w-full px-5 py-3 rounded-xl bg-gray-50 dark:bg-slate-800 border border-transparent focus:border-brand-teal focus:ring-4 focus:ring-brand-teal/10 outline-none transition-all text-sm font-bold text-gray-900 dark:text-white" placeholder="https://linkedin.com/in/..." />
                     </div>
                   </div>
                 </div>
@@ -192,7 +195,7 @@ export default function MembershipModal({ isOpen, onClose, initialRole }: Member
                 <button 
                   type="submit" 
                   disabled={loading}
-                  className="w-full bg-brand-teal text-white py-5 rounded-2xl font-black uppercase tracking-widest shadow-xl shadow-brand-teal/20 hover:bg-brand-dark transition-all disabled:opacity-50"
+                  className="w-full bg-brand-teal hover:bg-brand-dark text-white py-3.5 rounded-xl text-sm font-black shadow-lg shadow-brand-teal/20 transform active:scale-95 transition-all mt-2 uppercase tracking-widest disabled:opacity-50"
                 >
                   {loading ? "Skickar..." : "Skicka ansökan"}
                 </button>

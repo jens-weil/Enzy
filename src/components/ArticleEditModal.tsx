@@ -190,30 +190,32 @@ export default function ArticleEditModal({ editingArticle, accessToken, onClose,
       <motion.div
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
-        className="bg-white dark:bg-slate-900 w-full max-w-5xl max-h-[calc(100vh-1rem)] md:max-h-[min(92vh,1200px)] rounded-[1.5rem] md:rounded-[2.5rem] shadow-2xl flex flex-col overflow-hidden border border-white/20"
+        className="bg-white dark:bg-slate-900 w-full max-w-5xl max-h-[calc(100vh-1rem)] md:max-h-[min(92vh,1200px)] rounded-[2.5rem] shadow-2xl flex flex-col overflow-hidden border border-gray-100 dark:border-slate-800"
         onClick={e => e.stopPropagation()}
       >
         {/* Modal Header */}
-        <div className="sticky top-0 z-[160] bg-white/95 dark:bg-slate-900/95 backdrop-blur-xl px-6 md:px-10 py-4 md:py-6 border-b border-gray-100 dark:border-slate-800 flex justify-between items-center shrink-0">
-          <div className="flex items-center gap-3 md:gap-4">
-            <div className="w-10 h-10 md:w-12 md:h-12 rounded-xl bg-brand-teal/10 flex items-center justify-center text-brand-teal">
-              <FileText size={20} className="md:w-6 md:h-6" />
+        <div className="sticky top-0 z-[160] bg-brand-dark px-8 py-5 border-b border-white/10 flex justify-between items-center shrink-0 overflow-hidden">
+          <div className="absolute top-0 right-0 w-24 h-24 bg-brand-teal/20 rounded-full blur-3xl -mr-8 -mt-8 z-0"></div>
+          <button 
+            onClick={onClose}
+            className="absolute top-4 right-5 w-8 h-8 rounded-full bg-white/10 flex items-center justify-center font-black text-white/60 hover:text-white hover:bg-brand-teal transition-all z-20 text-lg shadow-sm"
+          >
+            &times;
+          </button>
+          
+          <div className="flex items-center gap-3 md:gap-4 relative z-10 animate-in fade-in duration-300">
+            <div className="w-10 h-10 md:w-12 md:h-12 rounded-xl bg-white/10 backdrop-blur-md flex items-center justify-center border border-white/20 shrink-0 text-white">
+              <FileText size={20} className="md:w-6 md:h-6 text-brand-teal" />
             </div>
             <div>
-              <h2 className="text-lg md:text-2xl font-black text-brand-dark dark:text-white uppercase italic tracking-tight">
+              <h2 className="text-lg md:text-2xl font-black text-white uppercase italic tracking-tight leading-none mb-1">
                 {isEditing ? "Redigera artikel" : "Skapa ny"}
               </h2>
-              <p className="text-[8px] md:text-[10px] font-black text-gray-400 uppercase tracking-widest mt-0.5">
+              <p className="text-[8px] md:text-[10px] font-black text-brand-light/60 uppercase tracking-widest mt-0.5 leading-none">
                 Layout & arkitektur
               </p>
             </div>
           </div>
-          <button
-            onClick={onClose}
-            className="w-10 h-10 md:w-12 md:h-12 rounded-xl bg-gray-50 dark:bg-slate-800 text-gray-400 flex items-center justify-center hover:bg-gray-100 dark:hover:bg-slate-700 transition-all group"
-          >
-            <span className="text-2xl md:text-3xl font-light group-hover:scale-110 transition-transform">&times;</span>
-          </button>
         </div>
 
         {/* Scrollable Form Content */}
@@ -321,7 +323,7 @@ export default function ArticleEditModal({ editingArticle, accessToken, onClose,
             <div className="lg:col-span-8 space-y-8">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div className="space-y-3">
-                  <label className="flex items-center gap-2 text-[10px] font-black text-brand-teal uppercase tracking-widest"><Type size={12}/> Titel</label>
+                  <label className="flex items-center gap-2 text-[10px] font-black text-brand-teal uppercase tracking-widest ml-1"><Type size={12}/> Titel</label>
                   <input
                     required
                     type="text"
@@ -329,17 +331,17 @@ export default function ArticleEditModal({ editingArticle, accessToken, onClose,
                     value={formData.title}
                     onChange={handleChange}
                     placeholder="Artikelrubrik..."
-                    className="w-full px-5 md:px-6 py-3 md:py-4 rounded-xl md:rounded-2xl bg-gray-50 dark:bg-slate-800 border border-transparent focus:border-brand-teal focus:ring-4 focus:ring-brand-teal/5 outline-none transition-all font-bold text-base md:text-lg"
+                    className="w-full px-5 py-3 rounded-xl bg-gray-50 dark:bg-slate-800 border border-transparent focus:border-brand-teal focus:ring-4 focus:ring-brand-teal/10 outline-none transition-all font-bold text-sm"
                   />
                 </div>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div className="space-y-2 md:space-y-3">
-                    <label className="flex items-center gap-2 text-[10px] font-black text-brand-teal uppercase tracking-widest"><Globe size={12}/> Kategori</label>
+                    <label className="flex items-center gap-2 text-[10px] font-black text-brand-teal uppercase tracking-widest ml-1"><Globe size={12}/> Kategori</label>
                     <select
                       name="type"
                       value={formData.type}
                       onChange={handleChange}
-                      className="w-full px-5 py-3 md:py-4 rounded-xl md:rounded-2xl bg-gray-50 dark:bg-slate-800 border-transparent focus:border-brand-teal outline-none transition-all font-bold"
+                      className="w-full px-5 py-3 rounded-xl bg-gray-50 dark:bg-slate-800 border border-transparent focus:border-brand-teal focus:ring-4 focus:ring-brand-teal/10 outline-none transition-all font-bold text-sm"
                     >
                       <option value="Artikel">Artikel</option>
                       <option value="PM">PM</option>
@@ -347,13 +349,13 @@ export default function ArticleEditModal({ editingArticle, accessToken, onClose,
                     </select>
                   </div>
                   <div className="space-y-2 md:space-y-3">
-                    <label className="flex items-center gap-2 text-[10px] font-black text-brand-teal uppercase tracking-widest"><Calendar size={12}/> Datum</label>
+                    <label className="flex items-center gap-2 text-[10px] font-black text-brand-teal uppercase tracking-widest ml-1"><Calendar size={12}/> Datum</label>
                     <input
                       type="date"
                       name="date"
                       value={formData.date}
                       onChange={handleChange}
-                      className="w-full px-5 py-3 md:py-4 rounded-xl md:rounded-2xl bg-gray-50 dark:bg-slate-800 border-transparent focus:border-brand-teal outline-none transition-all font-bold"
+                      className="w-full px-5 py-3 rounded-xl bg-gray-50 dark:bg-slate-800 border border-transparent focus:border-brand-teal focus:ring-4 focus:ring-brand-teal/10 outline-none transition-all font-bold text-sm"
                     />
                   </div>
                 </div>
@@ -368,14 +370,14 @@ export default function ArticleEditModal({ editingArticle, accessToken, onClose,
                   onChange={handleChange}
                   rows={3}
                   placeholder="Skriv en slagkraftig inledning som sammanfattar artikeln..."
-                  className="w-full px-6 py-5 rounded-3xl bg-gray-50 dark:bg-slate-800 border border-transparent focus:border-brand-teal focus:ring-4 focus:ring-brand-teal/5 outline-none transition-all font-bold italic text-lg leading-relaxed placeholder:font-normal placeholder:not-italic"
+                  className="w-full px-5 py-3 rounded-xl bg-gray-50 dark:bg-slate-800 border border-transparent focus:border-brand-teal focus:ring-4 focus:ring-brand-teal/10 outline-none transition-all font-bold italic text-sm leading-relaxed placeholder:font-normal placeholder:not-italic"
                 />
               </div>
             </div>
 
             {/* Right: Featured Image */}
             <div className="lg:col-span-4 space-y-3">
-              <label className="flex items-center gap-2 text-[10px] font-black text-brand-teal uppercase tracking-widest"><ImageIcon size={12}/> Huvudbild</label>
+              <label className="flex items-center gap-2 text-[10px] font-black text-brand-teal uppercase tracking-widest ml-1"><ImageIcon size={12}/> Huvudbild</label>
               <div className="relative aspect-square rounded-[2rem] overflow-hidden border-4 border-gray-50 dark:border-slate-800 group cursor-pointer" onClick={() => setShowMediaPicker(true)}>
                 <Image
                   src={formData.imageUrl || "/media/logo.png"}
@@ -393,7 +395,7 @@ export default function ArticleEditModal({ editingArticle, accessToken, onClose,
           {/* 4. MAIN BODY EDITOR */}
           <div className="space-y-4">
             <label className="flex items-center gap-2 text-[10px] font-black text-brand-teal uppercase tracking-widest ml-1"><FileText size={12}/> Brödtext (Artikelinnehåll)</label>
-            <div className="rounded-[2.5rem] bg-gray-50/50 dark:bg-slate-800/30 p-1">
+            <div className="rounded-xl bg-gray-50/50 dark:bg-slate-800/30 p-1 border border-gray-100 dark:border-slate-800">
               <RichTextEditor 
                 content={formData.content} 
                 onChange={(html) => setFormData(prev => ({ ...prev, content: html }))}
@@ -410,7 +412,7 @@ export default function ArticleEditModal({ editingArticle, accessToken, onClose,
             <button
               type="submit"
               disabled={loading}
-              className="flex-1 bg-brand-teal text-white py-4 md:py-6 rounded-2xl md:rounded-3xl font-black text-xs md:text-sm uppercase tracking-widest hover:bg-brand-dark transition-all shadow-xl shadow-brand-teal/20 active:scale-[0.98] disabled:opacity-50 flex items-center justify-center gap-3"
+              className="flex-1 bg-brand-teal hover:bg-brand-dark text-white py-3.5 rounded-xl text-sm font-black shadow-lg shadow-brand-teal/20 transform active:scale-95 transition-all uppercase tracking-widest disabled:opacity-50 flex items-center justify-center gap-3"
             >
               {loading ? (
                 <>
@@ -422,7 +424,7 @@ export default function ArticleEditModal({ editingArticle, accessToken, onClose,
             <button
               type="button"
               onClick={onClose}
-              className="px-6 md:px-10 bg-gray-50 dark:bg-slate-800 text-gray-500 py-4 md:py-6 rounded-2xl md:rounded-3xl font-black text-xs md:text-sm uppercase tracking-widest hover:bg-gray-100 dark:hover:bg-slate-700 transition-all outline-none"
+              className="px-8 bg-gray-50 dark:bg-slate-800 text-gray-500 hover:text-brand-teal dark:hover:text-white py-3.5 rounded-xl font-black text-sm uppercase tracking-widest hover:bg-gray-100 dark:hover:bg-slate-700 transition-all outline-none transform active:scale-95"
             >
               Avbryt
             </button>

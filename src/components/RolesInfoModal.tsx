@@ -107,37 +107,37 @@ export default function RolesInfoModal({ onClose, onApply, isLockActive, company
       <motion.div
         initial={{ scale: 0.9, y: 20 }}
         animate={{ scale: 1, y: 0 }}
-        className="bg-[#0f1218] border border-white/10 w-full max-w-md rounded-[2.5rem] shadow-2xl overflow-hidden flex flex-col max-h-[90vh]"
+        className="bg-white dark:bg-slate-900 border border-gray-100 dark:border-slate-800 w-full max-w-md rounded-[2.5rem] shadow-2xl overflow-hidden flex flex-col max-h-[90vh]"
       >
         {/* Header */}
-        <div className="p-8 pb-6 bg-gradient-to-br from-brand-teal/20 to-transparent relative overflow-hidden">
-          <div className="absolute top-0 right-0 w-32 h-32 bg-brand-teal/10 rounded-full blur-2xl -mr-16 -mt-16" />
-          <div className="flex items-center gap-4 mb-4">
-            <div className="w-12 h-12 rounded-xl bg-white/10 backdrop-blur-md flex items-center justify-center p-2 border border-white/20">
+        <div className="bg-brand-dark px-8 py-6 text-center relative overflow-hidden border-b border-white/10 shrink-0">
+          <div className="absolute top-0 right-0 w-24 h-24 bg-brand-teal/20 rounded-full blur-3xl -mr-8 -mt-8"></div>
+          <div className="flex items-center justify-center gap-4 relative z-10">
+            <div className="w-12 h-12 rounded-xl bg-white/10 backdrop-blur-md flex items-center justify-center p-2 border border-white/20 shrink-0">
               {company.logoUrl && company.logoUrl.trim() !== "" ? (
                 <Image 
                   src={company.logoUrl} 
                   alt={company.name} 
-                  width={40} 
-                  height={40} 
+                  width={30} 
+                  height={30} 
                   className="object-contain brightness-0 invert" 
                 />
               ) : (
                 <div className="text-xl font-black text-white/40">{company.name.charAt(0)}</div>
               )}
             </div>
-            <div>
-              <h2 className="text-2xl font-black text-white italic uppercase tracking-tighter leading-none">
+            <div className="text-left">
+              <h2 className="text-xl font-black text-white italic uppercase tracking-tighter leading-none mb-1">
                 Välkommen till
               </h2>
-              <h2 className="text-2xl font-black text-brand-teal italic uppercase tracking-tighter leading-tight">
+              <h2 className="text-xl font-black text-brand-teal italic uppercase tracking-tighter leading-none">
                 {company.name}
               </h2>
+              <p className="text-brand-light/60 text-[10px] font-black uppercase tracking-widest mt-1.5 leading-none">
+                Välj den roll som passar dig bäst
+              </p>
             </div>
           </div>
-          <p className="text-gray-400 text-[10px] font-bold uppercase tracking-widest pl-1 opacity-60">
-            Välj den roll som passar dig bäst.
-          </p>
         </div>
 
         {/* Content (Scrollable) */}
@@ -146,8 +146,8 @@ export default function RolesInfoModal({ onClose, onApply, isLockActive, company
             <div
               key={role.id}
               className={`border rounded-2xl overflow-hidden transition-all duration-300 ${selectedRole === role.id
-                  ? "border-brand-teal bg-brand-teal/5 shadow-lg shadow-brand-teal/5"
-                  : "border-white/5 bg-white/2"
+                  ? "border-brand-teal bg-brand-teal/5 dark:bg-brand-teal/10 shadow-lg shadow-brand-teal/5"
+                  : "border-gray-100 dark:border-slate-800 bg-gray-50/50 dark:bg-slate-900/50"
                 }`}
             >
               <div className="flex items-center">
@@ -158,7 +158,7 @@ export default function RolesInfoModal({ onClose, onApply, isLockActive, company
                 >
                   <div className={`w-6 h-6 rounded-full border-2 flex items-center justify-center transition-all ${selectedRole === role.id
                       ? "border-brand-teal bg-brand-teal"
-                      : "border-white/20 group-hover:border-brand-teal/50"
+                      : "border-gray-200 dark:border-slate-700 group-hover:border-brand-teal/50"
                     }`}>
                     {selectedRole === role.id && (
                       <svg className="w-4 h-4 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3}>
@@ -170,11 +170,11 @@ export default function RolesInfoModal({ onClose, onApply, isLockActive, company
 
                 <button
                   onClick={() => handleToggle(role.id)}
-                  className="flex-grow flex items-center justify-between p-4 hover:bg-white/5 transition-colors group"
+                  className="flex-grow flex items-center justify-between p-4 hover:bg-gray-100 dark:hover:bg-slate-800/40 transition-colors group"
                 >
                   <div className="flex items-center gap-3">
                     <span className="text-xl">{role.icon}</span>
-                    <span className="font-black text-white uppercase italic tracking-tight group-hover:text-brand-teal transition-colors text-left">
+                    <span className="font-black text-brand-dark dark:text-white uppercase italic tracking-tight group-hover:text-brand-teal transition-colors text-left">
                       {role.title}
                     </span>
                   </div>
@@ -192,7 +192,7 @@ export default function RolesInfoModal({ onClose, onApply, isLockActive, company
                     exit={{ height: 0, opacity: 0 }}
                     transition={{ duration: 0.3 }}
                   >
-                    <div className="px-5 pb-6 pt-1 text-sm text-gray-400 leading-relaxed border-t border-white/5 mx-5 mt-1">
+                    <div className="px-5 pb-6 pt-1 text-sm text-gray-500 dark:text-gray-400 leading-relaxed border-t border-gray-100 dark:border-slate-800 mx-5 mt-1">
                       {role.description}
                     </div>
                   </motion.div>
@@ -203,12 +203,11 @@ export default function RolesInfoModal({ onClose, onApply, isLockActive, company
         </div>
 
         {/* Action Section */}
-        <div className="p-4 border-t border-white/5 bg-[#0a0c10]/50">
+        <div className="p-6 border-t border-gray-100 dark:border-slate-800 bg-gray-50 dark:bg-slate-950/50">
           <div className="flex justify-center">
-
             <button
               onClick={handleFinish}
-              className="w-full md:w-auto px-8 py-3 bg-brand-teal text-white rounded-2xl font-black uppercase text-[10px] tracking-widest hover:scale-105 active:scale-95 transition-all shadow-xl shadow-brand-teal/20"
+              className="w-full bg-brand-teal hover:bg-brand-dark text-white py-3.5 rounded-xl font-black uppercase text-sm tracking-widest hover:scale-[1.02] active:scale-95 transition-all shadow-xl shadow-brand-teal/20"
             >
               Fortsätt som {selectedRole}
             </button>

@@ -130,10 +130,13 @@ export default function ContactModal({ isOpen, onClose, canEdit }: ContactModalP
         onClick={e => e.stopPropagation()}
       >
         {/* Sidebar / Tabs */}
-        <div className="w-full md:w-72 bg-gray-50 dark:bg-slate-800/50 p-6 md:p-8 flex flex-col border-b md:border-b-0 md:border-r border-gray-100 dark:border-slate-800">
-          <div className="mb-8">
-            <h2 className="text-2xl font-black text-brand-dark dark:text-white tracking-tight">Kontakt</h2>
-            <p className="text-gray-500 dark:text-gray-400 text-sm font-medium mt-1">Hur kan vi hjälpa dig?</p>
+        <div className="w-full md:w-72 bg-gray-50 dark:bg-slate-900/40 p-6 md:p-8 flex flex-col border-b md:border-b-0 md:border-r border-gray-100 dark:border-slate-800/60">
+          <div className="mb-8 relative overflow-hidden bg-brand-dark -mx-6 -mt-6 md:-mx-8 md:-mt-8 p-6 md:p-8 border-b border-white/10 shrink-0">
+            <div className="absolute top-0 right-0 w-24 h-24 bg-brand-teal/20 rounded-full blur-3xl -mr-8 -mt-8"></div>
+            <div className="relative z-10">
+              <h2 className="text-2xl font-black text-white italic uppercase tracking-tighter leading-none">Kontakt</h2>
+              <p className="text-brand-light/60 text-[10px] font-black uppercase tracking-widest mt-2 leading-none">Hur kan vi hjälpa dig?</p>
+            </div>
           </div>
 
           <div className="flex-grow flex md:flex-col gap-2 overflow-x-auto md:overflow-x-visible pb-2 md:pb-0 no-scrollbar">

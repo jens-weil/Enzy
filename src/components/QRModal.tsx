@@ -47,28 +47,28 @@ export default function QRModal({ isOpen, onClose }: QRModalProps) {
             onClick={(e) => e.stopPropagation()}
           >
             {/* Header */}
-            <div className="bg-[#0A0F1E] px-8 py-6 text-center relative overflow-hidden">
+            <div className="bg-brand-dark px-8 py-6 text-center relative overflow-hidden border-b border-white/10">
               <div className="absolute top-0 right-0 w-24 h-24 bg-brand-teal/20 rounded-full blur-3xl -mr-8 -mt-8 z-0" />
-              <div className="relative z-10 flex flex-col items-center gap-2">
+              <div className="relative z-10 flex flex-col items-center gap-2 animate-in fade-in duration-300">
                 <div className="w-12 h-12 bg-white/10 backdrop-blur-md rounded-xl flex items-center justify-center border border-white/20 mb-2">
                   <Share2 className="text-brand-teal" size={24} />
                 </div>
                 <h2 className={`font-black text-white tracking-tight uppercase italic transition-all duration-500 ${isMaximized ? 'text-6xl mb-4' : 'text-xl'}`}>Dela appen</h2>
                 <p className={`text-brand-light/60 font-black uppercase tracking-widest leading-none transition-all duration-500 ${isMaximized ? 'text-xl' : 'text-[10px]'}`}>Skanna för mobilvy</p>
               </div>
-              <div className="absolute top-5 right-5 flex items-center gap-2 z-[60]">
+              <div className="absolute top-4 right-5 flex items-center gap-2 z-[60]">
                 <button
                   onClick={() => setIsMaximized(!isMaximized)}
-                  className="text-white/40 hover:text-white transition-colors p-2 rounded-full hover:bg-white/10"
+                  className="w-8 h-8 rounded-full bg-white/10 text-white/60 flex items-center justify-center hover:text-white hover:bg-brand-teal transition-all shadow-sm"
                   title={isMaximized ? "Minimera" : "Maximera"}
                 >
-                  {isMaximized ? <Minimize2 size={20} /> : <Maximize2 size={20} />}
+                  {isMaximized ? <Minimize2 size={16} /> : <Maximize2 size={16} />}
                 </button>
                 <button 
                   onClick={onClose}
-                  className="text-white/40 hover:text-white transition-colors p-2 rounded-full hover:bg-white/10"
+                  className="w-8 h-8 rounded-full bg-white/10 flex items-center justify-center font-black text-white/60 hover:text-white hover:bg-brand-teal transition-all text-lg shadow-sm"
                 >
-                  <X size={20} />
+                  &times;
                 </button>
               </div>
             </div>

@@ -236,24 +236,34 @@ export default function MediaPicker({
 
       <div className="bg-white dark:bg-slate-900 w-full max-w-6xl max-h-[90vh] rounded-[2.5rem] shadow-2xl flex flex-col overflow-hidden relative z-10 border border-white/10">
         
-        {/* Header */}
-        <div className="p-8 border-b border-gray-100 dark:border-slate-800 flex flex-col md:flex-row md:items-center justify-between bg-gray-50 dark:bg-slate-900/50 gap-6">
-          <div className="flex gap-6 items-center">
-            <div>
-              <h3 className="text-3xl font-black text-brand-dark dark:text-white uppercase italic tracking-tighter leading-none">{title}</h3>
-              <p className="text-[10px] font-black text-gray-400 uppercase tracking-[0.2em] mt-2 leading-none">{description}</p>
+        {/* Header */}        <div className="bg-brand-dark px-8 py-6 relative overflow-hidden border-b border-white/10 flex flex-col md:flex-row md:items-center justify-between gap-6 shrink-0">
+          <div className="absolute top-0 right-0 w-24 h-24 bg-brand-teal/20 rounded-full blur-3xl -mr-8 -mt-8 z-0" />
+          <button 
+            onClick={onClose} 
+            className="absolute top-4 right-5 w-8 h-8 rounded-full bg-white/10 flex items-center justify-center font-black text-white/60 hover:text-white hover:bg-brand-teal transition-all z-20 text-lg shadow-sm"
+          >
+            &times;
+          </button>
+
+          <div className="flex gap-4 items-center relative z-10 animate-in fade-in duration-300">
+            <div className="w-12 h-12 bg-white/10 backdrop-blur-md rounded-xl flex items-center justify-center border border-white/20 shrink-0 text-white animate-pulse">
+              <span className="text-2xl">🖼️</span>
+            </div>
+            <div className="text-left">
+              <h3 className="text-xl font-black text-white uppercase italic tracking-tighter leading-none">{title}</h3>
+              <p className="text-[10px] font-black text-brand-light/60 uppercase tracking-widest mt-2 leading-none">{description}</p>
             </div>
           </div>
 
-          <div className="flex-1 max-w-xl flex gap-3">
+          <div className="flex-1 max-w-xl flex gap-3 relative z-10 md:mr-10">
             <div className="relative flex-1 group">
-              <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 group-focus-within:text-brand-teal transition-colors" size={18} />
+              <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-white/40 group-focus-within:text-brand-teal transition-colors" size={18} />
               <input 
                 type="text" 
                 placeholder="Sök på filnamn eller taggar..." 
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                className="w-full pl-12 pr-6 py-4 rounded-2xl border border-gray-200 dark:border-slate-700 bg-white dark:bg-slate-950 outline-none focus:ring-4 ring-brand-teal/10 focus:border-brand-teal transition-all font-bold text-sm dark:text-white shadow-inner"
+                className="w-full pl-12 pr-6 py-3.5 rounded-xl border border-transparent bg-white/5 dark:bg-slate-950/50 outline-none focus:bg-white/10 dark:focus:bg-slate-950 focus:border-brand-teal focus:ring-4 ring-brand-teal/10 focus:ring-brand-teal/10 transition-all font-bold text-sm text-white placeholder:text-white/40 shadow-inner"
               />
             </div>
 
@@ -261,10 +271,10 @@ export default function MediaPicker({
             <div className="relative" ref={dropdownRef}>
               <button 
                 onClick={() => setIsTagDropdownOpen(!isTagDropdownOpen)}
-                className={`h-full px-6 rounded-2xl border flex items-center gap-3 font-black text-[10px] uppercase tracking-widest transition-all ${
+                className={`h-full px-6 py-3.5 rounded-xl border flex items-center gap-3 font-black text-[10px] uppercase tracking-widest transition-all ${
                   selectedTag 
                     ? 'bg-brand-teal text-white border-transparent shadow-lg shadow-brand-teal/20' 
-                    : 'bg-white dark:bg-slate-950 border-gray-200 dark:border-slate-800 text-gray-500 hover:border-brand-teal/50 hover:text-brand-teal'
+                    : 'bg-white/5 dark:bg-slate-950/50 border-white/10 text-white/60 hover:border-brand-teal/50 hover:text-brand-teal hover:bg-white/10'
                 }`}
               >
                 <Filter size={16} className={selectedTag ? "animate-pulse" : ""} />
@@ -278,7 +288,7 @@ export default function MediaPicker({
                     initial={{ opacity: 0, y: 10, scale: 0.95 }}
                     animate={{ opacity: 1, y: 5, scale: 1 }}
                     exit={{ opacity: 0, y: 10, scale: 0.95 }}
-                    className="absolute top-full right-0 mt-2 w-72 bg-white dark:bg-slate-900 border border-gray-100 dark:border-slate-800 rounded-[1.5rem] shadow-2xl z-[100] overflow-hidden backdrop-blur-xl flex flex-col"
+                    className="absolute top-full right-0 mt-2 w-72 bg-white dark:bg-slate-900 border border-gray-100 dark:border-slate-800 rounded-xl shadow-2xl z-[100] overflow-hidden backdrop-blur-xl flex flex-col"
                   >
                     {/* Global Tag Creation */}
                     <div className="p-3 border-b border-gray-100 dark:border-slate-800 bg-gray-50/50 dark:bg-slate-950/50">
@@ -366,13 +376,6 @@ export default function MediaPicker({
               </AnimatePresence>
             </div>
           </div>
-
-          <button 
-            onClick={onClose} 
-            className="w-12 h-12 rounded-full bg-white dark:bg-slate-800 shadow-xl flex items-center justify-center text-xl font-black hover:bg-brand-teal hover:text-white transition-all hover:rotate-90 active:scale-90"
-          >
-            <X size={24} />
-          </button>
         </div>
 
         

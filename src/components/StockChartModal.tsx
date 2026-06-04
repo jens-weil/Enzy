@@ -334,42 +334,50 @@ export default function StockChartModal({ isOpen, onClose, ticker = 'ENZY.ST' }:
     >
       <motion.div 
         layout
-        className={`bg-white dark:bg-slate-900 shadow-2xl relative overflow-hidden animate-in zoom-in-95 duration-300 flex flex-col rounded-none ${
+        className={`bg-white dark:bg-slate-900 shadow-2xl relative overflow-hidden animate-in zoom-in-95 duration-300 flex flex-col ${
           isMaximized 
-            ? 'w-full h-full max-w-none max-h-none' 
-            : 'w-full max-w-[95vw] md:max-w-7xl h-[85vh] max-h-[1000px]'
+            ? 'w-full h-full max-w-none max-h-none rounded-none' 
+            : 'w-full max-w-[95vw] md:max-w-7xl h-[85vh] max-h-[1000px] rounded-[2.5rem] border border-gray-100 dark:border-slate-800'
         }`}
         onClick={e => e.stopPropagation()}
       >
         {/* Header Section */}
-        <div className="p-3 md:p-5 pb-4 md:pb-6 bg-gradient-to-br from-brand-teal/20 to-transparent relative border-b border-gray-50 dark:border-slate-800/50">
-          <div className="flex justify-between items-start">
-            <div>
-              <h2 className="text-lg md:text-2xl font-black text-brand-dark dark:text-white italic uppercase tracking-tighter mb-1">
-                {ticker.split('.')[0]} <span className="text-brand-teal text-sm md:text-base font-medium opacity-50 not-italic ml-2">({stockInfo.exchangeName})</span>
-              </h2>
-              <div className="flex items-center gap-2 md:gap-4 flex-wrap">
-                <span className="text-2xl md:text-4xl font-black text-brand-dark dark:text-white tracking-tighter">
-                  {stockInfo.price.toFixed(2)} <span className="text-sm md:text-lg font-medium text-gray-400 ml-1">{stockInfo.currency}</span>
-                </span>
-                <span className={`text-xs md:text-base font-black px-2 md:px-3 py-0.5 md:py-1 rounded-full ${isPositive ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'}`}>
-                  {isPositive ? '+' : ''}{stockInfo.changePercent.toFixed(2)}%
-                </span>
+        <div className="bg-brand-dark px-8 py-5 relative overflow-hidden border-b border-white/10 shrink-0">
+          <div className="absolute top-0 right-0 w-24 h-24 bg-brand-teal/20 rounded-full blur-3xl -mr-8 -mt-8 z-0"></div>
+          <button 
+            onClick={onClose}
+            className="absolute top-4 right-5 w-8 h-8 rounded-full bg-white/10 flex items-center justify-center font-black text-white/60 hover:text-white hover:bg-brand-teal transition-all z-20 text-lg shadow-sm"
+          >
+            &times;
+          </button>
+          
+          <div className="relative z-10 flex flex-col md:flex-row md:items-center justify-between gap-4">
+            <div className="flex items-center gap-4">
+              <div className="w-12 h-12 bg-white/10 backdrop-blur-md rounded-xl flex items-center justify-center border border-white/20 shrink-0">
+                <span className="text-2xl">📈</span>
+              </div>
+              <div className="text-left">
+                <h2 className="text-xl font-black text-white italic uppercase tracking-tighter leading-none mb-1">
+                  {ticker.split('.')[0]} Aktiegraf
+                </h2>
+                <p className="text-brand-light/60 text-[10px] font-black uppercase tracking-widest leading-none">{stockInfo.exchangeName}</p>
               </div>
             </div>
-            <div className="flex items-center gap-2">
+            
+            <div className="flex items-center gap-4 flex-wrap md:mr-10">
+              <span className="text-2xl md:text-3xl font-black text-white tracking-tighter">
+                {stockInfo.price.toFixed(2)} <span className="text-xs md:text-sm font-medium text-white/60 ml-1">{stockInfo.currency}</span>
+              </span>
+              <span className={`text-[10px] md:text-xs font-black px-2.5 py-0.5 rounded-full ${isPositive ? 'bg-green-500/20 text-green-300 border border-green-500/30' : 'bg-red-500/20 text-red-300 border border-red-500/30'}`}>
+                {isPositive ? '+' : ''}{stockInfo.changePercent.toFixed(2)}%
+              </span>
+              
               <button
                 onClick={() => setIsMaximized(!isMaximized)}
-                className="w-10 h-10 md:w-12 md:h-12 rounded-full bg-gray-50 dark:bg-slate-800 text-gray-500 dark:text-gray-400 flex items-center justify-center hover:bg-gray-200 dark:hover:bg-slate-700 transition-all"
+                className="w-8 h-8 rounded-full bg-white/10 text-white/60 flex items-center justify-center hover:text-white hover:bg-brand-teal transition-all shadow-sm ml-2"
                 title={isMaximized ? "Minimera" : "Maximera"}
               >
-                {isMaximized ? <Minimize2 size={20} /> : <Maximize2 size={20} />}
-              </button>
-              <button 
-                onClick={onClose}
-                className="w-10 h-10 md:w-12 md:h-12 rounded-full bg-gray-50 dark:bg-slate-800 text-gray-500 dark:text-gray-400 flex items-center justify-center hover:bg-gray-200 dark:hover:bg-slate-700 transition-all text-xl md:text-2xl font-black"
-              >
-                &times;
+                {isMaximized ? <Minimize2 size={16} /> : <Maximize2 size={16} />}
               </button>
             </div>
           </div>
@@ -383,7 +391,7 @@ export default function StockChartModal({ isOpen, onClose, ticker = 'ENZY.ST' }:
             <div className="relative">
               <button
                 onClick={() => { setShowTimeframeOpen(!showTimeframeOpen); setShowSettingsOpen(false); }}
-                className="px-2 md:px-6 py-3 rounded-2xl bg-gray-50 dark:bg-slate-800 border border-gray-100 dark:border-slate-800 flex items-center gap-2 md:gap-3 hover:bg-gray-100 dark:hover:bg-slate-700 transition-all min-w-[130px] md:min-w-[160px] group text-ellipsis overflow-hidden"
+                className="px-4 md:px-6 py-3 rounded-xl bg-gray-50 dark:bg-slate-800 border border-transparent focus:border-brand-teal focus:ring-4 focus:ring-brand-teal/10 outline-none transition-all flex items-center gap-2 md:gap-3 hover:bg-gray-100 dark:hover:bg-slate-700/60 min-w-[130px] md:min-w-[160px] group text-ellipsis overflow-hidden text-sm font-bold text-left"
               >
                 <span className="text-gray-400 text-[10px] font-black uppercase tracking-widest">Period:</span>
                 <span className="text-brand-dark dark:text-white text-xs font-black uppercase tracking-widest italic">{selectedTimeframe.label}</span>
@@ -398,7 +406,7 @@ export default function StockChartModal({ isOpen, onClose, ticker = 'ENZY.ST' }:
                       initial={{ opacity: 0, y: 10, scale: 0.95 }}
                       animate={{ opacity: 1, y: 0, scale: 1 }}
                       exit={{ opacity: 0, y: 10, scale: 0.95 }}
-                      className="absolute left-0 mt-3 w-48 bg-white dark:bg-slate-900 rounded-2xl shadow-2xl border border-gray-100 dark:border-slate-800 py-2 z-20 overflow-hidden"
+                      className="absolute left-0 mt-3 w-48 bg-white dark:bg-slate-900 rounded-xl shadow-2xl border border-gray-100 dark:border-slate-800 py-2 z-20 overflow-hidden"
                     >
                       {timeframes.map((tf) => {
                         const isLocked = ['1y', '3y', '10y', 'max'].includes(tf.range) && !isMember;
@@ -427,7 +435,7 @@ export default function StockChartModal({ isOpen, onClose, ticker = 'ENZY.ST' }:
             <div className="relative ml-0 md:ml-2">
               <button
                 onClick={() => { setShowSettingsOpen(!showSettingsOpen); setShowTimeframeOpen(false); }}
-                className="px-2 md:px-6 py-3 rounded-2xl bg-gray-50 dark:bg-slate-800 border border-gray-100 dark:border-slate-800 flex items-center gap-2 md:gap-3 hover:bg-gray-100 dark:hover:bg-slate-700 transition-all min-w-[130px] md:min-w-[160px] group text-ellipsis overflow-hidden"
+                className="px-4 md:px-6 py-3 rounded-xl bg-gray-50 dark:bg-slate-800 border border-transparent focus:border-brand-teal focus:ring-4 focus:ring-brand-teal/10 outline-none transition-all flex items-center gap-2 md:gap-3 hover:bg-gray-100 dark:hover:bg-slate-700/60 min-w-[130px] md:min-w-[160px] group text-ellipsis overflow-hidden text-sm font-bold text-left"
               >
                 <span className="text-gray-400 text-[10px] font-black uppercase tracking-widest">Visa:</span>
                 <span className="text-brand-dark dark:text-white text-xs font-black uppercase tracking-widest italic">
@@ -444,7 +452,7 @@ export default function StockChartModal({ isOpen, onClose, ticker = 'ENZY.ST' }:
                       initial={{ opacity: 0, y: 10, scale: 0.95 }}
                       animate={{ opacity: 1, y: 0, scale: 1 }}
                       exit={{ opacity: 0, y: 10, scale: 0.95 }}
-                      className="absolute left-0 mt-3 w-56 bg-white dark:bg-slate-900 rounded-[1.5rem] shadow-2xl border border-gray-100 dark:border-slate-800 p-4 z-20 space-y-4"
+                      className="absolute left-0 mt-3 w-56 bg-white dark:bg-slate-900 rounded-xl shadow-2xl border border-gray-100 dark:border-slate-800 p-4 z-20 space-y-4"
                     >
                       <label className="flex items-center justify-between cursor-pointer group" onClick={(e) => { e.preventDefault(); handleIndicatorToggle('ohlc', showOHLC, setShowOHLC); }}>
                         <div className="flex items-center gap-2">
